@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
@@ -23,6 +24,56 @@ class AuthController extends Controller
             'user'=>$user,
             'token'=>$token->plainTextToken
             ];
+
+        // $validated = $request->validate([
+        //     'name' => 'required|string',
+        //     'email' => 'required|email|unique:users,email',
+        //     'password' => 'required|string|confirmed',
+        //     'company_name' => 'required|string',
+        //     'addresses' => 'array',
+        //     'addresses.*.address_line_1' => 'required|string',
+        //     'addresses.*.address_line_2' => 'nullable|string',
+        //     'addresses.*.city' => 'required|string',
+        //     'addresses.*.state' => 'nullable|string',
+        //     'addresses.*.postal_code' => 'nullable|string',
+        //     'addresses.*.country' => 'required|string',
+        // ]);
+    
+        // // Create the company
+        // $company = Company::create(['name' => $validated['company_name']]);
+    
+        // // Create the owner user
+        // $owner = User::create([
+        //     'name' => $validated['name'],
+        //     'email' => $validated['email'],
+        //     'password' => Hash::make($validated['password']),
+        //     'role' => 'owner',
+        //     'company_id' => $company->id,
+        // ]);
+    
+        // // Save addresses
+        // if (!empty($validated['addresses'])) {
+        //     foreach ($validated['addresses'] as $address) {
+        //         $company->addresses()->create($address);
+        //     }
+        // }
+    
+        // return response()->json([
+        //     'message' => 'Company and owner registered successfully.',
+        //     'company' => $company,
+        //     'owner' => $owner,
+        // ], 201);
+    }
+    public function checkEmailExists(Request $request){
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+    
+        $emailExists = User::where('email', $request->email)->exists();
+    
+        return response()->json([
+            'exists' => $emailExists
+        ]);
     }
     public function login(Request $request){
         // $request->validate([
