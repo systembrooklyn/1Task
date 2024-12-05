@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\Invitation;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -64,6 +66,36 @@ class AuthController extends Controller
         //     'owner' => $owner,
         // ], 201);
     }
+
+    public function registerViaInvitation(Request $request)
+        {
+            $request->validate([
+                'token' => 'required',
+                'name' => 'required|string|max:255',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+
+            $invitation = Invitation::where('token', $request->token)->first();
+
+            if (!$invitation || $invitation->is_accepted) {
+                return response()->json(['message' => 'Invalid or expired invitation.'], 400);
+            }
+
+            // Create the new user
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $invitation->email,
+                'password' => Hash::make($request->password),
+            ]);
+
+            // Mark invitation as accepted
+            $invitation->update(['is_accepted' => true]);
+
+            return response()->json(['message' => 'Registration successful.', 'user' => $user], 201);
+        }
+
+
+
     public function checkEmailExists(Request $request){
         $request->validate([
             'email' => 'required|email'
@@ -160,6 +192,9 @@ class AuthController extends Controller
         ], 400);
     }
 
+
+    
+        
     /**
      * Handle the password reset process.
      *
