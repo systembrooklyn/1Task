@@ -27,9 +27,22 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'password'
+        'password',
+        'company_id',
     ];
-    
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class);
+    }
+
+    public function managedDepartments()
+    {
+        return $this->hasMany(Department::class, 'user_id');
+    }
    
 
     /**

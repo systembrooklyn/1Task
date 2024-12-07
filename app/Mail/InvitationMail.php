@@ -21,6 +21,12 @@ class InvitationMail extends Mailable
     public function build()
     {
         return $this->subject('You have been invited to join the platform!')
-                    ->view('emails.invitation');
+                    ->view('emails.invitation')
+                    ->with([
+                        'companyName' => $this->invitation->company ? $this->invitation->company->name : 'No Company',
+                        'token' => $this->invitation->token,               
+                        'expiresAt' => $this->invitation->expires_at,
+                        'company_id' =>$this->invitation->company_id  
+                    ]);
     }
 }

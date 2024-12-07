@@ -18,14 +18,23 @@ class AuthController extends Controller
         $fields = $request->validate([
             'name'=>'required|max:25',
             'email' => 'required|email|unique:users',
-            'password' => 'required|confirmed'
+            'password' => 'required|confirmed',
+            'company_name' => 'required|string|max:255',
         ]);
-        $user = User::create($fields);
+        $company = Company::create(['name' => $fields['company_name']]);
+        $user = User::create([
+            'name' => $fields['name'],
+            'email' => $fields['email'],
+            'password' => bcrypt($fields['password']),
+            'company_id' => $company->id,
+        ]);
+        
         $token = $user->createToken($request->name);
+        
         return [
-            'user'=>$user,
-            'token'=>$token->plainTextToken
-            ];
+            'user' => $user,
+            'token' => $token->plainTextToken,
+        ];
 
         // $validated = $request->validate([
         //     'name' => 'required|string',
@@ -68,31 +77,34 @@ class AuthController extends Controller
     }
 
     public function registerViaInvitation(Request $request)
-        {
-            $request->validate([
-                'token' => 'required',
-                'name' => 'required|string|max:255',
-                'password' => 'required|string|min:8|confirmed',
-            ]);
+{
+    $request->validate([
+        'token' => 'required',
+        'name' => 'required|string|max:255',
+        'password' => 'required|string|min:8|confirmed',
+    ]);
 
-            $invitation = Invitation::where('token', $request->token)->first();
+    $invitation = Invitation::where('token', $request->token)->first();
 
-            if (!$invitation || $invitation->is_accepted) {
-                return response()->json(['message' => 'Invalid or expired invitation.'], 400);
-            }
+    if (!$invitation || $invitation->is_accepted || $invitation->expires_at < now()) {
+        return response()->json(['message' => 'Invalid or expired invitation.'], 400);
+    }
+    $user = User::create([
+        'name' => $request->name,
+        'email' => $invitation->email,
+        'password' => Hash::make($request->password),
+        'company_id' => $invitation->company_id,
+    ]);
 
-            // Create the new user
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $invitation->email,
-                'password' => Hash::make($request->password),
-            ]);
+    // Mark the invitation as accepted
+    $invitation->update(['is_accepted' => true]);
 
-            // Mark invitation as accepted
-            $invitation->update(['is_accepted' => true]);
+    // Generate a token for the new user
+    $token = $user->createToken($request->name)->plainTextToken;
 
-            return response()->json(['message' => 'Registration successful.', 'user' => $user], 201);
-        }
+    return response()->json(['message' => 'Registration successful.', 'user' => $user, 'token' => $token], 201);
+}
+
 
 
 
