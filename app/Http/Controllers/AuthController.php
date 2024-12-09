@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Company;
 use App\Models\Invitation;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Events\PasswordReset;
@@ -234,4 +235,37 @@ class AuthController extends Controller
         ? response()->json(['message' => __($status)])
         : response()->json(['message' => __($status)], 400);
 }
+    public function assignRoleToUser(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'role_ids' => 'required|array',
+            'role_ids.*' => 'exists:roles,id',
+        ]);
+
+        $user = User::findOrFail($validated['user_id']);
+
+        $roles = Role::find($validated['role_ids']);
+        if ($roles->isEmpty()) {
+            return response()->json(['message' => 'No valid roles found.'], 400);
+        }
+
+        foreach ($roles as $role) {
+           
+            if ($user->company_id !== $role->company_id) {
+                return response()->json(['message' => 'User and role do not belong to the same company.'], 400);
+            }
+
+            
+            if ($role->guard_name == 'sanctum') {
+                $user->assignRole($role);
+            } else {
+                return response()->json(['message' => 'Invalid guard name for one of the roles.'], 400);
+            }
+        }
+
+        return response()->json(['message' => 'Roles assigned successfully.'], 200);
+    }
+
+    
 }
