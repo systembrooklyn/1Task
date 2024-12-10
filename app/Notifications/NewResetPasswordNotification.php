@@ -28,16 +28,20 @@ class NewResetPasswordNotification extends Notification
       * @return \Illuminate\Notifications\Messages\MailMessage
       */
       public function toMail($notifiable)
-{
-    // Custom URL for password reset (including token and email as query parameters)
-    $url = url("http://192.168.1.29:8080/reset-password?token={$this->token}&email={$notifiable->email}");
+    {
+        // Custom URL for password reset (including token and email as query parameters)
+        $url = url("http://192.168.1.29:8080/reset-password?token={$this->token}&email={$notifiable->email}");
 
-    return (new \Illuminate\Notifications\Messages\MailMessage)
-        ->subject('Reset Your Password')
-        ->line('You are receiving this email because we received a password reset request for your account.')
-        ->action('Reset Password', $url)
-        ->line('If you did not request a password reset, no further action is required.');
-}
+        return (new \Illuminate\Notifications\Messages\MailMessage)
+            ->subject('Reset Your Password')
+            ->view('emails.password_reset', [
+                'notifiable' => $notifiable,
+                'url' => $url
+            ]);
+            // ->line('You are receiving this email because we received a password reset request for your account.')
+            // ->action('Reset Password', $url)
+            // ->line('If you did not request a password reset, no further action is required.');
+    }
 
     /**
      * Get the notification's delivery channels.
