@@ -120,60 +120,109 @@ class AuthController extends Controller
             'exists' => $emailExists
         ]);
     }
-    public function login(Request $request){
-        // $request->validate([
-        //     'email' => 'required|email|exists:users',
-        //     'password' => 'required'
-        // ]);
-        // $user = User::where('email', $request->email)->first();
-        
-        // if (!$user || !Hash::check($request->password, $user->password)) {
-        //     return response()->json([
-        //         'message' => 'The provided credentials are incorrect.'
-        //     ], 401);
-        // }
-        // $token = $user->createToken($user->name);
-        // return [
-        //     'user' => $user,
-        //     'token' => $token->plainTextToken
-        //     ];
 
+    public function login(Request $request) 
+{
+    // Validate input
+    $validator = Validator::make($request->all(), [
+        'email' => 'required|email|exists:users',
+        'password' => 'required'
+    ]);
 
-
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email|exists:users',
-            'password' => 'required'
-        ]);
-    
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed. Please check your input.',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-    
-        $user = User::where('email', $request->email)->first();
-    
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'message' => 'The provided credentials are incorrect.',
-                'errors' => [
-                    'email' => [
-                        'The provided email or password is incorrect.'
-                    ]
-                ]
-            ], 401);
-        }
-    
-        // Generate an authentication token
-        $token = $user->createToken($user->name)->plainTextToken;
-    
-        // Return the user data and token
+    if ($validator->fails()) {
         return response()->json([
-            'user' => $user,
-            'token' => $token
-        ]);
+            'message' => 'Validation failed. Please check your input.',
+            'errors' => $validator->errors()
+        ], 422);
     }
+
+    // Find the user by email
+    $user = User::where('email', $request->email)->first();
+
+    // Check credentials
+    if (!$user || !Hash::check($request->password, $user->password)) {
+        return response()->json([
+            'message' => 'The provided credentials are incorrect.',
+            'errors' => [
+                'email' => [
+                    'The provided email or password is incorrect.'
+                ]
+            ]
+        ], 401);
+    }
+
+    // Generate authentication token
+    $token = $user->createToken($user->name)->plainTextToken;
+
+    // Eager load company, assigned departments, roles, and permissions
+    $userData = $user->load([
+        'company',
+        'departments',
+        'roles',
+        'roles.permissions'
+    ]);
+
+    // Return user data with token
+    return response()->json([
+        'user' => $userData,
+        'token' => $token
+    ]);
+}
+
+    // public function login(Request $request){
+    //     // $request->validate([
+    //     //     'email' => 'required|email|exists:users',
+    //     //     'password' => 'required'
+    //     // ]);
+    //     // $user = User::where('email', $request->email)->first();
+        
+    //     // if (!$user || !Hash::check($request->password, $user->password)) {
+    //     //     return response()->json([
+    //     //         'message' => 'The provided credentials are incorrect.'
+    //     //     ], 401);
+    //     // }
+    //     // $token = $user->createToken($user->name);
+    //     // return [
+    //     //     'user' => $user,
+    //     //     'token' => $token->plainTextToken
+    //     //     ];
+
+
+
+    //     $validator = Validator::make($request->all(), [
+    //         'email' => 'required|email|exists:users',
+    //         'password' => 'required'
+    //     ]);
+    
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'message' => 'Validation failed. Please check your input.',
+    //             'errors' => $validator->errors()
+    //         ], 422);
+    //     }
+    
+    //     $user = User::where('email', $request->email)->first();
+    
+    //     if (!$user || !Hash::check($request->password, $user->password)) {
+    //         return response()->json([
+    //             'message' => 'The provided credentials are incorrect.',
+    //             'errors' => [
+    //                 'email' => [
+    //                     'The provided email or password is incorrect.'
+    //                 ]
+    //             ]
+    //         ], 401);
+    //     }
+    
+    //     // Generate an authentication token
+    //     $token = $user->createToken($user->name)->plainTextToken;
+    
+    //     // Return the user data and token
+    //     return response()->json([
+    //         'user' => $user,
+    //         'token' => $token
+    //     ]);
+    // }
     public function logout(Request $request){
         $request->user()->tokens()->delete();
         return [

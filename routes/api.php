@@ -6,6 +6,8 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\UserDepartmentController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -17,7 +19,6 @@ Route::post('/logout', [AuthController::class, 'logout'])
 Route::post('forgot-password', [AuthController::class, 'sendPasswordResetLink']);
 
 
-// Route for resetting the password
 Route::post('reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/check-email', [AuthController::class, 'checkEmailExists']);
 
@@ -29,20 +30,23 @@ Route::apiResource('departments', DepartmentsController::class)->middleware('aut
 
 
 
-use App\Http\Controllers\RolePermissionController;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('permissions', [RolePermissionController::class, 'getPermissions']);
     Route::get('permissions/{id}', [RolePermissionController::class, 'getPermission']);
 
-    // Roles Routes
-    Route::post('roles', [RolePermissionController::class, 'createRole']);  // Create Role
-    Route::get('roles', [RolePermissionController::class, 'getRoles']);      // Get All Roles
-    Route::get('roles/{id}', [RolePermissionController::class, 'getRole']);  // Get Specific Role
-    Route::put('roles/{id}', [RolePermissionController::class, 'updateRole']); // Update Role
-    Route::delete('roles/{id}', [RolePermissionController::class, 'deleteRole']); // Delete Role
+    Route::post('roles', [RolePermissionController::class, 'createRole']);  
+    Route::get('roles', [RolePermissionController::class, 'getRoles']);      
+    Route::get('roles/{id}', [RolePermissionController::class, 'getRole']); 
+    Route::put('roles/{id}', [RolePermissionController::class, 'updateRole']);
+    Route::delete('roles/{id}', [RolePermissionController::class, 'deleteRole']); 
     Route::post('/roles/assign-permissions', [RolePermissionController::class, 'assignPermissions']);
     Route::get('/roles/get-permissions/{id}', [RolePermissionController::class, 'getRolePermissions']);
     Route::post('/users/assign-role', [AuthController::class, 'assignRoleToUser']);
     Route::post('/roles/remove-permissions', [RolePermissionController::class, 'removePermissionsFromRole']);
 });
+
+Route::middleware('auth:sanctum')->post('/users/{userId}/assign-departments', [UserDepartmentController::class, 'assignDepartments']);
+Route::middleware('auth:sanctum')->get('/departments-users', [UserDepartmentController::class, 'getUsersInDepartment']);
+Route::middleware('auth:sanctum')->post('/unassign-department/{userId}', [UserDepartmentController::class, 'unassignDepartment']);
+Route::middleware('auth:sanctum')->put('/department/assign-manager', [UserDepartmentController::class, 'assignManagerToDepartment']);
