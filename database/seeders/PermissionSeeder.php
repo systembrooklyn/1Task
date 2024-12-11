@@ -13,15 +13,27 @@ class PermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        Permission::create(['name' => 'create-department']);
-        Permission::create(['name' => 'edit-department']);
-        Permission::create(['name' => 'delete-department']);
-        Permission::create(['name' => 'view-department']);
-        
-        // Permissions for Projects
-        Permission::create(['name' => 'create-project']);
-        Permission::create(['name' => 'edit-project']);
-        Permission::create(['name' => 'delete-project']);
-        Permission::create(['name' => 'view-project']);
+        $permissions = [
+            'invite-user',
+            'edit-user',
+            'delete-user',
+            'view-user',
+            'create-department',
+            'edit-department',
+            'delete-department',
+            'view-department',
+            'create-project',
+            'edit-project',
+            'delete-project',
+            'view-project',
+            'create-task',
+            'edit-task',
+            'delete-task',
+            'view-task',
+        ];
+        foreach ($permissions as $permission) {
+            Permission::create(['name' => $permission,
+        'guard_name' => 'scantum']);
+        }
     }
 }

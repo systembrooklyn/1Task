@@ -12,9 +12,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
+use Spatie\Permission\Traits\HasRoles;
 
 class AuthController extends Controller
 {
+    use HasRoles;
     public function register(Request $request){
         $fields = $request->validate([
             'name'=>'required|max:25',
@@ -36,45 +38,6 @@ class AuthController extends Controller
             'user' => $user,
             'token' => $token->plainTextToken,
         ];
-
-        // $validated = $request->validate([
-        //     'name' => 'required|string',
-        //     'email' => 'required|email|unique:users,email',
-        //     'password' => 'required|string|confirmed',
-        //     'company_name' => 'required|string',
-        //     'addresses' => 'array',
-        //     'addresses.*.address_line_1' => 'required|string',
-        //     'addresses.*.address_line_2' => 'nullable|string',
-        //     'addresses.*.city' => 'required|string',
-        //     'addresses.*.state' => 'nullable|string',
-        //     'addresses.*.postal_code' => 'nullable|string',
-        //     'addresses.*.country' => 'required|string',
-        // ]);
-    
-        // // Create the company
-        // $company = Company::create(['name' => $validated['company_name']]);
-    
-        // // Create the owner user
-        // $owner = User::create([
-        //     'name' => $validated['name'],
-        //     'email' => $validated['email'],
-        //     'password' => Hash::make($validated['password']),
-        //     'role' => 'owner',
-        //     'company_id' => $company->id,
-        // ]);
-    
-        // // Save addresses
-        // if (!empty($validated['addresses'])) {
-        //     foreach ($validated['addresses'] as $address) {
-        //         $company->addresses()->create($address);
-        //     }
-        // }
-    
-        // return response()->json([
-        //     'message' => 'Company and owner registered successfully.',
-        //     'company' => $company,
-        //     'owner' => $owner,
-        // ], 201);
     }
 
     public function registerViaInvitation(Request $request)
@@ -161,7 +124,19 @@ class AuthController extends Controller
         'roles',
         'roles.permissions'
     ]);
-
+    
+    $userData->makeHidden(['created_at', 'updated_at','email_verified_at','company_id']);
+    $userData->company->makeHidden(['created_at', 'updated_at']);
+    $userData->departments->each(function ($department) {
+        $department->makeHidden(['created_at', 'updated_at','company_id']);
+    });
+    $userData->roles->each(function ($role) {
+        $role->makeHidden(['created_at', 'updated_at','company_id','guard_name','pivot']);
+        $role->permissions->each(function ($permission) {
+            $permission->makeHidden(['created_at', 'updated_at','guard_name','pivot']);
+        });
+    });
+    
     // Return user data with token
     return response()->json([
         'user' => $userData,
@@ -264,26 +239,26 @@ class AuthController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function resetPassword(Request $request)
-{
-    $request->validate([
-        'token' => 'required',
-        'email' => 'required|email',
-        'password' => 'required|confirmed|min:8',
-    ]);
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|confirmed|min:8',
+        ]);
 
-    $status = Password::reset(
-        $request->only('email', 'password', 'password_confirmation', 'token'),
-        function ($user, $password) {
-            $user->forceFill([
-                'password' => bcrypt($password),
-            ])->save();
-        }
-    );
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->forceFill([
+                    'password' => bcrypt($password),
+                ])->save();
+            }
+        );
 
-    return $status === Password::PASSWORD_RESET
-        ? response()->json(['message' => __($status)])
-        : response()->json(['message' => __($status)], 400);
-}
+        return $status === Password::PASSWORD_RESET
+            ? response()->json(['message' => __($status)])
+            : response()->json(['message' => __($status)], 400);
+    }
     public function assignRoleToUser(Request $request)
     {
         $validated = $request->validate([
@@ -291,8 +266,8 @@ class AuthController extends Controller
             'role_ids' => 'required|array',
             'role_ids.*' => 'exists:roles,id',
         ]);
-
         $user = User::findOrFail($validated['user_id']);
+
 
         $roles = Role::find($validated['role_ids']);
         if ($roles->isEmpty()) {

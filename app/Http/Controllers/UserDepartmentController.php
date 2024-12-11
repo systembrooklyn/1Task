@@ -7,9 +7,11 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Spatie\Permission\Traits\HasRoles;
 
 class UserDepartmentController extends Controller
 {
+    use HasRoles;
     public function assignManagerToDepartment(Request $request)
     {
         // Validate the request to ensure 'department_id' and 'user_id' are provided
