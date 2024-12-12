@@ -267,5 +267,30 @@ class AuthController extends Controller
     return response()->json(['message' => 'Roles unassigned successfully.'], 200);
 }
 
+    public function deleteUser(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+        $user = User::findOrFail($validated['user_id']);
+
+        DB::beginTransaction();
+
+        try {
+            $user->roles()->detach();
+
+            $user->departments()->detach();
+
+            $user->delete();
+
+            DB::commit();
+
+            return response()->json(['message' => 'User and related data deleted successfully.'], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json(['message' => 'An error occurred. Could not delete the user.'], 500);
+        }
+    }
     
 }

@@ -60,3 +60,4 @@ Route::middleware('auth:sanctum')->get('isOwner', [CompanyOwnerController::class
 
 Route::middleware('auth:sanctum')->get('company-users', [CompanyController::class, 'getCompanyUsers']);
 Route::middleware('auth:sanctum')->post('/unassign-role', [AuthController::class, 'unassignRoleFromUser']);
+Route::middleware('auth:sanctum')->delete('/delete-user', [AuthController::class, 'deleteUser']);
