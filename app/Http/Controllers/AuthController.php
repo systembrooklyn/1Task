@@ -231,5 +231,41 @@ class AuthController extends Controller
         return response()->json(['message' => 'Roles assigned successfully.'], 200);
     }
 
+
+    public function unassignRoleFromUser(Request $request)
+{
+    $validated = $request->validate([
+        'user_id' => 'required|exists:users,id',
+        'role_ids' => 'required|array',
+        'role_ids.*' => 'exists:roles,id',
+    ]);
+
+    $user = User::findOrFail($validated['user_id']);
+
+    // Retrieve roles based on the provided role_ids
+    $roles = Role::find($validated['role_ids']);
+
+    if ($roles->isEmpty()) {
+        return response()->json(['message' => 'No valid roles found.'], 400);
+    }
+
+    foreach ($roles as $role) {
+        // Check if the user and role belong to the same company
+        if ($user->company_id !== $role->company_id) {
+            return response()->json(['message' => 'User and role do not belong to the same company.'], 400);
+        }
+
+        // Check if the user already has the role
+        if (!$user->hasRole($role->name)) {
+            return response()->json(['message' => 'User does not have this role.'], 400);
+        }
+
+        // Unassign the role
+        $user->removeRole($role);
+    }
+
+    return response()->json(['message' => 'Roles unassigned successfully.'], 200);
+}
+
     
 }
