@@ -24,7 +24,8 @@ class DepartmentsController extends Controller
         foreach($permissions as $permission){
             if($permission->name == "view-department") $haveAccess = $permission->name;
         };
-        if($haveAccess == "view-department"){
+        $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
+        if($haveAccess == "view-department" || $isOwner){
             if (!$company_id) {
                 return response()->json(['message' => 'You must be associated with a company to view departments.'], 403);
             }
@@ -68,8 +69,9 @@ class DepartmentsController extends Controller
                 $haveAccess = $permission->name;
             }
         }
+        $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
     
-        if ($haveAccess == "create-department") {
+        if ($haveAccess == "create-department" || $isOwner) {
             // Check if the department already exists for this company
             $existingDepartment = Department::where('name', $fields['name'])
                                             ->where('company_id', $company_id)
@@ -135,8 +137,9 @@ class DepartmentsController extends Controller
         foreach($permissions as $permission){
             if($permission->name == "edit-department") $haveAccess = $permission->name;
         };
+        $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
 
-        if($haveAccess == "edit-department"){
+        if($haveAccess == "edit-department" || $isOwner){
             if (!$company_id) {
                 return response()->json(['message' => 'You must be associated with a company to update a department.'], 403);
             }
@@ -168,11 +171,12 @@ class DepartmentsController extends Controller
 
         $haveAccess = 'you dont have access';
         $permissions = $user->getAllPermissions();
+        $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
         foreach($permissions as $permission){
-            if($permission->name == "delete-department") $haveAccess = $permission->name;
+            if($permission->name == "delete-department" || $isOwner) $haveAccess = $permission->name;
         };
-
-        if($haveAccess == "delete-department"){
+        $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
+        if($haveAccess == "delete-department" || $isOwner){
             if (!$company_id) {
                 return response()->json(['message' => 'You must be associated with a company to delete a department.'], 403);
             }

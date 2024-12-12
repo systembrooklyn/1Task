@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
@@ -31,7 +32,11 @@ class AuthController extends Controller
             'password' => bcrypt($fields['password']),
             'company_id' => $company->id,
         ]);
-        
+        DB::table('owners')->insert([
+            'owner_id' => $user->id,
+            'company_id' => $company->id,
+        ]);
+
         $token = $user->createToken($request->name);
         
         return [
@@ -60,10 +65,8 @@ class AuthController extends Controller
         'company_id' => $invitation->company_id,
     ]);
 
-    // Mark the invitation as accepted
     $invitation->update(['is_accepted' => true]);
 
-    // Generate a token for the new user
     $token = $user->createToken($request->name)->plainTextToken;
 
     return response()->json(['message' => 'Registration successful.', 'user' => $user, 'token' => $token], 201);
@@ -99,10 +102,8 @@ class AuthController extends Controller
         ], 422);
     }
 
-    // Find the user by email
     $user = User::where('email', $request->email)->first();
 
-    // Check credentials
     if (!$user || !Hash::check($request->password, $user->password)) {
         return response()->json([
             'message' => 'The provided credentials are incorrect.',
@@ -114,10 +115,8 @@ class AuthController extends Controller
         ], 401);
     }
 
-    // Generate authentication token
     $token = $user->createToken($user->name)->plainTextToken;
 
-    // Eager load company, assigned departments, roles, and permissions
     $userData = $user->load([
         'company',
         'departments',
@@ -137,67 +136,12 @@ class AuthController extends Controller
         });
     });
     
-    // Return user data with token
     return response()->json([
         'user' => $userData,
         'token' => $token
     ]);
 }
 
-    // public function login(Request $request){
-    //     // $request->validate([
-    //     //     'email' => 'required|email|exists:users',
-    //     //     'password' => 'required'
-    //     // ]);
-    //     // $user = User::where('email', $request->email)->first();
-        
-    //     // if (!$user || !Hash::check($request->password, $user->password)) {
-    //     //     return response()->json([
-    //     //         'message' => 'The provided credentials are incorrect.'
-    //     //     ], 401);
-    //     // }
-    //     // $token = $user->createToken($user->name);
-    //     // return [
-    //     //     'user' => $user,
-    //     //     'token' => $token->plainTextToken
-    //     //     ];
-
-
-
-    //     $validator = Validator::make($request->all(), [
-    //         'email' => 'required|email|exists:users',
-    //         'password' => 'required'
-    //     ]);
-    
-    //     if ($validator->fails()) {
-    //         return response()->json([
-    //             'message' => 'Validation failed. Please check your input.',
-    //             'errors' => $validator->errors()
-    //         ], 422);
-    //     }
-    
-    //     $user = User::where('email', $request->email)->first();
-    
-    //     if (!$user || !Hash::check($request->password, $user->password)) {
-    //         return response()->json([
-    //             'message' => 'The provided credentials are incorrect.',
-    //             'errors' => [
-    //                 'email' => [
-    //                     'The provided email or password is incorrect.'
-    //                 ]
-    //             ]
-    //         ], 401);
-    //     }
-    
-    //     // Generate an authentication token
-    //     $token = $user->createToken($user->name)->plainTextToken;
-    
-    //     // Return the user data and token
-    //     return response()->json([
-    //         'user' => $user,
-    //         'token' => $token
-    //     ]);
-    // }
     public function logout(Request $request){
         $request->user()->tokens()->delete();
         return [
@@ -207,17 +151,13 @@ class AuthController extends Controller
 
     public function sendPasswordResetLink(Request $request)
     {
-        // Validate the request
         $request->validate([
             'email' => 'required|email|exists:users,email'
         ]);
-
-        // Send the password reset link
         $status = Password::sendResetLink(
             $request->only('email')
         );
 
-        // Return response based on status
         if ($status == Password::RESET_LINK_SENT) {
             return response()->json([
                 'message' => 'Password reset link sent successfully!'

@@ -10,6 +10,10 @@ class Company extends Model
 {
     protected $fillable = ['name'];
 
+    public function owners()
+    {
+        return $this->belongsToMany(User::class, 'owners', 'company_id', 'owner_id');
+    }
     public function users()
     {
         return $this->hasMany(User::class);

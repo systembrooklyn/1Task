@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\CompanyOwnerController;
 use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\RoleController;
@@ -50,3 +52,10 @@ Route::middleware('auth:sanctum')->post('/users/{userId}/assign-departments', [U
 Route::middleware('auth:sanctum')->get('/departments-users', [UserDepartmentController::class, 'getUsersInDepartment']);
 Route::middleware('auth:sanctum')->post('/unassign-department/{userId}', [UserDepartmentController::class, 'unassignDepartment']);
 Route::middleware('auth:sanctum')->put('/department/assign-manager', [UserDepartmentController::class, 'assignManagerToDepartment']);
+
+
+Route::middleware('auth:sanctum')->get('company-owner/{company_id}', [CompanyOwnerController::class, 'getCompanyOwner']);
+Route::middleware('auth:sanctum')->get('isOwner', [CompanyOwnerController::class, 'checkOwner']);
+
+
+Route::middleware('auth:sanctum')->get('company-users', [CompanyController::class, 'getCompanyUsers']);
