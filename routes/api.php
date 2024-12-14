@@ -47,21 +47,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/roles/get-permissions/{id}', [RolePermissionController::class, 'getRolePermissions']);
     Route::post('/users/assign-role', [AuthController::class, 'assignRoleToUser']);
     Route::post('/roles/remove-permissions', [RolePermissionController::class, 'removePermissionsFromRole']);
+
+    Route::post('/users/{userId}/assign-departments', [UserDepartmentController::class, 'assignDepartments']);
+    Route::get('/departments-users', [UserDepartmentController::class, 'getUsersInDepartment']);
+    Route::post('/unassign-department/{userId}', [UserDepartmentController::class, 'unassignDepartment']);
+    Route::put('/department/assign-manager', [UserDepartmentController::class, 'assignManagerToDepartment']);
+    Route::get('company-owner/{company_id}', [CompanyOwnerController::class, 'getCompanyOwner']);
+    Route::get('isOwner', [CompanyOwnerController::class, 'checkOwner']);
+    
+    
+    Route::get('company-users', [CompanyController::class, 'getCompanyUsers']);
+    Route::post('/unassign-role', [AuthController::class, 'unassignRoleFromUser']);
+    Route::delete('/delete-user', [AuthController::class, 'deleteUser']);
+    
+    
+    Route::apiResource('projects', ProjectController::class);
 });
 
-Route::middleware('auth:sanctum')->post('/users/{userId}/assign-departments', [UserDepartmentController::class, 'assignDepartments']);
-Route::middleware('auth:sanctum')->get('/departments-users', [UserDepartmentController::class, 'getUsersInDepartment']);
-Route::middleware('auth:sanctum')->post('/unassign-department/{userId}', [UserDepartmentController::class, 'unassignDepartment']);
-Route::middleware('auth:sanctum')->put('/department/assign-manager', [UserDepartmentController::class, 'assignManagerToDepartment']);
 
-
-Route::middleware('auth:sanctum')->get('company-owner/{company_id}', [CompanyOwnerController::class, 'getCompanyOwner']);
-Route::middleware('auth:sanctum')->get('isOwner', [CompanyOwnerController::class, 'checkOwner']);
-
-
-Route::middleware('auth:sanctum')->get('company-users', [CompanyController::class, 'getCompanyUsers']);
-Route::middleware('auth:sanctum')->post('/unassign-role', [AuthController::class, 'unassignRoleFromUser']);
-Route::middleware('auth:sanctum')->delete('/delete-user', [AuthController::class, 'deleteUser']);
-
-
-Route::apiResource('projects', ProjectController::class)->middleware('auth:sanctum');

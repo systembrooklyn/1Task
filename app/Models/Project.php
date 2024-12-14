@@ -14,69 +14,77 @@ class Project extends Model
         'desc',
         'status',
         'deadline',
-        'edited_by',
         'company_id',
-        'leader_id',
-        'dept_id',
         'created_by',
+        'leader_id',
+        'edited_by',
     ];
 
-    protected $appends = [
-        'company_name',
-        'department_name',
-        'created_by_name',
-        'edited_by_name',
-        'leader_name'
-    ];
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class, 'project_dept');
+    }
 
-    // Define relationships
+    // Define the relationship with the company
     public function company()
     {
-        return $this->belongsTo(Company::class, 'company_id')->select('id', 'name');
+        return $this->belongsTo(Company::class);
     }
 
-    public function department()
-    {
-        return $this->belongsTo(Department::class, 'dept_id')->select('id', 'name');
-    }
-
+    // Define the relationship with the createdBy (user)
     public function createdBy()
     {
-        return $this->belongsTo(User::class, 'created_by')->select('id', 'name');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
+    // Define the relationship with the editedBy (user)
     public function editedBy()
     {
-        return $this->belongsTo(User::class, 'edited_by')->select('id', 'name');
+        return $this->belongsTo(User::class, 'edited_by');
     }
 
+    // Define the relationship with the project leader
     public function leader()
     {
-        return $this->belongsTo(User::class, 'leader_id')->select('id', 'name');
+        return $this->belongsTo(User::class, 'leader_id');
     }
 
-    public function getCompanyNameAttribute()
-    {
-        return $this->company ? $this->company->name : null;
-    }
-
+    // Accessor to get the department name for response
     public function getDepartmentNameAttribute()
     {
-        return $this->department ? $this->department->name : null;
+        return $this->departments->isEmpty() ? [] : $this->departments->pluck('name')->toArray();
     }
 
+    // Accessor to get the company name for response
+    public function getCompanyNameAttribute()
+    {
+        return $this->company ? $this->company->name : 'No Company Assigned';
+    }
+
+    // Accessor to get the created_by name for response
     public function getCreatedByNameAttribute()
     {
-        return $this->createdBy ? $this->createdBy->name : null;
+        return $this->createdBy ? $this->createdBy->name : 'No Creator Assigned';
     }
 
+    // Accessor to get the edited_by name for response
     public function getEditedByNameAttribute()
     {
         return $this->editedBy ? $this->editedBy->name : null;
     }
 
+    // Accessor to get the leader name for response
     public function getLeaderNameAttribute()
     {
-        return $this->leader ? $this->leader->name : null;
+        return $this->leader ? $this->leader->name : 'No Leader Assigned';
     }
+
+    // Modify attributes to append in the response
+    protected $appends = [
+        'company_name',
+        'department_name',
+        'created_by_name',
+        'edited_by_name',
+        'leader_name',
+    ];
 }

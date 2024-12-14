@@ -15,58 +15,93 @@ class ProjectController extends Controller
     public function index()
     {
         $user = Auth::user();
-
         $companyId = $user->company_id;
         $departmentId = $user->dept_id;
 
         $isOwner = $user->companies()->wherePivot('company_id', $companyId)->exists();
+        $haveAccess = false;
+        $permissions = $user->getAllPermissions();
+        foreach($permissions as $permission){
+            if($permission->name == "view-project") $haveAccess = true;
+            break;
+        };
+        if($haveAccess == "view-project" || $isOwner){
+            $query = Project::where('company_id', $companyId);
 
-        $query = Project::where('company_id', $companyId);
+            if (!$isOwner) {
+                $query->whereHas('departments', function ($query) use ($departmentId) {
+                    $query->where('dept_id', $departmentId);
+                });
+            }
 
-        if (!$isOwner) {
-            $query->where('dept_id', $departmentId);
-        }
-        $projects = $query->with([
-            'company:id,name',
-            'department:id,name',
-            'createdBy:id,name',
-            'editedBy:id,name',
-            'leader:id,name',
-        ])
-        ->get();
-        $projects->each(function ($project) {
-            $project->setAppends([
-                'company_name',
-                'department_name',
-                'created_by_name',
-                'edited_by_name',
-                'leader_name',
-            ]);
-            $project->makeHidden([
-                'company_id',
-                'dept_id',
-                'created_by',
-                'edited_by',
-                'editedBy',
-                'createdBy',
-                'leader_id',
-                'company',
-                'department',
-                'leader',
-            ]);
-        });
-        return response()->json($projects);
+            $projects = $query->with([
+                'company:id,name',
+                'departments:id,name',
+                'createdBy:id,name',
+                'editedBy:id,name',
+                'leader:id,name',
+            ])
+            ->get();
+
+            // Modify the response
+            $projects->each(function ($project) {
+                $project->setAppends([
+                    'company_name',
+                    'department_name',
+                    'created_by_name',
+                    'edited_by_name',
+                    'leader_name',
+                ]);
+
+                // If no department is assigned, set 'department_name' to 'empty'
+                if ($project->departments->isEmpty()) {
+                    $project->department_name = 'No Department Assigned';
+                }
+
+                $project->makeHidden([
+                    'company_id',
+                    'dept_id',
+                    'created_by',
+                    'edited_by',
+                    'editedBy',
+                    'createdBy',
+                    'leader_id',
+                    'company',
+                    'departments',  // Hide the full relationship for cleaner response
+                    'leader',
+                ]);
+            });
+
+            return response()->json($projects);
+        }else return response()->json(['message' => 'You do not have permission to view projects'], 401);
     }
 
     public function show($id)
     {
         $project = Project::with([
             'company:id,name',
-            'department:id,name',
+            'departments:id,name',
             'createdBy:id,name',
             'editedBy:id,name',
             'leader:id,name',
-        ])->findOrFail($id);
+        ])->find($id);
+
+        if (!$project) {
+            return response()->json(['message' => 'Project not found'], 404);
+        }
+
+        $project->setAppends([
+            'company_name',
+            'department_name',
+            'created_by_name',
+            'edited_by_name',
+            'leader_name',
+        ]);
+
+        // If no department is assigned, set 'department_name' to 'empty'
+        if ($project->departments->isEmpty()) {
+            $project->department_name = 'No Department Assigned';
+        }
 
         $project->makeHidden([
             'company_id',
@@ -77,8 +112,8 @@ class ProjectController extends Controller
             'createdBy',
             'leader_id',
             'company',
-            'department',
-            'leader'
+            'departments',
+            'leader',
         ]);
 
         return response()->json($project);
@@ -86,183 +121,117 @@ class ProjectController extends Controller
 
     public function store(Request $request)
     {
-        $user = Auth::user();
+        $request->validate([
+            'name' => 'required|string',
+            'desc' => 'nullable|string',
+            'status' => 'required|boolean',
+            'deadline' => 'required|date',
+            'department_id' => 'nullable|exists:departments,id',  // Optional department_id
+        ]);
 
-        $company_id = $user->company_id;
-        $created_by = $user->id;
-    
+        $user = Auth::user();
+        $companyId = $user->company_id;
+
+        $isOwner = $user->companies()->wherePivot('company_id', $companyId)->exists();
         $haveAccess = false;
         $permissions = $user->getAllPermissions();
-        
-        foreach ($permissions as $permission) {
-            if ($permission->name == "create-project") {
-                $haveAccess = true;
-                break;
+        foreach($permissions as $permission){
+            if($permission->name == "create-project") $haveAccess = true;
+            break;
+        };
+        if($haveAccess == "create-project" || $isOwner){
+            $project = new Project();
+            $project->name = $request->name;
+            $project->desc = $request->desc;
+            $project->status = $request->status;
+            $project->deadline = $request->deadline;
+            $project->company_id = $companyId;
+            $project->created_by = $user->id;
+
+            $project->save();
+
+            // Attach the department if provided
+            if ($request->has('department_id')) {
+                $project->departments()->attach($request->department_id);
             }
-        }
-        $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
-    
-        if ($haveAccess == "create-project" || $isOwner) {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'desc' => 'required|string',
-                'status' => 'required|boolean',
-                'deadline' => 'required|date',
-                'leader_id' => 'required|exists:users,id',
-                'dept_id' => 'required|exists:departments,id',
-            ]);
-
-            $existingProject = Project::where('name', $validated['name'])
-                                                ->where('company_id', $company_id)
-                                                ->first();
-        
-                if ($existingProject) {
-                    return response()->json(['message' => 'Project already exists for this company.'], 400);
-                }
-        
-                if (!$company_id) {
-                    return response()->json(['message' => 'You must be associated with a company to create a Project.'], 403);
-                }
-
-            $project = Project::create([
-                'name' => $validated['name'],
-                'desc' => $validated['desc'],
-                'status' => $validated['status'],
-                'deadline' => $validated['deadline'],
-                'company_id' => $company_id,
-                'dept_id' => $validated['dept_id'],
-                'created_by' => $created_by,
-                'leader_id' => $validated['leader_id'],
-            ]);
-            $project->load([
-                'company:id,name',
-                'department:id,name',
-                'createdBy:id,name',
-                'leader:id,name',
-            ]);
-        
-            $project->company_name = $project->company->name;
-            $project->department_name = $project->department->name;
-            $project->created_by_name = $project->createdBy->name;
-            $project->leader_name = $project->leader->name;
-        
-            $project->makeHidden(['company', 'department', 'createdBy', 'leader', 'company_id', 'dept_id', 'created_by', 'leader_id']);
-        
 
             return response()->json([
                 'message' => 'Project created successfully',
-                'project' => $project
+                'project' => $project,
             ], 201);
-        }else {
-            return response()->json(['message' => 'You do not have permission to create project'], 401);
-        }
-}
+        }else return response()->json(['message' => 'You do not have permission to create project'], 401);
+    }
 
     public function update(Request $request, $id)
     {
+        $request->validate([
+            'name' => 'required|string',
+            'desc' => 'nullable|string',
+            'status' => 'required|boolean',
+            'deadline' => 'required|date',
+            'department_id' => 'nullable|exists:departments,id',  // Optional department_id
+        ]);
         $user = Auth::user();
+        $companyId = $user->company_id;
 
-        $company_id = $user->company_id;
-    
+        $isOwner = $user->companies()->wherePivot('company_id', $companyId)->exists();
         $haveAccess = false;
         $permissions = $user->getAllPermissions();
-        
-        foreach ($permissions as $permission) {
-            if ($permission->name == "edit-project") {
-                $haveAccess = true;
-                break;
-            }
-        }
-        $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
-    
-        if ($haveAccess == "edit-project" || $isOwner) {
-            $validated = $request->validate([
-                'name' => 'nullable|string|max:255',
-                'desc' => 'nullable|string',
-                'status' => 'nullable|boolean',
-                'deadline' => 'nullable|date',
-                'leader_id' => 'nullable|exists:users,id',
-            ]);
-
+        foreach($permissions as $permission){
+            if($permission->name == "edit-project") $haveAccess = true;
+            break;
+        };
+        if($haveAccess == "edit-project" || $isOwner){
             $project = Project::find($id);
 
             if (!$project) {
-                return response()->json([
-                    'message' => 'Project not found',
-                ], 404);
+                return response()->json(['message' => 'Project not found'], 404);
             }
 
-            $project->update([
-                'name' => $validated['name'] ?? $project->name,
-                'desc' => $validated['desc'] ?? $project->desc,
-                'status' => $validated['status'] ?? $project->status,
-                'deadline' => $validated['deadline'] ?? $project->deadline,
-                'leader_id' => $validated['leader_id'] ?? $project->leader_id,
-                'edited_by' => $user->id,
-            ]);
-            $project->load([
-                'company:id,name',
-                'department:id,name',
-                'createdBy:id,name',
-                'editedBy:id,name',
-                'leader:id,name',
-            ]);
-            $response = [
+            $project->name = $request->name;
+            $project->desc = $request->desc;
+            $project->status = $request->status;
+            $project->deadline = $request->deadline;
+
+            $project->save();
+
+            // Sync the department if provided
+            if ($request->has('department_id')) {
+                $project->departments()->sync([$request->department_id]);  // Sync to ensure only one department is assigned
+            }
+
+            return response()->json([
                 'message' => 'Project updated successfully',
-                'project' => [
-                    'id' => $project->id,
-                    'name' => $project->name,
-                    'desc' => $project->desc,
-                    'status' => $project->status,
-                    'deadline' => $project->deadline,
-                    'created_at' => $project->created_at,
-                    'updated_at' => $project->updated_at,
-                    'company_name' => $project->company->name,
-                    'department_name' => $project->department->name,
-                    'created_by_name' => $project->createdBy->name,
-                    'leader_name' => $project->leader ? $project->leader->name : null,
-                    'edited_by_name' => $project->editedBy ? $project->editedBy->name : null,
-                    'edited_by' => $project->editedBy->name,
-                ],
-            ];
-        
-            return response()->json($response);
-        }else {
-            return response()->json(['message' => 'You do not have permission to edit this project'], 401);
-        }
+                'project' => $project,
+            ]);
+        }else return response()->json(['message' => 'You do not have permission to edit project'], 401);
     }
 
     public function destroy($id)
     {
         $user = Auth::user();
-        $company_id = $user->company_id;
-
+        $companyId = $user->company_id;
+        $isOwner = $user->companies()->wherePivot('company_id', $companyId)->exists();
         $haveAccess = false;
         $permissions = $user->getAllPermissions();
+        foreach($permissions as $permission){
+            if($permission->name == "delete-project") $haveAccess = true;
+            break;
+        };
+        if($haveAccess == "delete-project" || $isOwner){
+        
+            $project = Project::find($id);
 
-        foreach ($permissions as $permission) {
-            if ($permission->name == "delete-project") {
-                $haveAccess = true;
-                break;
+            if (!$project) {
+                return response()->json(['message' => 'Project not found'], 404);
             }
-        }
-        $project = Project::find($id);
 
-        if (!$project) {
-            return response()->json(['message' => 'Project not found'], 404);
-        }
-        if ($project->company_id != $company_id) {
-            return response()->json(['message' => 'You do not have access to delete this project'], 403);
-        }
+            if ($project->company_id != $companyId && !$isOwner) {
+                return response()->json(['message' => 'You do not have access to delete this project'], 403);
+            }
 
-        $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
-        $isInSameDepartment = $user->department_id == $project->dept_id;
-
-        if ($haveAccess || $isOwner || $isInSameDepartment) {
             $project->delete();
             return response()->json(['message' => 'Project deleted successfully']);
-        } else {
-            return response()->json(['message' => 'You do not have permission to delete this project'], 403);
-        }
+        }else return response()->json(['message' => 'You do not have permission to delete project'], 401);
     }
 }
