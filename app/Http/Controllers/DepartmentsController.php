@@ -19,10 +19,11 @@ class DepartmentsController extends Controller
     {
         $user = Auth::user();
         $company_id = $user->company_id; 
-        $haveAccess = 'you dont have access';
+        $haveAccess = false;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
-            if($permission->name == "view-department") $haveAccess = $permission->name;
+            if($permission->name == "view-department") $haveAccess = true;
+            break;
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
         if($haveAccess == "view-department" || $isOwner){
@@ -42,7 +43,7 @@ class DepartmentsController extends Controller
             });
         
             return response()->json(['Departments' => $departmentsWithManagers], 200);
-        }else return response()->json(['message' => $haveAccess], 401);
+        }else return response()->json(['message' => 'You do not have permission to view departments'], 401);
 
     
 }
@@ -60,19 +61,16 @@ class DepartmentsController extends Controller
         $company_id = $user->company_id;
         $user_id = $user->id;
     
-        $haveAccess = 'you dont have access';
+        $haveAccess = false;
         $permissions = $user->getAllPermissions();
         
-        // Check if the user has the "create-department" permission
         foreach ($permissions as $permission) {
-            if ($permission->name == "create-department") {
-                $haveAccess = $permission->name;
-            }
+            if ($permission->name == "create-department") $haveAccess = true;
+            break;
         }
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
     
         if ($haveAccess == "create-department" || $isOwner) {
-            // Check if the department already exists for this company
             $existingDepartment = Department::where('name', $fields['name'])
                                             ->where('company_id', $company_id)
                                             ->first();
@@ -95,7 +93,7 @@ class DepartmentsController extends Controller
             $department->makeHidden(['created_at', 'updated_at']);
             return response()->json(['Department' => $department], 201);
         } else {
-            return response()->json(['message' => $haveAccess], 401);
+            return response()->json(['message' => 'You do not have permission to create department'], 401);
         }
     }
     /**
@@ -132,10 +130,11 @@ class DepartmentsController extends Controller
         $user = Auth::user();
         $company_id = $user->company_id;
 
-        $haveAccess = 'you dont have access';
+        $haveAccess = false;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
-            if($permission->name == "edit-department") $haveAccess = $permission->name;
+            if($permission->name == "edit-department") $haveAccess = true;
+            break;
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
 
@@ -157,7 +156,7 @@ class DepartmentsController extends Controller
             ]);
     
             return response()->json(['Department' => $department], 200);
-        }else return response()->json(['message' => $haveAccess], 401);
+        }else return response()->json(['message' => 'You do not have permission to edit this department'], 401);
     }
 
     /**
@@ -169,11 +168,12 @@ class DepartmentsController extends Controller
         $company_id = $user->company_id;
 
 
-        $haveAccess = 'you dont have access';
+        $haveAccess = false;
         $permissions = $user->getAllPermissions();
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
         foreach($permissions as $permission){
-            if($permission->name == "delete-department" || $isOwner) $haveAccess = $permission->name;
+            if($permission->name == "delete-department" || $isOwner) $haveAccess = true;
+            break;
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
         if($haveAccess == "delete-department" || $isOwner){
@@ -192,6 +192,6 @@ class DepartmentsController extends Controller
             $department->delete();
     
             return response()->json(['message' => 'Department deleted successfully.'], 200);
-        }   else return response()->json(['message' => $haveAccess], 401);
+        }   else return response()->json(['message' => 'You do not have permission to delete this department'], 401);
     }
 }

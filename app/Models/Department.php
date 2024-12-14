@@ -23,4 +23,8 @@ class Department extends Model
     {
         return $this->belongsToMany(User::class, 'department_user');
     }
+    public function projects()
+    {
+        return $this->hasMany(Project::class);
+    }
 }

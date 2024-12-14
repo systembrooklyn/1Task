@@ -52,6 +52,20 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Role::class)->withTimestamps();
     }
+    public function projectsEdited()
+    {
+        return $this->hasMany(Project::class, 'edited_by');
+    }
+
+    public function projectsCreated()
+    {
+        return $this->hasMany(Project::class, 'created_by');
+    }
+
+    public function projectsLed()
+    {
+        return $this->hasMany(Project::class, 'leader_id');
+    }
    
 
     /**

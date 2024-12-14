@@ -30,17 +30,25 @@ class RolePermissionController extends Controller
     public function createRole(Request $request)
     {
         $user = Auth::user();
-        $companyId = $user->company_id;
-    
-        $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
-        $role = Role::create([
-            'name' => $request->name,
-            'company_id' => $companyId
-        ]);
-    
-        return response()->json(['message' => 'Role created successfully', 'role' => $role], 201);
+        $company_id = $user->company_id;
+        $haveAccess = false;
+        $permissions = $user->getAllPermissions();
+        foreach($permissions as $permission){
+            if($permission->name == "create-role") $haveAccess = true;
+            break;
+        };
+        $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
+        if($haveAccess == "create-role" || $isOwner){
+            $request->validate([
+                'name' => 'required|string|max:255',
+            ]);
+            $role = Role::create([
+                'name' => $request->name,
+                'company_id' => $company_id
+            ]);
+        
+            return response()->json(['message' => 'Role created successfully', 'role' => $role], 201);
+        }else return response()->json(['message' => 'You do not have permission to create role'], 401);
     }
 
     /**
@@ -50,8 +58,6 @@ class RolePermissionController extends Controller
     {
         $user = Auth::user();
         $companyId = $user->company_id;
-
-        // Get all roles for this company
         $roles = Role::where('company_id', $companyId)->get();
 
         return response()->json($roles);
@@ -77,19 +83,25 @@ class RolePermissionController extends Controller
     public function updateRole(Request $request, $id)
     {
         $user = Auth::user();
-        $companyId = $user->company_id;
+        $company_id = $user->company_id;
+        $haveAccess = false;
+        $permissions = $user->getAllPermissions();
+        foreach($permissions as $permission){
+            if($permission->name == "edit-role") $haveAccess = true;
+            break;
+        };
+        $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
+        if($haveAccess == "edit-role" || $isOwner){
+            $request->validate([
+                'name' => 'required|string|unique:roles,name,' . $id
+            ]);
 
-        // Validate the request
-        $request->validate([
-            'name' => 'required|string|unique:roles,name,' . $id
-        ]);
+            $role = Role::where('company_id', $company_id)->findOrFail($id);
+            $role->name = $request->name;
+            $role->save();
 
-        // Find and update the role
-        $role = Role::where('company_id', $companyId)->findOrFail($id);
-        $role->name = $request->name;
-        $role->save();
-
-        return response()->json($role);
+            return response()->json($role);
+        }else return response()->json(['message' => 'You do not have permission to edit this role'], 401);
     }
 
     /**
@@ -98,19 +110,26 @@ class RolePermissionController extends Controller
     public function deleteRole($id)
     {
         $user = Auth::user();
-        $companyId = $user->company_id;
-
-        // Find and delete the role
-        $role = Role::where('company_id', $companyId)->findOrFail($id);
+        $company_id = $user->company_id;
+        $haveAccess = false;
+        $permissions = $user->getAllPermissions();
+        foreach($permissions as $permission){
+            if($permission->name == "delete-role") $haveAccess = true;
+            break;
+        };
+        $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
+        if($haveAccess == "delete-role" || $isOwner){
+            echo $haveAccess, $isOwner;
+        $role = Role::where('company_id', $company_id)->findOrFail($id);
         echo $role;
         $role->delete();
 
         return response()->json(['message' => 'Role deleted successfully']);
+        }else return response()->json(['message' => 'You do not have permission to delete this role'], 401);
     }
 
     public function assignPermissions(Request $request)
     {
-        $user = Auth::user();
         $request->validate([
             'role_id' => 'required|exists:roles,id',
             'permissions' => 'required|array',
@@ -125,10 +144,8 @@ class RolePermissionController extends Controller
     }
     public function getRolePermissions($roleId)
     {
-        // Find the role by its ID
         $role = Role::findOrFail($roleId);
 
-        // Retrieve all permissions associated with the role
         $permissions = $role->permissions;
 
         return response()->json([
@@ -138,36 +155,28 @@ class RolePermissionController extends Controller
     }
     public function removePermissionsFromRole(Request $request)
     {
-        // Validate the incoming request
         $validated = $request->validate([
-            'role_id' => 'required|exists:roles,id',   // Ensure the role exists
-            'permission_ids' => 'required|array',      // Ensure permission_ids is an array
-            'permission_ids.*' => 'exists:permissions,id', // Ensure each permission exists by id
+            'role_id' => 'required|exists:roles,id',
+            'permission_ids' => 'required|array', 
+            'permission_ids.*' => 'exists:permissions,id',
         ]);
 
-        // Retrieve the user ID from the Bearer token
-        $user = Auth::user(); // Gets the authenticated user from the Bearer token
-        $userId = $user->id; // Get the user ID
+        $user = Auth::user();
 
-        // Fetch the role by its ID
         $role = Role::findOrFail($request->role_id);
 
-        // Ensure the user and role are in the same company
         if ($user->company_id !== $role->company_id) {
             return response()->json(['message' => 'User and role must belong to the same company.'], 403);
         }
 
-        // Loop through the permission IDs and remove each permission from the role
         foreach ($request->permission_ids as $permission_id) {
             $permission = Permission::findOrFail($permission_id);
 
-            // Check if the role has the permission before removing it
             if ($role->hasPermissionTo($permission)) {
-                $role->revokePermissionTo($permission); // Remove the permission from the role
+                $role->revokePermissionTo($permission); 
             }
         }
 
-        // Return a success response
         return response()->json(['message' => 'Permissions removed from role successfully.'], 200);
     }
 }
