@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 
 class InvitationController extends Controller
 {
+    public $haveAccess = false;
     public function invite(Request $request)
     {
         if (!Auth::check()) {
@@ -21,14 +22,13 @@ class InvitationController extends Controller
 
         $user = Auth::user();
         $company_id = $user->company_id;
-        $haveAccess = false;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
             if($permission->name == "invite-user") $haveAccess = true; 
             break;
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
-        if($haveAccess == "invite-user" || $isOwner){
+        if($haveAccess || $isOwner){
             $request->validate([
                 'email' => 'required|email',
             ]);

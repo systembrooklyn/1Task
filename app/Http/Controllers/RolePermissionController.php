@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 
 class RolePermissionController extends Controller
 {
-    
+    public $haveAccess = false;
     public function getPermissions()
     {
         $permissions = Permission::get();
@@ -31,14 +31,13 @@ class RolePermissionController extends Controller
     {
         $user = Auth::user();
         $company_id = $user->company_id;
-        $haveAccess = false;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
             if($permission->name == "create-role") $haveAccess = true;
             break;
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
-        if($haveAccess == "create-role" || $isOwner){
+        if($haveAccess || $isOwner){
             $request->validate([
                 'name' => 'required|string|max:255',
             ]);
@@ -84,14 +83,13 @@ class RolePermissionController extends Controller
     {
         $user = Auth::user();
         $company_id = $user->company_id;
-        $haveAccess = false;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
             if($permission->name == "edit-role") $haveAccess = true;
             break;
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
-        if($haveAccess == "edit-role" || $isOwner){
+        if($haveAccess || $isOwner){
             $request->validate([
                 'name' => 'required|string|unique:roles,name,' . $id
             ]);
@@ -111,17 +109,14 @@ class RolePermissionController extends Controller
     {
         $user = Auth::user();
         $company_id = $user->company_id;
-        $haveAccess = false;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
             if($permission->name == "delete-role") $haveAccess = true;
             break;
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
-        if($haveAccess == "delete-role" || $isOwner){
-            echo $haveAccess, $isOwner;
+        if($haveAccess || $isOwner){
         $role = Role::where('company_id', $company_id)->findOrFail($id);
-        echo $role;
         $role->delete();
 
         return response()->json(['message' => 'Role deleted successfully']);

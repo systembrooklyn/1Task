@@ -14,19 +14,18 @@ class DepartmentsController extends Controller
     /**
      * Display a listing of the resource.
      */
-    
+    public $haveAccess = false;
     public function index()
     {
         $user = Auth::user();
-        $company_id = $user->company_id; 
-        $haveAccess = false;
+        $company_id = $user->company_id;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
             if($permission->name == "view-department") $haveAccess = true;
             break;
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
-        if($haveAccess == "view-department" || $isOwner){
+        if($haveAccess || $isOwner){
             if (!$company_id) {
                 return response()->json(['message' => 'You must be associated with a company to view departments.'], 403);
             }
@@ -60,8 +59,6 @@ class DepartmentsController extends Controller
         $user = Auth::user();
         $company_id = $user->company_id;
         $user_id = $user->id;
-    
-        $haveAccess = false;
         $permissions = $user->getAllPermissions();
         
         foreach ($permissions as $permission) {
@@ -70,7 +67,7 @@ class DepartmentsController extends Controller
         }
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
     
-        if ($haveAccess == "create-department" || $isOwner) {
+        if ($haveAccess || $isOwner) {
             $existingDepartment = Department::where('name', $fields['name'])
                                             ->where('company_id', $company_id)
                                             ->first();
@@ -121,6 +118,7 @@ class DepartmentsController extends Controller
     /**
      * Update the specified resource in storage.
      */
+    
     public function update(Request $request, $id)
     {
         $fields = $request->validate([
@@ -129,8 +127,6 @@ class DepartmentsController extends Controller
 
         $user = Auth::user();
         $company_id = $user->company_id;
-
-        $haveAccess = false;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
             if($permission->name == "edit-department") $haveAccess = true;
@@ -138,7 +134,7 @@ class DepartmentsController extends Controller
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
 
-        if($haveAccess == "edit-department" || $isOwner){
+        if($haveAccess || $isOwner){
             if (!$company_id) {
                 return response()->json(['message' => 'You must be associated with a company to update a department.'], 403);
             }
@@ -166,9 +162,6 @@ class DepartmentsController extends Controller
     {
         $user = Auth::user();
         $company_id = $user->company_id;
-
-
-        $haveAccess = false;
         $permissions = $user->getAllPermissions();
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
         foreach($permissions as $permission){
@@ -176,7 +169,7 @@ class DepartmentsController extends Controller
             break;
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
-        if($haveAccess == "delete-department" || $isOwner){
+        if($haveAccess || $isOwner){
             if (!$company_id) {
                 return response()->json(['message' => 'You must be associated with a company to delete a department.'], 403);
             }

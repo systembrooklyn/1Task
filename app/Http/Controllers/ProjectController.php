@@ -12,6 +12,7 @@ use Spatie\Permission\Models\Permission;
 class ProjectController extends Controller
 {
     use HasRoles;
+    public $haveAccess = false;
     public function index()
     {
         $user = Auth::user();
@@ -19,13 +20,12 @@ class ProjectController extends Controller
         $departmentId = $user->dept_id;
 
         $isOwner = $user->companies()->wherePivot('company_id', $companyId)->exists();
-        $haveAccess = false;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
             if($permission->name == "view-project") $haveAccess = true;
             break;
         };
-        if($haveAccess == "view-project" || $isOwner){
+        if($haveAccess || $isOwner){
             $query = Project::where('company_id', $companyId);
 
             if (!$isOwner) {
@@ -133,13 +133,12 @@ class ProjectController extends Controller
         $companyId = $user->company_id;
 
         $isOwner = $user->companies()->wherePivot('company_id', $companyId)->exists();
-        $haveAccess = false;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
             if($permission->name == "create-project") $haveAccess = true;
             break;
         };
-        if($haveAccess == "create-project" || $isOwner){
+        if($haveAccess || $isOwner){
             $project = new Project();
             $project->name = $request->name;
             $project->desc = $request->desc;
@@ -175,13 +174,12 @@ class ProjectController extends Controller
         $companyId = $user->company_id;
 
         $isOwner = $user->companies()->wherePivot('company_id', $companyId)->exists();
-        $haveAccess = false;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
             if($permission->name == "edit-project") $haveAccess = true;
             break;
         };
-        if($haveAccess == "edit-project" || $isOwner){
+        if($haveAccess || $isOwner){
             $project = Project::find($id);
 
             if (!$project) {
@@ -212,13 +210,12 @@ class ProjectController extends Controller
         $user = Auth::user();
         $companyId = $user->company_id;
         $isOwner = $user->companies()->wherePivot('company_id', $companyId)->exists();
-        $haveAccess = false;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
             if($permission->name == "delete-project") $haveAccess = true;
             break;
         };
-        if($haveAccess == "delete-project" || $isOwner){
+        if($haveAccess || $isOwner){
         
             $project = Project::find($id);
 
