@@ -11,6 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class DepartmentsController extends Controller
 {
+    use HasRoles;
     /**
      * Display a listing of the resource.
      */
@@ -21,8 +22,10 @@ class DepartmentsController extends Controller
         $company_id = $user->company_id;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
-            if($permission->name == "view-department") $haveAccess = true;
+            if($permission->name == "view-department") {
+                $haveAccess = true;
             break;
+        }
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
         if($haveAccess || $isOwner){
@@ -63,8 +66,8 @@ class DepartmentsController extends Controller
         $permissions = $user->getAllPermissions();
         
         foreach ($permissions as $permission) {
-            if ($permission->name == "create-department") $haveAccess = true;
-            break;
+            if ($permission->name == "create-department") {$haveAccess = true;
+            break;}
         }
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
     
@@ -131,8 +134,8 @@ class DepartmentsController extends Controller
         $company_id = $user->company_id;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
-            if($permission->name == "edit-department") $haveAccess = true;
-            break;
+            if($permission->name == "edit-department") {$haveAccess = true;
+            break;}
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
 
@@ -168,8 +171,8 @@ class DepartmentsController extends Controller
         $permissions = $user->getAllPermissions();
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
         foreach($permissions as $permission){
-            if($permission->name == "delete-department" || $isOwner) $haveAccess = true;
-            break;
+            if($permission->name == "delete-department" || $isOwner) {$haveAccess = true;
+            break;}
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
         if($haveAccess || $isOwner){

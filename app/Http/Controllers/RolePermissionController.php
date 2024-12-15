@@ -33,8 +33,8 @@ class RolePermissionController extends Controller
         $company_id = $user->company_id;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
-            if($permission->name == "create-role") $haveAccess = true;
-            break;
+            if($permission->name == "create-role") {$haveAccess = true;
+            break;}
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
         if($haveAccess || $isOwner){
@@ -86,8 +86,8 @@ class RolePermissionController extends Controller
         $company_id = $user->company_id;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
-            if($permission->name == "edit-role") $haveAccess = true;
-            break;
+            if($permission->name == "edit-role") {$haveAccess = true;
+            break;}
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
         if($haveAccess || $isOwner){
@@ -113,8 +113,8 @@ class RolePermissionController extends Controller
         $company_id = $user->company_id;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
-            if($permission->name == "delete-role") $haveAccess = true;
-            break;
+            if($permission->name == "delete-role") {$haveAccess = true;
+            break;}
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
         if($haveAccess || $isOwner){

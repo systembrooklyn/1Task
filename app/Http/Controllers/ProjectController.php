@@ -22,8 +22,8 @@ class ProjectController extends Controller
         $isOwner = $user->companies()->wherePivot('company_id', $companyId)->exists();
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
-            if($permission->name == "view-project") $haveAccess = true;
-            break;
+            if($permission->name == "view-project") {$haveAccess = true;
+            break;}
         };
         if($haveAccess || $isOwner){
             $query = Project::where('company_id', $companyId);
@@ -136,8 +136,8 @@ class ProjectController extends Controller
         $isOwner = $user->companies()->wherePivot('company_id', $companyId)->exists();
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
-            if($permission->name == "create-project") $haveAccess = true;
-            break;
+            if($permission->name == "create-project") {$haveAccess = true;
+            break;}
         };
         if($haveAccess || $isOwner){
             $project = new Project();
@@ -178,8 +178,8 @@ class ProjectController extends Controller
         $isOwner = $user->companies()->wherePivot('company_id', $companyId)->exists();
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
-            if($permission->name == "edit-project") $haveAccess = true;
-            break;
+            if($permission->name == "edit-project") {$haveAccess = true;
+            break;}
         };
         if($haveAccess || $isOwner){
             $project = Project::find($id);
@@ -215,8 +215,8 @@ class ProjectController extends Controller
         $isOwner = $user->companies()->wherePivot('company_id', $companyId)->exists();
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
-            if($permission->name == "delete-project") $haveAccess = true;
-            break;
+            if($permission->name == "delete-project") {$haveAccess = true;
+            break;}
         };
         if($haveAccess || $isOwner){
         

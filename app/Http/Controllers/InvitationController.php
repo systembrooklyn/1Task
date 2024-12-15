@@ -24,8 +24,8 @@ class InvitationController extends Controller
         $company_id = $user->company_id;
         $permissions = $user->getAllPermissions();
         foreach($permissions as $permission){
-            if($permission->name == "invite-user") $haveAccess = true; 
-            break;
+            if($permission->name == "invite-user") {$haveAccess = true; 
+            break;}
         };
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
         if($haveAccess || $isOwner){
