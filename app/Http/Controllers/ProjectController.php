@@ -12,9 +12,9 @@ use Spatie\Permission\Models\Permission;
 class ProjectController extends Controller
 {
     use HasRoles;
-    public $haveAccess = false;
     public function index()
     {
+        $haveAccess = false;
         $user = Auth::user();
         $companyId = $user->company_id;
         $departmentId = $user->dept_id;
@@ -121,6 +121,7 @@ class ProjectController extends Controller
 
     public function store(Request $request)
     {
+        $haveAccess = false;
         $request->validate([
             'name' => 'required|string',
             'desc' => 'nullable|string',
@@ -163,6 +164,7 @@ class ProjectController extends Controller
 
     public function update(Request $request, $id)
     {
+        $haveAccess = false;
         $request->validate([
             'name' => 'required|string',
             'desc' => 'nullable|string',
@@ -207,6 +209,7 @@ class ProjectController extends Controller
 
     public function destroy($id)
     {
+        $haveAccess = false;
         $user = Auth::user();
         $companyId = $user->company_id;
         $isOwner = $user->companies()->wherePivot('company_id', $companyId)->exists();

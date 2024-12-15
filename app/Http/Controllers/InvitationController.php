@@ -13,9 +13,9 @@ use Illuminate\Support\Facades\Hash;
 
 class InvitationController extends Controller
 {
-    public $haveAccess = false;
     public function invite(Request $request)
     {
+        $haveAccess = false;
         if (!Auth::check()) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }

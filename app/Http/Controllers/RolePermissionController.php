@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Auth;
 
 class RolePermissionController extends Controller
 {
-    public $haveAccess = false;
     public function getPermissions()
     {
         $permissions = Permission::get();
@@ -29,6 +28,7 @@ class RolePermissionController extends Controller
 
     public function createRole(Request $request)
     {
+        $haveAccess = false;
         $user = Auth::user();
         $company_id = $user->company_id;
         $permissions = $user->getAllPermissions();
@@ -81,6 +81,7 @@ class RolePermissionController extends Controller
      */
     public function updateRole(Request $request, $id)
     {
+        $haveAccess = false;
         $user = Auth::user();
         $company_id = $user->company_id;
         $permissions = $user->getAllPermissions();
@@ -107,6 +108,7 @@ class RolePermissionController extends Controller
      */
     public function deleteRole($id)
     {
+        $haveAccess = false;
         $user = Auth::user();
         $company_id = $user->company_id;
         $permissions = $user->getAllPermissions();

@@ -14,9 +14,9 @@ class DepartmentsController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public $haveAccess = false;
     public function index()
     {
+        $haveAccess = false;
         $user = Auth::user();
         $company_id = $user->company_id;
         $permissions = $user->getAllPermissions();
@@ -52,6 +52,7 @@ class DepartmentsController extends Controller
      */
     public function store(Request $request)
     {
+        $haveAccess = false;
         $fields = $request->validate([
             'name' => 'required|max:255',
         ]);
@@ -121,6 +122,7 @@ class DepartmentsController extends Controller
     
     public function update(Request $request, $id)
     {
+        $haveAccess = false;
         $fields = $request->validate([
             'name' => 'required|max:255',
         ]);
@@ -160,6 +162,7 @@ class DepartmentsController extends Controller
      */
     public function destroy($id)
     {
+        $haveAccess = false;
         $user = Auth::user();
         $company_id = $user->company_id;
         $permissions = $user->getAllPermissions();
