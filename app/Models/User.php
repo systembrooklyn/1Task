@@ -31,6 +31,7 @@ class User extends Authenticatable
         'password',
         'company_id',
     ];
+    
     public function company()
     {
         return $this->belongsTo(Company::class);
@@ -65,6 +66,18 @@ class User extends Authenticatable
     public function projectsLed()
     {
         return $this->hasMany(Project::class, 'leader_id');
+    }
+    public function createdTasks()
+    {
+        return $this->hasMany(DailyTask::class, 'created_by');
+    }
+
+    /**
+     * Get the tasks assigned to the user.
+     */
+    public function assignedTasks()
+    {
+        return $this->hasMany(DailyTask::class, 'assigned_to');
     }
    
 

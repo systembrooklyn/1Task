@@ -58,8 +58,20 @@ class RolePermissionController extends Controller
         $user = Auth::user();
         $companyId = $user->company_id;
         $roles = Role::where('company_id', $companyId)->get();
-
-        return response()->json($roles);
+        $rolesWithPermissions = $roles->map(function ($role) {
+        $permissions = $role->permissions;
+            return [
+                'role_id' => $role->id,
+                'role_name' => $role->name,
+                'permissions' => $permissions->map(function ($permission) {
+                    return [
+                        'permission_id' => $permission->id,
+                        'permission_name' => $permission->name
+                    ];
+                })
+            ];
+        });
+        return response()->json($rolesWithPermissions);
     }
 
     /**
@@ -68,12 +80,24 @@ class RolePermissionController extends Controller
     public function getRole($id)
     {
         $user = Auth::user();
-        $companyId = $user->company_id;
+    $companyId = $user->company_id;
+    $role = Role::where('company_id', $companyId)->find($id);
+    if (!$role) {
+        return response()->json(['error' => 'Role not found or does not belong to your company.'], 404);
+    }
+    $permissions = $role->permissions;
+    $roleWithPermissions = [
+        'role_id' => $role->id,
+        'role_name' => $role->name,
+        'permissions' => $permissions->map(function ($permission) {
+            return [
+                'permission_id' => $permission->id,
+                'permission_name' => $permission->name 
+            ];
+        })
+    ];
 
-        // Find the role by ID for the user's company
-        $role = Role::where('company_id', $companyId)->findOrFail($id);
-
-        return response()->json($role);
+    return response()->json($roleWithPermissions);
     }
 
     /**
@@ -85,22 +109,35 @@ class RolePermissionController extends Controller
         $user = Auth::user();
         $company_id = $user->company_id;
         $permissions = $user->getAllPermissions();
-        foreach($permissions as $permission){
-            if($permission->name == "edit-role") {$haveAccess = true;
-            break;}
-        };
+        foreach ($permissions as $permission) {
+            if ($permission->name == "edit-role") {
+                $haveAccess = true;
+                break;
+            }
+        }
+
         $isOwner = $user->companies()->wherePivot('company_id', $company_id)->exists();
-        if($haveAccess || $isOwner){
+
+        if ($haveAccess || $isOwner) {
             $request->validate([
-                'name' => 'required|string|unique:roles,name,' . $id
+                'name' => 'required|string|unique:roles,name,' . $id,
+                'permissions' => 'required|array',
+                'permissions.*' => 'exists:permissions,id',
             ]);
 
             $role = Role::where('company_id', $company_id)->findOrFail($id);
+
             $role->name = $request->name;
             $role->save();
 
-            return response()->json($role);
-        }else return response()->json(['message' => 'You do not have permission to edit this role'], 401);
+            $role->permissions()->sync($request->permissions);
+
+            return response()->json([
+                'message' => 'Role updated successfully',
+            ]);
+        } else {
+            return response()->json(['message' => 'You do not have permission to edit this role'], 401);
+        }
     }
 
     /**

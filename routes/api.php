@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CompanyOwnerController;
+use App\Http\Controllers\DailyTaskController;
 use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProjectController;
@@ -62,6 +63,6 @@ Route::middleware('auth:sanctum')->group(function () {
     
     
     Route::apiResource('projects', ProjectController::class);
+    Route::apiResource('dailytask', DailyTaskController::class);
 });
-
 

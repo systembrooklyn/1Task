@@ -27,4 +27,8 @@ class Department extends Model
     {
         return $this->belongsToMany(Project::class, 'project_dept');
     }
+    public function tasks()
+    {
+        return $this->hasMany(DailyTask::class, 'dept_id');  // Assuming 'dept_id' in 'tasks' table
+    }
 }

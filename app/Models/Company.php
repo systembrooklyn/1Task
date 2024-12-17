@@ -30,4 +30,8 @@ class Company extends Model
     {
         return $this->hasMany(Project::class);
     }
+    public function tasks()
+    {
+        return $this->hasMany(DailyTask::class, 'company_id');  // Assuming 'dept_id' in 'tasks' table
+    }
 }
