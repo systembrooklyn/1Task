@@ -233,63 +233,73 @@ class AuthController extends Controller
 
 
     public function unassignRoleFromUser(Request $request)
-{
-    $validated = $request->validate([
-        'user_id' => 'required|exists:users,id',
-        'role_ids' => 'required|array',
-        'role_ids.*' => 'exists:roles,id',
-    ]);
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'role_ids' => 'required|array',
+            'role_ids.*' => 'exists:roles,id',
+        ]);
 
-    $user = User::findOrFail($validated['user_id']);
+        $user = User::findOrFail($validated['user_id']);
+        $roles = Role::find($validated['role_ids']);
 
-    // Retrieve roles based on the provided role_ids
-    $roles = Role::find($validated['role_ids']);
-
-    if ($roles->isEmpty()) {
-        return response()->json(['message' => 'No valid roles found.'], 400);
-    }
-
-    foreach ($roles as $role) {
-        // Check if the user and role belong to the same company
-        if ($user->company_id !== $role->company_id) {
-            return response()->json(['message' => 'User and role do not belong to the same company.'], 400);
+        if ($roles->isEmpty()) {
+            return response()->json(['message' => 'No valid roles found.'], 400);
         }
 
-        // Check if the user already has the role
-        if (!$user->hasRole($role->name)) {
-            return response()->json(['message' => 'User does not have this role.'], 400);
+        foreach ($roles as $role) {
+            if ($user->company_id !== $role->company_id) {
+                return response()->json(['message' => 'User and role do not belong to the same company.'], 400);
+            }
+            if (!$user->hasRole($role->name)) {
+                return response()->json(['message' => 'User does not have this role.'], 400);
+            }
+            $user->removeRole($role);
         }
 
-        // Unassign the role
-        $user->removeRole($role);
+        return response()->json(['message' => 'Roles unassigned successfully.'], 200);
     }
-
-    return response()->json(['message' => 'Roles unassigned successfully.'], 200);
-}
 
     public function deleteUser(Request $request)
     {
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
         ]);
-        $user = User::findOrFail($validated['user_id']);
 
-        DB::beginTransaction();
+        $loggedInUser = Auth::user();
+        $userToDelete = User::findOrFail($validated['user_id']);
+        if ($loggedInUser->company_id != $userToDelete->company_id) {
+            return response()->json(['message' => 'You can only delete users within your company.'], 403);
+        }
+        $haveAccess = false;
+        $permissions = $loggedInUser->getAllPermissions();
 
-        try {
-            $user->roles()->detach();
+        foreach ($permissions as $permission) {
+            if ($permission->name == "delete-user") {
+                $haveAccess = true;
+                break;
+            }
+        }
+        $isOwner = $loggedInUser->companies()->wherePivot('company_id', $loggedInUser->company_id)->exists();
 
-            $user->departments()->detach();
+        if ($haveAccess || $isOwner) {
+            DB::beginTransaction();
 
-            $user->delete();
+            try {
+                $userToDelete->roles()->detach();
+                $userToDelete->departments()->detach();
+                $userToDelete->delete();
 
-            DB::commit();
+                DB::commit();
 
-            return response()->json(['message' => 'User and related data deleted successfully.'], 200);
-        } catch (\Exception $e) {
-            DB::rollBack();
+                return response()->json(['message' => 'User and related data deleted successfully.'], 200);
+            } catch (\Exception $e) {
+                DB::rollBack();
 
-            return response()->json(['message' => 'An error occurred. Could not delete the user.'], 500);
+                return response()->json(['message' => 'An error occurred. Could not delete the user.'], 500);
+            }
+        } else {
+            return response()->json(['message' => 'You do not have permission to delete this user.'], 401);
         }
     }
     
