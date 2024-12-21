@@ -251,14 +251,10 @@ class AuthController extends Controller
         return response()->json(['message' => 'Roles unassigned successfully.'], 200);
     }
 
-    public function deleteUser(Request $request)
+    public function deleteUser(Request $request, int $id)
     {
-        $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-        ]);
-
         $loggedInUser = Auth::user();
-        $userToDelete = User::findOrFail($validated['user_id']);
+        $userToDelete = User::findOrFail($id);
         if ($loggedInUser->company_id != $userToDelete->company_id) {
             return response()->json(['message' => 'You can only delete users within your company.'], 403);
         }

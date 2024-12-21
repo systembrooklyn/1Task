@@ -64,12 +64,12 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::get('company-users', [CompanyController::class, 'getCompanyUsers']);
     Route::post('/unassign-role', [AuthController::class, 'unassignRoleFromUser']);
+    Route::delete('/delete-user/{id}', [AuthController::class, 'deleteUser']);
     
     
     Route::apiResource('projects', ProjectController::class);
     Route::apiResource('dailytask', DailyTaskController::class);
 });
-Route::delete('/delete-user', [AuthController::class, 'deleteUser'])->middleware('auth:sanctum');
 
 Route::middleware('auth:sanctum')->group(function () {
     // Tasks
