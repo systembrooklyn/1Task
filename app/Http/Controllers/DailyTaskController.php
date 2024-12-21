@@ -129,7 +129,7 @@ class DailyTaskController extends Controller
             return response()->json(['message' => 'Task deleted successfully.']);
         }else return response()->json(['message' => 'You do not have permission to edit daily task'], 401);
     }
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $company_id = $user->company_id;
@@ -147,12 +147,12 @@ class DailyTaskController extends Controller
             $today = now()->format('Y-m-d');
             $currentDayOfWeek = now()->dayOfWeek;
             $currentDayOfMonth = now()->day;
+            $perPage = $request->input('per_page', 10);
             if ($isOwner) {
                 $tasks = DailyTask::where('company_id', $company_id)
                     ->where(function ($query) use ($today, $currentDayOfWeek, $currentDayOfMonth) {
                         $query->orWhere(function ($query) use ($today) {
-                            $query->where('task_type', 'daily')
-                                ->whereDate('start_date', $today);
+                            $query->where('task_type', 'daily')->whereDate('start_date','<=', $today);
                         })
                         ->orWhere(function ($query) use ($today, $currentDayOfWeek) {
                             $query->where('task_type', 'weekly')
@@ -165,8 +165,7 @@ class DailyTaskController extends Controller
                                 ->where('day_of_month', $currentDayOfMonth);
                         })
                         ->orWhere(function ($query) use ($today) {
-                            $query->where('task_type', 'single')
-                                ->whereDate('start_date', $today);
+                            $query->where('task_type', 'single')->whereDate('start_date', $today);
                         })
                         ->orWhere(function ($query) use ($today) {
                             $query->where('task_type', 'last_day_of_month')
@@ -174,43 +173,46 @@ class DailyTaskController extends Controller
                                 ->whereRaw('DAY(LAST_DAY(start_date)) = ?', [now()->day]);
                         });
                     })
-                    ->get();
+                    ->paginate($perPage);
             } else {
-                $tasks = collect();
-                foreach ($user->departments as $department) {
-                    $departmentTasks = DailyTask::where('company_id', $company_id)
-                        ->where('dept_id', $department->id)
-                        ->where(function ($query) use ($today, $currentDayOfWeek, $currentDayOfMonth) {
-                            $query->orWhere(function ($query) use ($today) {
-                                $query->where('task_type', 'daily')
-                                    ->whereDate('start_date', $today);
-                            })
-                            ->orWhere(function ($query) use ($today, $currentDayOfWeek) {
-                                $query->where('task_type', 'weekly')
-                                    ->whereDate('start_date', '<=', $today)
-                                    ->whereJsonContains('recurrent_days', $currentDayOfWeek);
-                            })
-                            ->orWhere(function ($query) use ($today, $currentDayOfMonth) {
-                                $query->where('task_type', 'monthly')
-                                    ->whereDate('start_date', '<=', $today)
-                                    ->where('day_of_month', $currentDayOfMonth);
-                            })
-                            ->orWhere(function ($query) use ($today) {
-                                $query->where('task_type', 'single')
-                                    ->whereDate('start_date', $today);
-                            })
-                            ->orWhere(function ($query) use ($today) {
-                                $query->where('task_type', 'last_day_of_month')
-                                    ->whereDate('start_date', $today)
-                                    ->whereRaw('DAY(LAST_DAY(start_date)) = ?', [now()->day]);
-                            });
+                $tasksQuery = DailyTask::where('company_id', $company_id)
+                    ->whereIn('dept_id', $user->departments->pluck('id'))
+                    ->where(function ($query) use ($today, $currentDayOfWeek, $currentDayOfMonth) {
+                        $query->orWhere(function ($query) use ($today) {
+                            $query->where('task_type', 'daily')->whereDate('start_date','<=', $today);
                         })
-                        ->get();
-
-                    $tasks = $tasks->merge($departmentTasks);
-                }
+                        ->orWhere(function ($query) use ($today, $currentDayOfWeek) {
+                            $query->where('task_type', 'weekly')
+                                ->whereDate('start_date', '<=', $today)
+                                ->whereJsonContains('recurrent_days', $currentDayOfWeek);
+                        })
+                        ->orWhere(function ($query) use ($today, $currentDayOfMonth) {
+                            $query->where('task_type', 'monthly')
+                                ->whereDate('start_date', '<=', $today)
+                                ->where('day_of_month', $currentDayOfMonth);
+                        })
+                        ->orWhere(function ($query) use ($today) {
+                            $query->where('task_type', 'single')->whereDate('start_date', $today);
+                        })
+                        ->orWhere(function ($query) use ($today) {
+                            $query->where('task_type', 'last_day_of_month')
+                                ->whereDate('start_date', $today)
+                                ->whereRaw('DAY(LAST_DAY(start_date)) = ?', [now()->day]);
+                        });
+                    });
+                $tasks = $tasksQuery->paginate($perPage);
             }
-            return response()->json(['tasks' => $tasks]);
+            return response()->json([
+                'tasks' => $tasks->items(),
+                'pagination' => [
+                    'total' => $tasks->total(),
+                    'current_page' => $tasks->currentPage(),
+                    'per_page' => $tasks->perPage(),
+                    'last_page' => $tasks->lastPage(),
+                    'next_page_url' => $tasks->nextPageUrl(),
+                    'prev_page_url' => $tasks->previousPageUrl(),
+                ],
+            ]);
         } else {
             return response()->json(['message' => 'You do not have permission to view daily tasks'], 401);
         }

@@ -11,6 +11,11 @@ use App\Http\Controllers\RoleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\TaskAttachmentController;
+use App\Http\Controllers\TaskCommentController;
+use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TaskRevisionController;
+use App\Http\Controllers\TaskUserStatusController;
 use App\Http\Controllers\UserDepartmentController;
 
 Route::get('/user', function (Request $request) {
@@ -59,10 +64,31 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::get('company-users', [CompanyController::class, 'getCompanyUsers']);
     Route::post('/unassign-role', [AuthController::class, 'unassignRoleFromUser']);
-    Route::delete('/delete-user', [AuthController::class, 'deleteUser']);
     
     
     Route::apiResource('projects', ProjectController::class);
     Route::apiResource('dailytask', DailyTaskController::class);
 });
+Route::delete('/delete-user', [AuthController::class, 'deleteUser'])->middleware('auth:sanctum');
 
+Route::middleware('auth:sanctum')->group(function () {
+    // Tasks
+    Route::get('/tasks', [TaskController::class, 'index']);
+    Route::post('/tasks', [TaskController::class, 'store']);
+    Route::get('/tasks/{id}', [TaskController::class, 'show']);
+    Route::put('/tasks/{id}', [TaskController::class, 'update']);
+    Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
+
+    // Comments
+    Route::post('/tasks/{id}/comments', [TaskCommentController::class, 'store']);
+
+    // Attachments
+    Route::post('/tasks/{id}/attachments', [TaskAttachmentController::class, 'store']);
+
+    // User statuses
+    Route::post('/tasks/{id}/star', [TaskUserStatusController::class, 'toggleStar']);
+    Route::post('/tasks/{id}/archive', [TaskUserStatusController::class, 'toggleArchive']);
+
+    // Revisions
+    Route::get('/tasks/{id}/revisions', [TaskRevisionController::class, 'index']);
+});

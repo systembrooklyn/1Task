@@ -127,7 +127,7 @@ class ProjectController extends Controller
             'desc' => 'nullable|string',
             'status' => 'required|boolean',
             'deadline' => 'required|date',
-            'department_id' => 'nullable|exists:departments,id',  // Optional department_id
+            'department_id' => 'nullable|exists:departments,id',
         ]);
 
         $user = Auth::user();
@@ -149,8 +149,6 @@ class ProjectController extends Controller
             $project->created_by = $user->id;
 
             $project->save();
-
-            // Attach the department if provided
             if ($request->has('department_id')) {
                 $project->departments()->attach($request->department_id);
             }

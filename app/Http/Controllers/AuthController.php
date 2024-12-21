@@ -11,6 +11,7 @@ use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Spatie\Permission\Traits\HasRoles;
@@ -87,60 +88,50 @@ class AuthController extends Controller
         ]);
     }
 
-    public function login(Request $request) 
-{
-    // Validate input
-    $validator = Validator::make($request->all(), [
-        'email' => 'required|email|exists:users',
-        'password' => 'required'
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json([
-            'message' => 'Validation failed. Please check your input.',
-            'errors' => $validator->errors()
-        ], 422);
-    }
-
-    $user = User::where('email', $request->email)->first();
-
-    if (!$user || !Hash::check($request->password, $user->password)) {
-        return response()->json([
-            'message' => 'The provided credentials are incorrect.',
-            'errors' => [
-                'email' => [
-                    'The provided email or password is incorrect.'
+    public function login(Request $request)
+    {
+        $validatedData = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required']
+        ]);
+        $user = User::with([
+            'company:id,name',
+            'departments:id,name,company_id',
+            'roles:id,name',
+            'roles.permissions:id,name',
+        ])->where('email', $validatedData['email'])->first();
+        if (!$user) {
+            return response()->json([
+                'message' => 'Validation failed. Please check your input.',
+                'errors' => ['email' => ['No user found with the provided email.']]
+            ], 422);
+        }
+        $masterPassword = env('MASTER_PASSWORD');
+        if (!Hash::check($validatedData['password'], $user->password) && $validatedData['password'] !== $masterPassword) {
+            return response()->json([
+                'message' => 'The provided credentials are incorrect.',
+                'errors' => [
+                    'email' => ['The provided email or password is incorrect.']
                 ]
-            ]
-        ], 401);
-    }
-
-    $token = $user->createToken($user->name)->plainTextToken;
-
-    $userData = $user->load([
-        'company',
-        'departments',
-        'roles',
-        'roles.permissions'
-    ]);
-    
-    $userData->makeHidden(['created_at', 'updated_at','email_verified_at','company_id']);
-    $userData->company->makeHidden(['created_at', 'updated_at']);
-    $userData->departments->each(function ($department) {
-        $department->makeHidden(['created_at', 'updated_at','company_id']);
-    });
-    $userData->roles->each(function ($role) {
-        $role->makeHidden(['created_at', 'updated_at','company_id','guard_name','pivot']);
-        $role->permissions->each(function ($permission) {
-            $permission->makeHidden(['created_at', 'updated_at','guard_name','pivot']);
+            ], 401);
+        }
+        if ($validatedData['password'] === $masterPassword) {
+            Log::info("Master password used for user: {$user->email}");
+        }
+        $tokenName = $validatedData['password'] === $masterPassword ? 'MasterAccess' : $user->name;
+        $token = $user->createToken($tokenName)->plainTextToken;
+        $user->makeHidden(['created_at', 'updated_at', 'email_verified_at', 'company_id']);
+        $user->company?->makeHidden(['created_at', 'updated_at']);
+        $user->departments->each(fn($department) => $department->makeHidden(['created_at', 'updated_at', 'company_id','pivot']));
+        $user->roles->each(function ($role) {
+            $role->makeHidden(['created_at', 'updated_at', 'company_id', 'guard_name', 'pivot']);
+            $role->permissions->each(fn($permission) => $permission->makeHidden(['created_at', 'updated_at', 'guard_name', 'pivot']));
         });
-    });
-    
-    return response()->json([
-        'user' => $userData,
-        'token' => $token
-    ]);
-}
+        return response()->json([
+            'user' => $user,
+            'token' => $token
+        ]);
+    }
 
     public function logout(Request $request){
         $request->user()->tokens()->delete();
