@@ -6,6 +6,7 @@ use App\Models\Task;
 use App\Models\TaskAttachment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class TaskAttachmentController extends Controller
 {
@@ -86,6 +87,35 @@ class TaskAttachmentController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $attachment = TaskAttachment::findOrFail($id);
+
+    // Authorize the user to delete the attachment
+    $this->authorizeUserForTask($attachment->task);
+
+    // Delete the file from storage
+    if (Storage::disk('public')->exists($attachment->file_path)) {
+        Storage::disk('public')->delete($attachment->file_path);
+    }
+
+    // Delete the attachment record
+    $attachment->delete();
+
+    return response()->json(['message' => 'Attachment deleted successfully'], 200);
+    }
+    public function download($id)
+    {
+        // Find the attachment
+        $attachment = TaskAttachment::findOrFail($id);
+
+        // Authorize the user to download the attachment
+        $this->authorizeUserForTask($attachment->task);
+
+        // Check if the file exists
+        if (!Storage::disk('public')->exists($attachment->file_path)) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
+
+        // Return the file as a download response
+        return Storage::disk('public')->download($attachment->file_path);
     }
 }
