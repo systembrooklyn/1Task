@@ -71,6 +71,15 @@ class User extends Authenticatable
     {
         return $this->hasMany(DailyTask::class, 'created_by');
     }
+    public function assignedPermissions()
+    {
+        return $this->roles->map->permissions->flatten()->unique();
+    }
+
+    public function hasAssignedPermission($permissionName)
+    {
+        return $this->assignedPermissions()->contains('name', $permissionName);
+    }
 
     /**
      * Get the tasks assigned to the user.

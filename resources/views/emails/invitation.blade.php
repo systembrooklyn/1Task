@@ -106,7 +106,7 @@
           </div>
           <br>
           <div class="button-container">
-              <a href="{{ url('http://192.168.1.29:8080/user-information?token=' . $invitation->token) }}" class="button">Accept Invitation</a>
+            <a href="https://www.1task.net/user-information#token={{ $invitation->token }}&expires_at={{ $invitation->expires_at->timestamp }}" class="button">Accept Invitation</a>
           </div>
           <br>
           <div class="expiry-note">Note: This Invitation link will expire after one hour<br>

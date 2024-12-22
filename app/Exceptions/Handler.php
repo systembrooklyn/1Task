@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -61,7 +62,9 @@ class Handler extends ExceptionHandler
                 'errors' => $exception->errors() // All validation error messages
             ], 422);  // HTTP Status Code 422 (Unprocessable Entity)
         }
-
+        if ($exception instanceof AuthorizationException) {
+            return response()->json(['message' => $exception->getMessage()], 403);
+        }
         // Default handling of other exceptions
         return parent::render($request, $exception);
     }

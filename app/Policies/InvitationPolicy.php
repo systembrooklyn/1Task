@@ -2,11 +2,11 @@
 
 namespace App\Policies;
 
-use App\Models\Department;
+use App\Models\Invitation;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
-class DepartmentsPolicy
+class InvitationPolicy
 {
     /**
      * Determine whether the user can view any models.
@@ -19,11 +19,19 @@ class DepartmentsPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Department $departments): bool
+    public function view(User $user, Invitation $invitation): bool
     {
         return false;
     }
+    public function invite(User $user)
+    {
+        $hasPermission = $user->assignedPermissions()->contains('name', 'invite-user');
+        $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
 
+        return ($hasPermission || $isOwner)
+            ? \Illuminate\Auth\Access\Response::allow()
+            : \Illuminate\Auth\Access\Response::deny('You do not have permission to invite users.');
+    }
     /**
      * Determine whether the user can create models.
      */
@@ -35,7 +43,7 @@ class DepartmentsPolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Department $departments): bool
+    public function update(User $user, Invitation $invitation): bool
     {
         return false;
     }
@@ -43,7 +51,7 @@ class DepartmentsPolicy
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Department $departments): bool
+    public function delete(User $user, Invitation $invitation): bool
     {
         return false;
     }
@@ -51,7 +59,7 @@ class DepartmentsPolicy
     /**
      * Determine whether the user can restore the model.
      */
-    public function restore(User $user, Department $departments): bool
+    public function restore(User $user, Invitation $invitation): bool
     {
         return false;
     }
@@ -59,7 +67,7 @@ class DepartmentsPolicy
     /**
      * Determine whether the user can permanently delete the model.
      */
-    public function forceDelete(User $user, Department $departments): bool
+    public function forceDelete(User $user, Invitation $invitation): bool
     {
         return false;
     }

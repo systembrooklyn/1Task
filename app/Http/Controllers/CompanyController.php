@@ -14,7 +14,6 @@ class CompanyController extends Controller
         if (!$user || !$user->company_id) {
             return response()->json(['message' => 'User not associated with a company or not authenticated'], 400);
         }
-
         $company_id = $user->company_id;
         $companyUsers = User::where('company_id', $company_id)
                             ->whereDoesntHave('companies', function ($query) use ($company_id) {
