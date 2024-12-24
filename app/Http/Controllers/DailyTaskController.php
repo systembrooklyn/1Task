@@ -149,8 +149,6 @@ class DailyTaskController extends Controller
 {
     $user = Auth::user();
     $task = DailyTask::findOrFail($id);
-
-    // Authorize the action
     $this->authorize('view', $task);
 
     return response()->json(['task' => $task]);

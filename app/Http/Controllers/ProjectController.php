@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\ProjectRevision;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -255,6 +256,7 @@ class ProjectController extends Controller
             'status' => 'required|boolean',
             'deadline' => 'required|date',
             'department_id' => 'nullable|exists:departments,id',
+            'start_date' => 'required|date',
         ]);
         $user = Auth::user();
         $companyId = $user->company_id;
@@ -266,6 +268,7 @@ class ProjectController extends Controller
         $project->deadline = $request->deadline;
         $project->company_id = $companyId;
         $project->created_by = $user->id;
+        $project->start_date = $request->start_date;
         $project->save();
         if ($request->has('department_id')) {
             $project->departments()->attach($request->department_id);
@@ -323,25 +326,44 @@ class ProjectController extends Controller
 
     public function update(Request $request, $id)
     {
+        $project = Project::find($id);
+        $this->authorize('update', $project);
+        $original = $project->getOriginal();
         $request->validate([
             'name' => 'required|string',
             'desc' => 'nullable|string',
             'status' => 'required|boolean',
             'deadline' => 'required|date',
             'department_id' => 'nullable|exists:departments,id',
+            'start_date' => 'required|date',
         ]);
-        $project = Project::find($id);
         if (!$project) {
             return response()->json(['message' => 'Project not found'], 404);
         }
-        $this->authorize('update', $project);
         $project->name = $request->name;
         $project->desc = $request->desc;
         $project->status = $request->status;
         $project->deadline = $request->deadline;
-        $project->save();
+        $project->start_date = $request->start_date;
         if ($request->has('department_id')) {
             $project->departments()->sync([$request->department_id]);
+        }
+        
+        $project->save();
+        $changes = $project->getChanges();
+        foreach ($changes as $field => $newValue) {
+            if (in_array($field, ['name','status','desc','deadline','department_id','start_date'])) {
+                
+                    ProjectRevision::create([
+                        'project_id' => $project->id,
+                        'user_id' => Auth::id(),
+                        'field' => $field,
+                        'old_value' => $original[$field] ?? null,
+                        'new_value' => $newValue,
+                        'created_at' => now()
+                    ]);
+                
+            }
         }
         return response()->json([
             'message' => 'Project updated successfully',
@@ -387,5 +409,45 @@ class ProjectController extends Controller
         $this->authorize('delete', $project);
         $project->delete();
         return response()->json(['message' => 'Project deleted successfully']);
+    }
+
+
+    public function updatestatus(Request $request, $id)
+    {
+        $project = Project::find($id);
+    if (!$project) {
+        return response()->json(['message' => 'Project not found'], 404);
+    }
+    $this->authorize('update', $project);
+    $project->status = !$project->status;
+    $project->save();
+    if ($request->has('department_id')) {
+        $project->departments()->sync([$request->department_id]);
+    }
+    return response()->json([
+        'message' => 'Project status toggled'
+    ]);
+    }
+    public function getRevisions($id)
+    {
+        $project = Project::find($id);
+        if (! $project) {
+            return response()->json(['message' => 'Project not found'], 404);
+        }
+        $revisions = $project->revisions()->with('user')->get();
+        $formatted = $revisions->map(function($revision) {
+            return [
+                'id'         => $revision->id,
+                'field'      => $revision->field,
+                'old_value'  => $revision->old_value,
+                'new_value'  => $revision->new_value,
+                'changed_at' => $revision->created_at,
+                'changed_by' => $revision->user ? $revision->user->name : null,
+            ];
+        });
+        return response()->json([
+            'project_id' => $project->id,
+            'revisions'  => $formatted,
+        ], 200);
     }
 }

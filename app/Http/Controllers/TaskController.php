@@ -97,10 +97,7 @@ class TaskController extends Controller
     {
         $task = Task::findOrFail($id);
         $this->authorizeUserForTask($task);
-
-        // Save original values for revisions
         $original = $task->getOriginal();
-
         $request->validate([
             'title' => 'sometimes|string',
             'description' => 'sometimes|string',
@@ -112,12 +109,8 @@ class TaskController extends Controller
             'assigned_user_id' => 'sometimes|exists:users,id',
             'supervisor_user_id' => 'sometimes|exists:users,id',
         ]);
-
         $data = $request->all();
-
-        // Check permission on status changes
         if (isset($data['status'])) {
-            // creator or supervisor logic here for rework/done
             if ($data['status'] === 'done' && Auth::id() !== $task->creator_user_id) {
                 return response()->json(['error' => 'Only creator can mark done'], 403);
             }
@@ -127,8 +120,6 @@ class TaskController extends Controller
         }
 
         $task->update($data);
-
-        // Log changes to revisions
         $changes = $task->getChanges();
         foreach ($changes as $field => $newValue) {
             if (in_array($field, ['deadline','status','title','description','assigned_user_id','supervisor_user_id','priority','is_urgent'])) {

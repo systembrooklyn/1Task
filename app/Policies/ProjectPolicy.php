@@ -26,12 +26,12 @@ class ProjectPolicy
      */
     public function view(User $user, Project $project)
     {
-        $belongsToCompany = $user->company_id === $project->company_id;
         $hasPermission = $user->assignedPermissions()->contains('name', 'view-project');
+        $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
 
-        return ($belongsToCompany && $hasPermission)
+        return ($hasPermission || $isOwner)
             ? \Illuminate\Auth\Access\Response::allow()
-            : \Illuminate\Auth\Access\Response::deny('You do not have permission to view this project.');
+            : \Illuminate\Auth\Access\Response::deny('You do not have permission to view project.');
     }
 
     /**

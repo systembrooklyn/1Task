@@ -68,28 +68,21 @@ Route::middleware('auth:sanctum')->group(function () {
     
     
     Route::apiResource('projects', ProjectController::class);
+    Route::put('/projects/{id}/status', [ProjectController::class, 'updatestatus']);
+    Route::get('/projects/{id}/revisions', [ProjectController::class, 'getRevisions']);
     Route::apiResource('dailytask', DailyTaskController::class);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
-    // Tasks
     Route::get('/tasks', [TaskController::class, 'index']);
     Route::post('/tasks', [TaskController::class, 'store']);
     Route::get('/tasks/{id}', [TaskController::class, 'show']);
     Route::put('/tasks/{id}', [TaskController::class, 'update']);
     Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
-
-    // Comments
     Route::post('/tasks/{id}/comments', [TaskCommentController::class, 'store']);
-
-    // Attachments
     Route::post('/tasks/{id}/attachments', [TaskAttachmentController::class, 'store']);
-
-    // User statuses
     Route::post('/tasks/{id}/star', [TaskUserStatusController::class, 'toggleStar']);
     Route::post('/tasks/{id}/archive', [TaskUserStatusController::class, 'toggleArchive']);
-
-    // Revisions
     Route::get('/tasks/{id}/revisions', [TaskRevisionController::class, 'index']);
     Route::delete('/attachments/{id}', [TaskAttachmentController::class, 'destroy'])->name('attachments.delete');
     Route::get('/attachments/{id}/download', [TaskAttachmentController::class, 'download'])->name('attachments.download');

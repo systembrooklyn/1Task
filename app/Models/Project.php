@@ -18,6 +18,7 @@ class Project extends Model
         'created_by',
         'leader_id',
         'edited_by',
+        'start_date'
     ];
 
     public function departments()
@@ -77,6 +78,10 @@ class Project extends Model
     public function getLeaderNameAttribute()
     {
         return $this->leader ? $this->leader->name : 'No Leader Assigned';
+    }
+    public function revisions()
+    {
+        return $this->hasMany(ProjectRevision::class);
     }
 
     // Modify attributes to append in the response

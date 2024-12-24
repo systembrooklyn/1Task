@@ -26,15 +26,12 @@ class DailyTaskPolicy
      */
     public function view(User $user, DailyTask $dailyTask)
     {
-        if ($user->company_id !== $dailyTask->company_id) {
-            return \Illuminate\Auth\Access\Response::deny('You do not belong to this company.');
-        }
+        $hasPermission = $user->assignedPermissions()->contains('name', 'view-dailytask');
+        $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
 
-        if (!$user->departments->contains($dailyTask->dept_id)) {
-            return \Illuminate\Auth\Access\Response::deny('You do not belong to the department responsible for this task.');
-        }
-
-        return \Illuminate\Auth\Access\Response::allow();
+        return ($hasPermission || $isOwner)
+            ? \Illuminate\Auth\Access\Response::allow()
+            : \Illuminate\Auth\Access\Response::deny('You do not have permission to view daily tasks.');
     }
 
     /**
