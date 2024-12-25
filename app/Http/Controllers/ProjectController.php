@@ -89,7 +89,6 @@ class ProjectController extends Controller
             'edited_by',
             'editedBy',
             'createdBy',
-            'leader_id',
             'company',
             'departments',
             'leader',
