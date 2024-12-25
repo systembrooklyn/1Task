@@ -68,7 +68,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
     
     Route::apiResource('projects', ProjectController::class);
-    Route::put('/projects/{id}/status', [ProjectController::class, 'updatestatus']);
+    Route::post('/projects/{id}/status', [ProjectController::class, 'updatestatus']);
     Route::get('/projects/{id}/revisions', [ProjectController::class, 'getRevisions']);
     Route::apiResource('dailytask', DailyTaskController::class);
 });
