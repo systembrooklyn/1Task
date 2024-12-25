@@ -47,36 +47,37 @@ class AuthController extends Controller
     }
 
     public function registerViaInvitation(Request $request)
-{
-    $request->validate([
-        'token' => 'required',
-        'name' => 'required|string|max:255',
-        'password' => 'required|string|min:8|confirmed',
-    ]);
+    {
+        $request->validate([
+            'token' => 'required',
+            'name' => 'required|string|max:255',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
 
-    $invitation = Invitation::where('token', $request->token)->first();
+        $invitation = Invitation::where('token', $request->token)->first();
 
-    if (!$invitation || $invitation->is_accepted || $invitation->expires_at < now()) {
-        return response()->json(['message' => 'Invalid or expired invitation.'], 400);
+        if (!$invitation || $invitation->is_accepted || $invitation->expires_at < now()) {
+            return response()->json(['message' => 'Invalid or expired invitation.'], 400);
+        }
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $invitation->email,
+            'password' => Hash::make($request->password),
+            'company_id' => $invitation->company_id,
+        ]);
+
+        $invitation->update(['is_accepted' => true]);
+
+        $token = $user->createToken($request->name)->plainTextToken;
+
+        return response()->json(['message' => 'Registration successful.', 'user' => $user, 'token' => $token], 201);
     }
-    $user = User::create([
-        'name' => $request->name,
-        'email' => $invitation->email,
-        'password' => Hash::make($request->password),
-        'company_id' => $invitation->company_id,
-    ]);
-
-    $invitation->update(['is_accepted' => true]);
-
-    $token = $user->createToken($request->name)->plainTextToken;
-
-    return response()->json(['message' => 'Registration successful.', 'user' => $user, 'token' => $token], 201);
-}
 
 
 
 
-    public function checkEmailExists(Request $request){
+    public function checkEmailExists(Request $request)
+    {
         $request->validate([
             'email' => 'required|email'
         ]);
@@ -133,7 +134,8 @@ class AuthController extends Controller
         ]);
     }
 
-    public function logout(Request $request){
+    public function logout(Request $request)
+    {
         $request->user()->tokens()->delete();
         return [
             'message' => 'You are logged out'

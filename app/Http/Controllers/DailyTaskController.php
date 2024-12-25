@@ -146,11 +146,11 @@ class DailyTaskController extends Controller
     }
 
     public function show($id)
-{
-    $user = Auth::user();
-    $task = DailyTask::findOrFail($id);
-    $this->authorize('view', $task);
+    {
+        $user = Auth::user();
+        $task = DailyTask::findOrFail($id);
+        $this->authorize('view', $task);
 
-    return response()->json(['task' => $task]);
-}
+        return response()->json(['task' => $task]);
+    }
 }

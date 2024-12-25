@@ -10,52 +10,52 @@ use Illuminate\Support\Facades\Auth;
 class TaskController extends Controller
 {
     public function index()
-{
-    $userId = Auth::id();
-    $tasks = Task::select(
-        'id',
-        'company_id',
-        'project_id',
-        'department_id',
-        'creator_user_id',
-        'assigned_user_id',
-        'supervisor_user_id',
-        'title',
-        'description',
-        'start_date',
-        'deadline',
-        'is_urgent',
-        'priority',
-        'status',
-        'created_at',
-        'updated_at'
-    )
-    ->where('creator_user_id', $userId)
-    ->orWhere('assigned_user_id', $userId)
-    ->orWhere('supervisor_user_id', $userId)
-    ->with([
-        'creator:id,name,email',
-        'assignedUser:id,name,email',
-        'supervisor:id,name,email',
-        'project:id,name',
-        'department:id,name',
-        'userStatuses' => function ($query) use ($userId) {
-            $query->where('user_id', $userId);
-        },
-    ])
-    ->get();
-    $tasks->each(function ($task) {
-        $status = $task->userStatuses->first();
-        $task->is_starred = $status ? $status->is_starred : false;
-        $task->is_archived = $status ? $status->is_archived : false;
-        $task->makeHidden(['company_id', 'department_id', 'project_id', 'creator_user_id', 'assigned_user_id', 'supervisor_user_id', 'userStatuses']);
-        if ($task->project) {
-            $task->project->setAppends([]);
-        }
-    });
+    {
+        $userId = Auth::id();
+        $tasks = Task::select(
+            'id',
+            'company_id',
+            'project_id',
+            'department_id',
+            'creator_user_id',
+            'assigned_user_id',
+            'supervisor_user_id',
+            'title',
+            'description',
+            'start_date',
+            'deadline',
+            'is_urgent',
+            'priority',
+            'status',
+            'created_at',
+            'updated_at'
+        )
+        ->where('creator_user_id', $userId)
+        ->orWhere('assigned_user_id', $userId)
+        ->orWhere('supervisor_user_id', $userId)
+        ->with([
+            'creator:id,name,email',
+            'assignedUser:id,name,email',
+            'supervisor:id,name,email',
+            'project:id,name',
+            'department:id,name',
+            'userStatuses' => function ($query) use ($userId) {
+                $query->where('user_id', $userId);
+            },
+        ])
+        ->get();
+        $tasks->each(function ($task) {
+            $status = $task->userStatuses->first();
+            $task->is_starred = $status ? $status->is_starred : false;
+            $task->is_archived = $status ? $status->is_archived : false;
+            $task->makeHidden(['company_id', 'department_id', 'project_id', 'creator_user_id', 'assigned_user_id', 'supervisor_user_id', 'userStatuses']);
+            if ($task->project) {
+                $task->project->setAppends([]);
+            }
+        });
 
-    return response()->json($tasks, 200);
-}
+        return response()->json($tasks, 200);
+    }
 
     public function store(Request $request)
     {
