@@ -189,6 +189,7 @@ class ProjectController extends Controller
 
     public function updatestatus(Request $request, $id)
     {
+        Auth::user();
         $project = Project::find($id);
     if (!$project) {
         return response()->json(['message' => 'Project not found'], 404);

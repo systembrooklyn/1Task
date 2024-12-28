@@ -19,7 +19,7 @@ class InvitationController extends Controller
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
         $user = Auth::user();
-        $this->authorize('invite', $user);
+        $this->authorize('invite', Invitation::class);
         $request->validate([
             'email' => 'required|email',
         ]);
