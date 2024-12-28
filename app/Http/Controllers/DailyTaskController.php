@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DailyTask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Resources\DailyTaskResource;
 
 class DailyTaskController extends Controller
 {
@@ -132,8 +133,9 @@ class DailyTaskController extends Controller
             $tasksQuery->whereIn('dept_id', $user->departments->pluck('id'));
         }
         $tasks = $tasksQuery->paginate($perPage);
+        $tasksData = DailyTaskResource::collection($tasks->items());
         return response()->json([
-            'tasks' => $tasks->items(),
+            'tasks' => $tasksData,
             'pagination' => [
                 'total' => $tasks->total(),
                 'current_page' => $tasks->currentPage(),
