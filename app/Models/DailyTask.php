@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
+use App\Helpers\TaskNumberGenerator;
+use Illuminate\Support\Facades\Log;
 
 class DailyTask extends Model
 {
@@ -12,14 +15,15 @@ class DailyTask extends Model
     protected $fillable = [
         'task_no', 'task_name', 'description', 'start_date', 'task_type',
         'recurrent_days', 'day_of_month', 'from', 'to', 'company_id',
-        'dept_id', 'created_by', 'assigned_to', 'note', 'status', 'updated_by'
+        'dept_id', 'created_by', 'assigned_to', 'note', 'status', 'updated_by','active',
+        'submitted_by'
     ];
 
     protected $casts = [
-        'recurrent_days' => 'array', // Cast recurrent_days to an array for weekly tasks
+        'recurrent_days' => 'array',
+        'active' => 'boolean',
     ];
 
-    // Relationships
     public function company()
     {
         return $this->belongsTo(Company::class);
@@ -50,14 +54,56 @@ class DailyTask extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
-
-    // Ensure the task number is unique and auto-generated
-    public static function boot()
+    public function submittedBy()
     {
-        parent::boot();
-
+        return $this->belongsTo(User::class, 'submitted_by');
+    }
+    public function revisions()
+    {
+        return $this->hasMany(DailyTaskRevision::class);
+    }
+    protected static function booted()
+    {
         static::creating(function ($task) {
-            $task->task_no = 'TASK-' . strtoupper(uniqid());
+            $task->task_no = TaskNumberGenerator::generateTaskNo($task->company_id);
+        });
+
+        static::updating(function ($task) {
+            // Retrieve all changed attributes
+            $changes = $task->getChanges();
+            $original = $task->getOriginal();
+
+            foreach ($changes as $field => $newValue) {
+                if ($field === 'updated_at') {
+                    continue; // Skip timestamps
+                }
+
+                $oldValue = $original[$field] ?? null;
+
+                // Only log if the value has actually changed
+                if ($oldValue !== $newValue) {
+                    // Get the authenticated user ID
+                    $userId = Auth::id();
+
+                    // Ensure user ID is available
+                    if (!$userId) {
+                        Log::warning("Revision not logged for DailyTask ID {$task->id} because no authenticated user was found.");
+                        continue;
+                    }
+
+                    // Create a revision record for each changed field
+                    try {
+                        $task->revisions()->create([
+                            'user_id'    => $userId,
+                            'field_name' => $field,
+                            'old_value'  => is_array($oldValue) ? json_encode($oldValue) : $oldValue,
+                            'new_value'  => is_array($newValue) ? json_encode($newValue) : $newValue,
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error("Failed to create revision for DailyTask ID {$task->id}: " . $e->getMessage());
+                    }
+                }
+            }
         });
     }
 }

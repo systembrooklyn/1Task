@@ -70,6 +70,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('projects', ProjectController::class);
     Route::post('/projects/{id}/status', [ProjectController::class, 'updatestatus']);
     Route::get('/projects/{id}/revisions', [ProjectController::class, 'getRevisions']);
+
+    
+    Route::get('/alldailytask',[DailyTaskController::class, 'allDailyTasks']);
+    Route::post('/submitdailytask/{id}',[DailyTaskController::class, 'submitDailyTask']);
+    Route::post('/activedailytask/{id}',[DailyTaskController::class,'activeDailyTask']);
+    Route::get('dailytask/{id}/revisions', [DailyTaskController::class, 'revisions']);
     Route::apiResource('dailytask', DailyTaskController::class);
 });
 

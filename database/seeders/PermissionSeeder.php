@@ -38,6 +38,7 @@ class PermissionSeeder extends Seeder
             'edit-dailytask',
             'delete-dailytask',
             'view-dailytask',
+            'view-alldailytask'
         ];
         foreach ($permissions as $permission) {
             Permission::create(['name' => $permission,

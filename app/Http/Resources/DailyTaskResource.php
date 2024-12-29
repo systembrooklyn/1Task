@@ -40,10 +40,14 @@ class DailyTaskResource extends JsonResource
             ],
             'note' => $this->note,
             'status' => $this->status,
-            'updated_by' =>
-            [
-                'id' => $this->updated_by->id ?? null,
-                'name' => $this->updated_by->name ?? 'N/A',
+            'active' => $this->active,
+            'submitted_by' => [
+                'id' => $this->submittedBy->id ?? null,
+                'name' => $this->submittedBy->name ?? 'N/A',
+            ],
+            'updated_by' => [
+                'id' => $this->updatedBy->id ?? null,
+                'name' => $this->updatedBy->name ?? 'N/A',
             ],
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

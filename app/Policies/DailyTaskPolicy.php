@@ -47,6 +47,14 @@ class DailyTaskPolicy
             : \Illuminate\Auth\Access\Response::deny('You do not have permission to create daily task.');
     }
 
+    public function viewAllTasks(User $user){
+        $hasPermission = $user->assignedPermissions()->contains('name', 'view-alldailytask');
+        $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
+
+        return ($hasPermission || $isOwner)
+            ? \Illuminate\Auth\Access\Response::allow()
+            : \Illuminate\Auth\Access\Response::deny('You do not have permission to view daily tasks.');
+    }
     /**
      * Determine whether the user can update the model.
      */
