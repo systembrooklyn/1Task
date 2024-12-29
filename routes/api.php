@@ -78,6 +78,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/activedailytask/{id}',[DailyTaskController::class,'activeDailyTask']);
     Route::get('dailytask/{id}/revisions', [DailyTaskController::class, 'revisions']);
     Route::apiResource('dailytask', DailyTaskController::class);
+    Route::post('/daily-tasks/{id}/submit-report', [DailyTaskReportController::class, 'submitReport']);
+    Route::get('/daily-tasks/todays-reports', [DailyTaskReportController::class, 'todaysReports']);
+    Route::get('/daily-task-reports', [DailyTaskReportController::class, 'index']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -93,11 +96,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/tasks/{id}/revisions', [TaskRevisionController::class, 'index']);
     Route::delete('/attachments/{id}', [TaskAttachmentController::class, 'destroy'])->name('attachments.delete');
     Route::get('/attachments/{id}/download', [TaskAttachmentController::class, 'download'])->name('attachments.download');
-});
-
-
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::post('/daily-tasks/{id}/submit-report', [DailyTaskReportController::class, 'submitReport']);
-    Route::get('/daily-tasks/todays-reports', [DailyTaskReportController::class, 'todaysReports']);
-    Route::get('/daily-task-reports', [DailyTaskReportController::class, 'index']);
 });

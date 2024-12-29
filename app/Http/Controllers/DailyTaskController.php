@@ -28,7 +28,6 @@ class DailyTaskController extends Controller
             'to' => 'required|date_format:H:i|after:from',
             'dept_id' => 'required|exists:departments,id',
             'assigned_to' => 'nullable|exists:users,id',
-            'note' => 'nullable|string',
             'active' => 'sometimes|boolean',
         ]);
         $user = Auth::user();
@@ -49,8 +48,6 @@ class DailyTaskController extends Controller
                     'dept_id' => $validated['dept_id'],
                     'created_by' => $user->id,
                     'assigned_to' => $validated['assigned_to'] ?? null,
-                    'note' => $validated['note'] ?? null,
-                    'status' => $validated['status'] ?? null,
                     'active' => $validated['active'] ?? true,
                     'submitted_by' => $validated['submitted_by'] ?? null,
                     'updated_by' => null,
