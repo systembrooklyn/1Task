@@ -38,19 +38,29 @@ class DailyTaskResource extends JsonResource
                 'id' => $this->assignee->id ?? null,
                 'name' => $this->assignee->name ?? 'N/A',
             ],
-            'note' => $this->note,
-            'status' => $this->status,
             'active' => $this->active,
-            'submitted_by' => [
-                'id' => $this->submittedBy->id ?? null,
-                'name' => $this->submittedBy->name ?? 'N/A',
-            ],
             'updated_by' => [
                 'id' => $this->updatedBy->id ?? null,
                 'name' => $this->updatedBy->name ?? 'N/A',
             ],
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+
+            // **New Fields for Today's Report**
+            'has_today_report' => $this->todayReport ? true : false,
+            'today_report_status' => $this->todayReport ? $this->todayReport->status : null,
+            // Optionally, include more details about today's report
+            'today_report' => $this->todayReport ? [
+                'id' => $this->todayReport->id,
+                'notes' => $this->todayReport->notes,
+                'status' => $this->todayReport->status,
+                'submitted_by' => [
+                    'id' => $this->todayReport->submittedBy->id ?? null,
+                    'name' => $this->todayReport->submittedBy->name ?? 'N/A',
+                ],
+                'created_at' => $this->todayReport->created_at,
+                'updated_at' => $this->todayReport->updated_at,
+            ] : null,
         ];
     }
 }

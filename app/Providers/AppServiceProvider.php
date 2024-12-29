@@ -3,10 +3,12 @@
 namespace App\Providers;
 
 use App\Models\DailyTask;
+use App\Models\DailyTaskReport;
 use App\Models\Department;
 use App\Models\Invitation;
 use App\Models\Project;
 use App\Models\Role;
+use App\Observers\DailyTaskReportObserver;
 use App\Policies\DailyTaskPolicy;
 use App\Policies\DepartmentPolicy;
 use App\Policies\InvitationPolicy;
@@ -30,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         //
+        DailyTaskReport::observe(DailyTaskReportObserver::class);
     }
 
     protected $policies = [

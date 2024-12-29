@@ -62,6 +62,19 @@ class DailyTask extends Model
     {
         return $this->hasMany(DailyTaskRevision::class);
     }
+    public function reports()
+    {
+        return $this->hasMany(DailyTaskReport::class);
+    }
+    public function todayReport()
+    {
+        return $this->hasOne(DailyTaskReport::class)
+                    ->whereDate('created_at', now()->toDateString());
+    }
+    public function getTodayReportStatusAttribute()
+    {
+        return $this->todayReport ? $this->todayReport->status : null;
+    }
     protected static function booted()
     {
         static::creating(function ($task) {

@@ -88,7 +88,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(DailyTask::class, 'assigned_to');
     }
-   
+    public function submittedReports()
+    {
+        return $this->hasMany(DailyTaskReport::class, 'submitted_by');
+    }
 
     /**
      * The attributes that should be hidden for serialization.

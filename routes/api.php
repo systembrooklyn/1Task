@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CompanyOwnerController;
 use App\Http\Controllers\DailyTaskController;
+use App\Http\Controllers\DailyTaskReportController;
 use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProjectController;
@@ -71,9 +72,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/projects/{id}/status', [ProjectController::class, 'updatestatus']);
     Route::get('/projects/{id}/revisions', [ProjectController::class, 'getRevisions']);
 
-    
+
     Route::get('/alldailytask',[DailyTaskController::class, 'allDailyTasks']);
-    Route::post('/submitdailytask/{id}',[DailyTaskController::class, 'submitDailyTask']);
+    // Route::post('/submitdailytask/{id}',[DailyTaskController::class, 'submitDailyTask']);
     Route::post('/activedailytask/{id}',[DailyTaskController::class,'activeDailyTask']);
     Route::get('dailytask/{id}/revisions', [DailyTaskController::class, 'revisions']);
     Route::apiResource('dailytask', DailyTaskController::class);
@@ -92,4 +93,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/tasks/{id}/revisions', [TaskRevisionController::class, 'index']);
     Route::delete('/attachments/{id}', [TaskAttachmentController::class, 'destroy'])->name('attachments.delete');
     Route::get('/attachments/{id}/download', [TaskAttachmentController::class, 'download'])->name('attachments.download');
+});
+
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/daily-tasks/{id}/submit-report', [DailyTaskReportController::class, 'submitReport']);
+    Route::get('/daily-tasks/todays-reports', [DailyTaskReportController::class, 'todaysReports']);
+    Route::get('/daily-task-reports', [DailyTaskReportController::class, 'index']);
 });

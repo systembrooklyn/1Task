@@ -234,19 +234,19 @@ class DailyTaskController extends Controller
     }
 
 
-    public function submitDailyTask(Request $request, $id){
-        $user = Auth::user();
-        $request->validate([
-            'note' => 'nullable|string',
-            'status' => 'required|in:done,not_done',
-        ]);
-        $task = DailyTask::findOrFail($id);
-        $task->note = $request['note'];
-        $task->status = $request['status'];
-        $task->submitted_by = $user->id;
-        $task->save();
-        return response()->json(['message' => 'Task submitted successfully!']);
-    }
+    // public function submitDailyTask(Request $request, $id){
+    //     $user = Auth::user();
+    //     $request->validate([
+    //         'note' => 'nullable|string',
+    //         'status' => 'required|in:done,not_done',
+    //     ]);
+    //     $task = DailyTask::findOrFail($id);
+    //     $task->note = $request['note'];
+    //     $task->status = $request['status'];
+    //     $task->submitted_by = $user->id;
+    //     $task->save();
+    //     return response()->json(['message' => 'Task submitted successfully!']);
+    // }
     
     public function activeDailyTask(Request $request, $id){
         $user = Auth::user();
@@ -295,5 +295,19 @@ class DailyTaskController extends Controller
             'daily_task_id' => $task->id,
             'revisions'     => $formattedRevisions,
         ]);
+    }
+    public function todaysReports()
+    {
+        $user = Auth::user();
+        $today = now()->toDateString();
+        $dailyTasks = DailyTask::with(['todayReport', 'department', 'creator', 'assignee', 'submittedBy', 'updatedBy'])
+                        ->where('company_id', $user->company_id)
+                        ->whereIn('dept_id', $user->departments()->pluck('departments.id')->toArray())
+                        ->get();
+        $tasksData = DailyTaskResource::collection($dailyTasks);
+        return response()->json([
+            'date' => $today,
+            'tasks' => $tasksData,
+        ], 200);
     }
 }
