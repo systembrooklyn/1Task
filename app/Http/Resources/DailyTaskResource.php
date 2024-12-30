@@ -28,20 +28,20 @@ class DailyTaskResource extends JsonResource
             'company_id' => $this->company_id,
             'department' => [
                 'dept_id' => $this->dept_id,
-                'department_name' => $this->department->name ?? 'N/A',
+                'department_name' => $this->department->name ?? null,
             ],
             'created_by' => [
                 'id' => $this->creator->id ?? null,
-                'name' => $this->creator->name ?? 'N/A',
+                'name' => $this->creator->name ?? null,
             ],
             'assigned_to' => [
                 'id' => $this->assignee->id ?? null,
-                'name' => $this->assignee->name ?? 'N/A',
+                'name' => $this->assignee->name ?? null,
             ],
             'active' => $this->active,
             'updated_by' => [
                 'id' => $this->updatedBy->id ?? null,
-                'name' => $this->updatedBy->name ?? 'N/A',
+                'name' => $this->updatedBy->name ?? null,
             ],
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
@@ -53,7 +53,7 @@ class DailyTaskResource extends JsonResource
                 'status' => $this->todayReport->status,
                 'submitted_by' => [
                     'id' => $this->todayReport->submittedBy->id ?? null,
-                    'name' => $this->todayReport->submittedBy->name ?? 'N/A',
+                    'name' => $this->todayReport->submittedBy->name ?? null,
                 ],
                 'created_at' => $this->todayReport->created_at,
                 'updated_at' => $this->todayReport->updated_at,
