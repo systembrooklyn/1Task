@@ -45,11 +45,8 @@ class DailyTaskResource extends JsonResource
             ],
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-
-            // **New Fields for Today's Report**
             'has_today_report' => $this->todayReport ? true : false,
             'today_report_status' => $this->todayReport ? $this->todayReport->status : null,
-            // Optionally, include more details about today's report
             'today_report' => $this->todayReport ? [
                 'id' => $this->todayReport->id,
                 'notes' => $this->todayReport->notes,

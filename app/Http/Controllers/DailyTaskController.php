@@ -15,69 +15,76 @@ class DailyTaskController extends Controller
 {
 
     public function store(Request $request)
-    {
+{
+    $user = Auth::user();
+    $companyId = $user->company_id;
+
+    try {
         $this->authorize('create', DailyTask::class);
-        $validated = $request->validate([
-            'task_name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'start_date' => 'required|date',
-            'task_type' => 'required|in:single,daily,weekly,monthly,last_day_of_month',
-            'recurrent_days' => 'nullable|array',
-            'day_of_month' => 'nullable|integer|min:1|max:31',
-            'from' => 'required|date_format:H:i',
-            'to' => 'required|date_format:H:i|after:from',
-            'dept_id' => 'required|exists:departments,id',
-            'assigned_to' => 'nullable|exists:users,id',
-            'active' => 'sometimes|boolean',
-        ]);
-        $user = Auth::user();
-        $companyId = $user->company_id;
-
-        try {
-            $task = DB::transaction(function () use ($validated, $companyId, $user) {
-                return DailyTask::create([
-                    'task_name' => $validated['task_name'],
-                    'description' => $validated['description'] ?? null,
-                    'start_date' => $validated['start_date'],
-                    'task_type' => $validated['task_type'],
-                    'recurrent_days' => $validated['recurrent_days'] ?? null,
-                    'day_of_month' => $validated['day_of_month'] ?? null,
-                    'from' => $validated['from'],
-                    'to' => $validated['to'],
-                    'company_id' => $companyId,
-                    'dept_id' => $validated['dept_id'],
-                    'created_by' => $user->id,
-                    'assigned_to' => $validated['assigned_to'] ?? null,
-                    'active' => $validated['active'] ?? true,
-                    'submitted_by' => $validated['submitted_by'] ?? null,
-                    'updated_by' => null,
-                ]);
-            });
-            $task->load(['department', 'creator', 'assignee', 'updatedBy', 'submittedBy']);
-
-            return response()->json([
-                'message' => 'Daily Task created successfully.',
-                'data' => $task,
-            ], 201);
-        } catch (QueryException $e) {
-            if ($e->errorInfo[1] == 1062) {
-                return response()->json([
-                    'message' => 'Task number already exists. Please try again.',
-                ], 409);
-            }
-            Log::error('Task Creation Failed: ' . $e->getMessage());
-
-            return response()->json([
-                'message' => 'Failed to create Daily Task.',
-            ], 500);
-        } catch (\Exception $e) {
-            Log::error('Task Creation Error: ' . $e->getMessage());
-
-            return response()->json([
-                'message' => 'An unexpected error occurred.',
-            ], 500);
-        }
+    } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        return response()->json([
+            'message' => $e->getMessage(),
+        ], 403);
     }
+
+    $validated = $request->validate([
+        'task_name' => 'required|string|max:255',
+        'description' => 'nullable|string',
+        'start_date' => 'required|date',
+        'task_type' => 'required|in:single,daily,weekly,monthly,last_day_of_month',
+        'recurrent_days' => 'nullable|array',
+        'day_of_month' => 'nullable|integer|min:1|max:31',
+        'from' => 'required|date_format:H:i',
+        'to' => 'required|date_format:H:i|after:from',
+        'dept_id' => 'required|exists:departments,id',
+        'assigned_to' => 'nullable|exists:users,id',
+    ]);
+
+    try {
+        $task = DB::transaction(function () use ($validated, $companyId, $user) {
+            return DailyTask::create([
+                'task_name' => $validated['task_name'],
+                'description' => $validated['description'] ?? null,
+                'start_date' => $validated['start_date'],
+                'task_type' => $validated['task_type'],
+                'recurrent_days' => $validated['recurrent_days'] ?? null,
+                'day_of_month' => $validated['day_of_month'] ?? null,
+                'from' => $validated['from'],
+                'to' => $validated['to'],
+                'company_id' => $companyId,
+                'dept_id' => $validated['dept_id'],
+                'created_by' => $user->id,
+                'assigned_to' => $validated['assigned_to'] ?? null,
+                'active' => true,
+                'updated_by' => null,
+            ]);
+        });
+
+        $task->load(['department', 'creator', 'assignee', 'updatedBy', 'submittedBy']);
+
+        return response()->json([
+            'message' => 'Daily Task created successfully.',
+            'data' => new DailyTaskResource($task),
+        ], 201);
+    } catch (QueryException $e) {
+        if ($e->errorInfo[1] == 1062) {
+            return response()->json([
+                'message' => 'Task number already exists. Please try again.',
+            ], 409);
+        }
+        Log::error('Task Creation Failed: ' . $e->getMessage());
+
+        return response()->json([
+            'message' => 'Failed to create Daily Task.',
+        ], 500);
+    } catch (\Exception $e) {
+        Log::error('Task Creation Error: ' . $e->getMessage());
+
+        return response()->json([
+            'message' => 'An unexpected error occurred.',
+        ], 500);
+    }
+}
 
     public function update(Request $request, $id)
     {
