@@ -91,7 +91,11 @@ class DailyTaskController extends Controller
         $user = Auth::user();
         $task = DailyTask::findOrFail($id);
         $this->authorize('update', $task);
+
+        // Get the original attributes before any changes
         $original = $task->getOriginal();
+
+        // Validate the incoming request data
         $validated = $request->validate([
             'task_name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -104,9 +108,8 @@ class DailyTaskController extends Controller
             'dept_id' => 'required|exists:departments,id',
             'assigned_to' => 'nullable|exists:users,id',
         ]);
-        if (!$task) {
-            return response()->json(['message' => 'Task not found'], 404);
-        }
+
+        // Prepare the data for updating the task
         $updateData = [
             'task_name' => $validated['task_name'],
             'description' => $validated['description'] ?? $task->description,
@@ -119,24 +122,54 @@ class DailyTaskController extends Controller
             'assigned_to' => $validated['assigned_to'] ?? $task->assigned_to,
             'updated_by' => $user->id,
         ];
+
+        // Update the task with the new data
         $task->update($updateData);
+
+        // Get the changed attributes
         $changes = $task->getChanges();
+
+        // Define the fields that should be tracked for revisions
+        $trackableFields = [
+            'task_name',
+            'status',
+            'description',
+            'start_date',
+            'task_type',
+            'recurrent_days',
+            'day_of_month',
+            'from',
+            'to',
+            'assigned_to',
+            'note',
+        ];
+
+        // Iterate over each changed field
         foreach ($changes as $field => $newValue) {
-            if (in_array($field, ['task_name','status','description','start_date','task_type','recurrent_days','day_of_month','from','to','assigned_to','note',])) {
-                
-                    DailyTaskRevision::create([
-                        'daily_task_id' => $task->id,
-                        'user_id' => Auth::id(),
-                        'field_name' => $field,
-                        'old_value' => $original[$field] ?? null,
-                        'new_value' => $newValue,
-                        'created_at' => now()
-                    ]);
-                
+            if (in_array($field, $trackableFields)) {
+                $oldValue = $original[$field] ?? null;
+
+                // Check if the field is an array and serialize it
+                if (is_array($oldValue)) {
+                    $oldValue = json_encode($oldValue);
+                }
+                if (is_array($newValue)) {
+                    $newValue = json_encode($newValue);
+                }
+
+                // Create a revision record
+                DailyTaskRevision::create([
+                    'daily_task_id' => $task->id,
+                    'user_id' => $user->id,
+                    'field_name' => $field,
+                    'old_value' => $oldValue,
+                    'new_value' => $newValue,
+                    'created_at' => now(),
+                ]);
             }
         }
 
-        return response()->json(['message' => 'Task updated successfully!', 'task' => $task]);
+        return response()->json(['message' => 'Task updated successfully', 'task' => $task], 200);
     }
 
     public function destroy($id)
