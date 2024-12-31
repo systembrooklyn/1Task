@@ -154,17 +154,30 @@ class DailyTaskController extends Controller
         $user = Auth::user();
         $company_id = $user->company_id;
         $this->authorize('viewAny', DailyTask::class);
+        $sort_by = $request->input('sort_by', 'created_at');
+        $type_of = $request->input('type_of', 'desc');
+        $allowedSorts = ['start_date','created_at'];
+        if (!in_array($sort_by, $allowedSorts)) {
+            $sort_by = 'created_at';
+        }
+        $type_of = strtolower($type_of);
+        if (!in_array($type_of, ['asc', 'desc'])) {
+            $type_of = 'desc';
+        }
+        
         $today = now()->format('Y-m-d');
         $currentDayOfWeek = now()->dayOfWeek;
         $currentDayOfMonth = now()->day;
         $departmentIds = $user->departments()->pluck('departments.id')->toArray();
         $perPage = $request->input('per_page', 10);
+        
         $tasksQuery = DailyTask::query()
             ->where('company_id', $company_id)
             ->whereIn('dept_id', $departmentIds)
             ->where(function ($query) use ($today, $currentDayOfWeek, $currentDayOfMonth) {
                 $query->orWhere(function ($query) use ($today) {
-                    $query->where('task_type', 'daily')->whereDate('start_date', '<=', $today);
+                    $query->where('task_type', 'daily')
+                        ->whereDate('start_date', '<=', $today);
                 })
                 ->orWhere(function ($query) use ($today, $currentDayOfWeek) {
                     $query->where('task_type', 'weekly')
@@ -177,16 +190,20 @@ class DailyTaskController extends Controller
                         ->where('day_of_month', $currentDayOfMonth);
                 })
                 ->orWhere(function ($query) use ($today) {
-                    $query->where('task_type', 'single')->whereDate('start_date', $today);
+                    $query->where('task_type', 'single')
+                        ->whereDate('start_date', $today);
                 })
                 ->orWhere(function ($query) use ($today) {
                     $query->where('task_type', 'last_day_of_month')
                         ->whereDate('start_date', $today)
                         ->whereRaw('DAY(LAST_DAY(start_date)) = ?', [now()->day]);
                 });
-            });
+            })
+            ->orderBy($sort_by, $type_of);
+        
         $tasks = $tasksQuery->paginate($perPage);
         $tasksData = DailyTaskResource::collection($tasks->items());
+        
         return response()->json([
             'tasks' => $tasksData,
             'pagination' => [
@@ -216,9 +233,20 @@ class DailyTaskController extends Controller
         $perPage = $request->input('per_page', 10);
         $user = Auth::user();
         $this->authorize('viewAny', DailyTask::class);
+        $sort_by = $request->input('sort_by', 'created_at');
+        $type_of = $request->input('type_of', 'desc');
+        $allowedSorts = ['start_date','created_at'];
+        if (!in_array($sort_by, $allowedSorts)) {
+            $sort_by = 'created_at';
+        }
+        $type_of = strtolower($type_of);
+        if (!in_array($type_of, ['asc', 'desc'])) {
+            $type_of = 'desc';
+        }
 
         $tasks = DailyTask::with(['department', 'creator', 'assignee', 'updatedBy', 'submittedBy'])
                           ->where('company_id', $user->company_id)
+                          ->orderBy($sort_by, $type_of)
                           ->paginate($perPage);
         return response()->json([
             'tasks' => DailyTaskResource::collection($tasks->items()),
