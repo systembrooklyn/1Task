@@ -39,7 +39,14 @@ class DailyTaskController extends Controller
             'dept_id' => 'required|exists:departments,id',
             'assigned_to' => 'nullable|exists:users,id',
         ]);
-
+        if ($validated['task_type'] === 'daily') {
+            $validated['recurrent_days'] = null;
+            $validated['day_of_month'] = null;
+        } elseif ($validated['task_type'] === 'weekly') {
+            $validated['day_of_month'] = null;
+        } elseif ($validated['task_type'] === 'monthly') {
+            $validated['recurrent_days'] = null;
+        }
         try {
             $task = DB::transaction(function () use ($validated, $companyId, $user) {
                 return DailyTask::create([
@@ -91,11 +98,7 @@ class DailyTaskController extends Controller
         $user = Auth::user();
         $task = DailyTask::findOrFail($id);
         $this->authorize('update', $task);
-
-        // Get the original attributes before any changes
         $original = $task->getOriginal();
-
-        // Validate the incoming request data
         $validated = $request->validate([
             'task_name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -108,28 +111,28 @@ class DailyTaskController extends Controller
             'dept_id' => 'required|exists:departments,id',
             'assigned_to' => 'nullable|exists:users,id',
         ]);
-
-        // Prepare the data for updating the task
+        if ($validated['task_type'] === 'daily') {
+            $validated['recurrent_days'] = null;
+            $validated['day_of_month'] = null;
+        } elseif ($validated['task_type'] === 'weekly') {
+            $validated['day_of_month'] = null;
+        } elseif ($validated['task_type'] === 'monthly') {
+            $validated['recurrent_days'] = null;
+        }
         $updateData = [
-            'task_name' => $validated['task_name'],
+            'task_name' => $validated['task_name'] ?? $task->name,
             'description' => $validated['description'] ?? $task->description,
-            'start_date' => $validated['start_date'],
-            'task_type' => $validated['task_type'],
+            'start_date' => $validated['start_date'] ?? $task->start_date,
+            'task_type' => $validated['task_type'] ?? $task->task_type,
             'recurrent_days' => $validated['recurrent_days'] ?? $task->recurrent_days,
             'day_of_month' => $validated['day_of_month'] ?? $task->day_of_month,
-            'from' => $validated['from'],
-            'to' => $validated['to'],
+            'from' => $validated['from'] ?? $task->from,
+            'to' => $validated['to'] ?? $task->to,
             'assigned_to' => $validated['assigned_to'] ?? $task->assigned_to,
             'updated_by' => $user->id,
         ];
-
-        // Update the task with the new data
         $task->update($updateData);
-
-        // Get the changed attributes
         $changes = $task->getChanges();
-
-        // Define the fields that should be tracked for revisions
         $trackableFields = [
             'task_name',
             'status',
@@ -143,21 +146,15 @@ class DailyTaskController extends Controller
             'assigned_to',
             'note',
         ];
-
-        // Iterate over each changed field
         foreach ($changes as $field => $newValue) {
             if (in_array($field, $trackableFields)) {
                 $oldValue = $original[$field] ?? null;
-
-                // Check if the field is an array and serialize it
                 if (is_array($oldValue)) {
                     $oldValue = json_encode($oldValue);
                 }
                 if (is_array($newValue)) {
                     $newValue = json_encode($newValue);
                 }
-
-                // Create a revision record
                 DailyTaskRevision::create([
                     'daily_task_id' => $task->id,
                     'user_id' => $user->id,
