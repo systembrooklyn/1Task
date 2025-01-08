@@ -77,7 +77,7 @@ class DailyTaskPolicy
     }
     public function report(User $user, DailyTask $dailyTask)
     {
-        $hasPermission = $user->assignedPermissions()->contains('name', 'report_dailytask');
+        $hasPermission = $user->assignedPermissions()->contains('name', 'report-dailytask');
         $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
 
         if (!($hasPermission || $isOwner)) {

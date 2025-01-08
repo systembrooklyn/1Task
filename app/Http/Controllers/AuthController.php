@@ -65,12 +65,12 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
             'company_id' => $invitation->company_id,
         ]);
-
+        $user->assignRole('agent');
         $invitation->update(['is_accepted' => true]);
 
         $token = $user->createToken($request->name)->plainTextToken;
 
-        return response()->json(['message' => 'Registration successful.', 'user' => $user, 'token' => $token], 201);
+        return response()->json(['message' => 'Registration successful and assigned agent role.', 'user' => $user, 'token' => $token], 201);
     }
 
 
