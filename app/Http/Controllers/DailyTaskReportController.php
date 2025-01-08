@@ -58,7 +58,7 @@ class DailyTaskReportController extends Controller
     {
         $user = Auth::user();
         $dailyTask = DailyTask::findOrFail($dailyTaskId);
-        $this->authorize('update', $dailyTask);
+        $this->authorize('report', $dailyTask);
         $validated = $request->validate([
             'notes' => 'nullable|string',
             'status' => 'required|in:done,not_done',

@@ -3,7 +3,9 @@
 namespace App\Helpers;
 
 use App\Models\DailyTask;
+use App\Models\DailyTaskCounter;
 use Illuminate\Support\Facades\DB;
+
 
 class TaskNumberGenerator
 {
@@ -13,20 +15,38 @@ class TaskNumberGenerator
      * @param int
      * @return string
      */
+    // public static function generateTaskNo(int $companyId): string
+    // {
+    //     return DB::transaction(function () use ($companyId) {
+    //         $lastTask = DailyTask::where('company_id', $companyId)
+    //             ->select(DB::raw('MAX(CAST(SUBSTRING(task_no, 6) AS UNSIGNED)) as max_no'))
+    //             ->lockForUpdate()
+    //             ->first();
+    //         $nextNumber = $lastTask->max_no ? $lastTask->max_no + 1 : 1;
+    //         if ($nextNumber <= 9999) {
+    //             $numberPart = str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+    //         } else {
+    //             $numberPart = (string) $nextNumber;
+    //         }
+
+    //         return 'TASK-' . strtoupper($numberPart);
+    //     });
+    // }
     public static function generateTaskNo(int $companyId): string
     {
         return DB::transaction(function () use ($companyId) {
-            $lastTask = DailyTask::where('company_id', $companyId)
-                ->select(DB::raw('MAX(CAST(SUBSTRING(task_no, 6) AS UNSIGNED)) as max_no'))
+            $taskCounter = DailyTaskCounter::where('company_id', $companyId)
                 ->lockForUpdate()
                 ->first();
-            $nextNumber = $lastTask->max_no ? $lastTask->max_no + 1 : 1;
-            if ($nextNumber <= 9999) {
-                $numberPart = str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
-            } else {
-                $numberPart = (string) $nextNumber;
+            if (!$taskCounter) {
+                $taskCounter = new DailyTaskCounter([
+                    'company_id'  => $companyId,
+                    'last_daily_task_no' => 0,
+                ]);
             }
-
+            $taskCounter->last_daily_task_no++;
+            $taskCounter->save();
+            $numberPart = str_pad($taskCounter->last_daily_task_no, 4, '0', STR_PAD_LEFT);
             return 'TASK-' . strtoupper($numberPart);
         });
     }

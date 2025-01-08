@@ -22,7 +22,7 @@ class DailyTaskPolicy
     }
 
     /**
-     * Determine whether the user can view the model.
+     * Determine whether the user can view the model.` 
      */
     public function view(User $user, DailyTask $dailyTask)
     {
@@ -71,6 +71,20 @@ class DailyTaskPolicy
         // || !$user->departments->contains($dailyTask->dept_id)
         if ($user->company_id !== $dailyTask->company_id) {
             return \Illuminate\Auth\Access\Response::deny('You do not have permission to update this task.');
+        }
+
+        return \Illuminate\Auth\Access\Response::allow();
+    }
+    public function report(User $user, DailyTask $dailyTask)
+    {
+        $hasPermission = $user->assignedPermissions()->contains('name', 'report_dailytask');
+        $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
+
+        if (!($hasPermission || $isOwner)) {
+            return \Illuminate\Auth\Access\Response::deny('You do not have permission to report daily task.');
+        }
+        if ($user->company_id !== $dailyTask->company_id) {
+            return \Illuminate\Auth\Access\Response::deny('You do not have permission to report this task.');
         }
 
         return \Illuminate\Auth\Access\Response::allow();

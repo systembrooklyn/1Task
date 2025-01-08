@@ -6,6 +6,7 @@ use App\Http\Controllers\CompanyOwnerController;
 use App\Http\Controllers\DailyTaskController;
 use App\Http\Controllers\DailyTaskReportController;
 use App\Http\Controllers\DepartmentsController;
+use App\Http\Controllers\DigitalCardController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RoleController;
@@ -97,3 +98,25 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/attachments/{id}', [TaskAttachmentController::class, 'destroy'])->name('attachments.delete');
     Route::get('/attachments/{id}/download', [TaskAttachmentController::class, 'download'])->name('attachments.download');
 });
+
+
+/**
+ * digital users
+*/
+
+Route::get('/digitalusers', [DigitalCardController::class, 'listUsers']);
+Route::post('/digitalusers', [DigitalCardController::class, 'createUser']);
+Route::get('/digitalusers/{id}', [DigitalCardController::class, 'getUser']);
+Route::get('/digitalusers/code/{userCode}', [DigitalCardController::class, 'getUserByCode']);
+Route::put('/digitalusers/{id}', [DigitalCardController::class, 'updateUser']);
+Route::delete('/digitalusers/{id}', [DigitalCardController::class, 'deleteUser']);
+
+Route::get('/digitalusers/{userId}/social-links', [DigitalCardController::class, 'listSocialLinks']);
+Route::post('/digitalusers/{userId}/social-links', [DigitalCardController::class, 'addSocialLink']);
+Route::put('/social-links/{id}', [DigitalCardController::class, 'updateSocialLink']);
+Route::delete('/social-links/{id}', [DigitalCardController::class, 'deleteSocialLink']);
+
+Route::get('/digitalusers/{userId}/phones', [DigitalCardController::class, 'listPhones']);
+Route::post('/digitalusers/{userId}/phones', [DigitalCardController::class, 'addPhone']);
+Route::put('/phones/{id}', [DigitalCardController::class, 'updatePhone']);
+Route::delete('/phones/{id}', [DigitalCardController::class, 'deletePhone']);
