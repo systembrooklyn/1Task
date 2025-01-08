@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Company;
 use App\Models\Invitation;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -38,6 +39,24 @@ class AuthController extends Controller
             'company_id' => $company->id,
         ]);
 
+
+        $agentRole = Role::create([
+            'name'       => 'agent',
+            'company_id' => $company->id,
+            'guard_name' => 'sanctum'
+        ]);
+        $viewPermission = Permission::where('name', 'view-dailytask')->first();
+        $reportPermission = Permission::where('name', 'report-dailytask')->first();
+        DB::table('role_has_permissions')->insert([
+            'role_id'       => $agentRole->id,
+            'permission_id' => $viewPermission->id,
+        ]);
+        DB::table('role_has_permissions')->insert([
+            'role_id'       => $agentRole->id,
+            'permission_id' => $reportPermission->id,
+        ]);
+
+
         $token = $user->createToken($request->name);
         
         return [
@@ -66,6 +85,18 @@ class AuthController extends Controller
             'company_id' => $invitation->company_id,
         ]);
         $invitation->update(['is_accepted' => true]);
+
+        $agentRole = Role::where('name', 'agent')
+            ->where('guard_name', 'sanctum')
+            ->where('company_id', $invitation->company_id)
+            ->first();
+
+        DB::table('role_user')->insert([
+            'user_id'    => $user->id,
+            'role_id'    => $agentRole->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         $token = $user->createToken($request->name)->plainTextToken;
 

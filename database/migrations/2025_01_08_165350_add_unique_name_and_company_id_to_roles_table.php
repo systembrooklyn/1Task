@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('roles', function (Blueprint $table) {
-            $table->unsignedBigInteger('company_id')->nullable()->change();
+            $table->dropUnique('roles_name_guard_name_unique');
+            $table->unique(['name', 'company_id'], 'roles_name_company_id_unique');
         });
     }
 
@@ -22,7 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('roles', function (Blueprint $table) {
-            //
+            $table->dropUnique('roles_name_company_id_unique');
+            $table->unique(['name', 'guard_name'], 'roles_name_guard_name_unique');
         });
     }
 };
