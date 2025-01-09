@@ -60,7 +60,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/departments-users', [UserDepartmentController::class, 'getUsersInDepartment']);
     Route::post('/unassign-department/{userId}', [UserDepartmentController::class, 'unassignDepartment']);
     Route::put('/department/assign-manager', [UserDepartmentController::class, 'assignManagerToDepartment']);
-    Route::get('company-owner/{company_id}', [CompanyOwnerController::class, 'getCompanyOwner']);
+    Route::get('company-owner', [CompanyOwnerController::class, 'getCompanyOwner']);
     Route::get('isOwner', [CompanyOwnerController::class, 'checkOwner']);
     
     

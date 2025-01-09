@@ -56,6 +56,19 @@ class AuthController extends Controller
             'permission_id' => $reportPermission->id,
         ]);
 
+        $superAdminRole = Role::create([
+            'name'       => 'superadmin',
+            'company_id' => $company->id,
+            'guard_name' => 'sanctum',
+        ]);
+        $allPermissions = Permission::all();
+        foreach ($allPermissions as $permission) {
+            DB::table('role_has_permissions')->insert([
+                'role_id'       => $superAdminRole->id,
+                'permission_id' => $permission->id,
+            ]);
+        }
+
 
         $token = $user->createToken($request->name);
         

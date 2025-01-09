@@ -8,16 +8,20 @@ use Illuminate\Support\Facades\Auth;
 
 class CompanyOwnerController extends Controller
 {
-    public function getCompanyOwner($company_id)
+    public function getCompanyOwner()
     {
-        $company = Company::with('owners')->find($company_id);
+        $user = Auth::user();
+        $company = Company::with('owners')->find($user->company_id);
 
         if (!$company) {
             return response()->json(['message' => 'Company not found'], 404);
         }
 
         $owners = $company->owners->map(function ($owner) {
-            return $owner->name;
+            return [
+                'name'  => $owner->name,
+                'email' => $owner->email,
+            ];
         });
 
         return response()->json([
@@ -30,7 +34,7 @@ class CompanyOwnerController extends Controller
         $user = Auth::user();
 
         if (!$user) {
-            return response()->json(['message' => 'User not authenticated'], 401); // Unauthorized
+            return response()->json(['message' => 'User not authenticated'], 401);
         }
 
         $isOwner = Company::whereHas('owners', function ($query) use ($user) {
