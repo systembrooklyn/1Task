@@ -242,26 +242,29 @@ class AuthController extends Controller
             'role_ids' => 'required|array',
             'role_ids.*' => 'exists:roles,id',
         ]);
+
         $user = User::findOrFail($validated['user_id']);
-
-
         $roles = Role::find($validated['role_ids']);
+
         if ($roles->isEmpty()) {
             return response()->json(['message' => 'No valid roles found.'], 400);
         }
 
         foreach ($roles as $role) {
-           
+            // Ensure the user and role belong to the same company
             if ($user->company_id !== $role->company_id) {
                 return response()->json(['message' => 'User and role do not belong to the same company.'], 400);
             }
 
-            
-            if ($role->guard_name == 'sanctum') {
-                $user->assignRole($role);
-            } else {
+            // Check the guard name
+            if ($role->guard_name !== 'sanctum') {
                 return response()->json(['message' => 'Invalid guard name for one of the roles.'], 400);
             }
+
+            // Assign the role with the company_id in the pivot table
+            $user->roles()->syncWithoutDetaching([
+                $role->id => ['company_id' => $user->company_id]
+            ]);
         }
 
         return response()->json(['message' => 'Roles assigned successfully.'], 200);
