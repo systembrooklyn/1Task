@@ -13,7 +13,10 @@ class DigitalCardUser extends Model
     use HasFactory, HasApiTokens, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'password', 'user_code', 'title', 'desc', 'profile_pic_url', 'back_pic_link'
+        'name', 'email', 'password', 'user_code', 'title', 'desc', 'profile_pic_url', 'back_pic_link',
+        'email_verified_at',
+        'verification_code',
+        'is_verified'
     ];
 
     protected $hidden = [
@@ -23,12 +26,6 @@ class DigitalCardUser extends Model
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-
-    // Send the verification email notification
-    public function sendEmailVerificationNotification()
-    {
-        $this->notify(new \App\Notifications\VerifyEmailNotification());
-    }
     protected static function boot()
     {
         parent::boot();
@@ -40,6 +37,11 @@ class DigitalCardUser extends Model
 
             $model->user_code = $randomCode;
         });
+        static::creating(function ($user) {
+            if (empty($user->verification_code)) {
+                $user->verification_code = Str::random(6);
+            }
+        });
     }
     public function socialLinks()
     {
@@ -49,5 +51,17 @@ class DigitalCardUser extends Model
     {
         return $this->hasMany(DigitalCardUsersPhone::class, 'user_id');
     }
-    
+    public function verifyEmail($code)
+    {
+        if ($this->verification_code === $code) {
+            $this->email_verified_at = now();
+            $this->verification_code = null;
+            $this->save();
+
+            return true;
+        }
+
+        return false;
+    }
+
 }

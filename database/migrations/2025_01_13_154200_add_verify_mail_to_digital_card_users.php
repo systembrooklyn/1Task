@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('digital_card_users', function (Blueprint $table) {
-            $table->string('edit_code')->nullable()->unique();
-            $table->timestamp('edit_code_expires_at')->nullable();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('verification_code')->nullable();
+            $table->boolean('is_verified')->default(false);
         });
     }
 
@@ -23,7 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('digital_card_users', function (Blueprint $table) {
-            $table->dropColumn(['edit_code', 'edit_code_expires_at']);
+            $table->dropColumn('verification_code');
+            $table->dropColumn('is_verified');
+            $table->dropColumn('email_verified_at');
         });
     }
 };

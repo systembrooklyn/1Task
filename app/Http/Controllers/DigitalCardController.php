@@ -2,226 +2,196 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\EditCodeMail;
 use App\Models\DigitalCardUser;
 use App\Models\DigitalCardSocialLink;
 use App\Models\DigitalCardUsersPhone;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Password;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\Mail;
 
 class DigitalCardController extends Controller
 {   
+    use HasApiTokens, Notifiable;
     /**
      * digital users register and login
      */
     public function register(Request $request)
     {
-        $validatedData = $request->validate([
-            'email' => 'required|email|unique:digital_card_users,email',
-            'password' => 'required|min:6',
+        $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'title' => 'nullable|string|max:255',
-            'desc' => 'nullable|string',
-            'profile_pic_url' => 'nullable|url',
-            'back_pic_link' => 'nullable|url',
+            'email' => 'required|email|unique:digital_card_users,email',
+            'password' => 'required|string|min:8',
         ]);
 
-        $validatedData['password'] = Hash::make($validatedData['password']);
-        $user = DigitalCardUser::create($validatedData);
-
-        return response()->json([
-            'message' => 'User registered successfully!',
-            'user' => $user,
-        ], 201);
-    }
-
-    // Login digital card user
-    public function login(Request $request)
-    {
-        $validatedData = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+        $user = DigitalCardUser::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => bcrypt($request->password),
+            'verification_code' => Str::random(6),
         ]);
-
-        $user = DigitalCardUser::where('email', $validatedData['email'])->first();
-
-        if (!$user || !Hash::check($validatedData['password'], $user->password)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+        try {
+            Mail::send('emails.verification_code', ['user' => $user], function ($message) use ($user) {
+                $message->to($user->email)
+                        ->subject('Your Email Verification Code');
+            });
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to send verification email.'], 500);
         }
 
-        // Generate a token for the user
+        return response()->json([
+            'message' => 'User registered successfully. Please check your email for the verification code.',
+        ]);
+    }
+    public function verifyCode(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'verification_code' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+        $user = DigitalCardUser::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found.'], 404);
+        }
+        if ($user->verification_code !== $request->verification_code) {
+            return response()->json(['message' => 'Invalid verification code.'], 400);
+        }
+        $user->is_verified = true;
+        $user->email_verified_at = now();
+        $user->verification_code = null;
+        $user->save();
+
+        return response()->json([
+            'message' => 'Email verified successfully.',
+            'user' => $user
+        ]);
+    }
+
+    // Login
+    public function login(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:digital_card_users,email',
+            'password' => 'required|string|min:8',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+        $user = DigitalCardUser::where('email', $request->email)->first();
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'Invalid credentials.'], 401);
+        }
+        if (is_null($user->email_verified_at)) {
+            return response()->json(['message' => 'Please verify your email first.'], 403);
+        }
         $token = $user->createToken('DigitalCardApp')->plainTextToken;
 
         return response()->json([
-            'message' => 'Login successful',
+            'message' => 'Login successful.',
             'token' => $token,
         ]);
     }
 
-    // Logout digital card user
-    public function logout(Request $request)
+    public function updateDigitalCard(Request $request)
     {
-        Auth::user()->tokens->each(function ($token) {
-            $token->delete();
-        });
+        $user = auth('digital_card_users')->user();
 
-        return response()->json(['message' => 'Logged out successfully']);
-    }
-
-    // Email Verification Method
-    public function verifyEmail(Request $request)
-    {
-        // Validate the verification link
-        $request->validate([
-            'id' => 'required|exists:digital_card_users,id',
-            'hash' => 'required|string',
-        ]);
-
-        $user = DigitalCardUser::findOrFail($request->id);
-
-        // Check if the email is already verified
-        if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'Email already verified'], 200);
+        if (!$user) {
+            return response()->json(['message' => 'User not found.'], 404);
         }
-
-        // Verify the email address
-        $user->markEmailAsVerified();
-
-        return response()->json(['message' => 'Email verified successfully'], 200);
-    }
-
-
-
-
-    public function createUser(Request $request)
-    {
-        $validatedData = $request->validate([
+        $validator = Validator::make($request->all(), [
             'title' => 'nullable|string|max:255',
             'desc' => 'nullable|string',
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:digital_card_users,email',
             'profile_pic_url' => 'nullable|url',
             'back_pic_link' => 'nullable|url',
-            'phones' => 'required|array',
-            'phones.*' => 'required|numeric',
-            'social_links' => 'required|array',
-            'social_links.*.name' => 'required|string|max:255',
-            'social_links.*.icon' => 'nullable|string|max:255',
-            'social_links.*.link' => 'required|url',
-        ]);
-
-        $digitalCardUser = DigitalCardUser::create([
-            'title' => $validatedData['title'] ?? null,
-            'desc' => $validatedData['desc'] ?? null,
-            'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
-            'profile_pic_url' => $validatedData['profile_pic_url'] ?? null,
-            'back_pic_link' => $validatedData['back_pic_link'] ?? null,
-        ]);
-
-        foreach ($validatedData['phones'] as $phone) {
-            DigitalCardUsersPhone::create([
-                'user_id' => $digitalCardUser->id,
-                'phone' => $phone,
-            ]);
-        }
-
-        foreach ($validatedData['social_links'] as $socialLink) {
-            DigitalCardSocialLink::create([
-                'user_id' => $digitalCardUser->id,
-                'name' => $socialLink['name'],
-                'icon' => $socialLink['icon'] ?? null,
-                'link' => $socialLink['link'],
-            ]);
-        }
-
-        return response()->json([
-            'message' => 'User created successfully!',
-            'data' => $digitalCardUser->load('phones', 'socialLinks'),
-        ], 201);
-    }
-    public function getUserByCode($userCode)
-    {
-        $user = DigitalCardUser::with(['socialLinks', 'phones'])
-            ->where('user_code', $userCode)
-            ->firstOrFail();
-
-        return response()->json($user);
-    }
-    public function sendEditCode(Request $request)
-    {
-        $validated = $request->validate([
-            'email' => 'required|email|exists:digital_card_users,email',
-        ]);
-
-        $user = DigitalCardUser::where('email', $validated['email'])->firstOrFail();
-        $editCode = rand(100000, 999999);
-        $user->edit_code = (string) $editCode;
-        $user->edit_code_expires_at = now()->addMinutes(120);
-        $user->save();
-        Mail::to($user->email)->send(new EditCodeMail($editCode));
-
-        return response()->json(['message' => 'Edit code sent successfully!'], 200);
-    }
-    public function updateUser(Request $request)
-    {
-        $validated = $request->validate([
-            'email' => 'required|email|exists:digital_card_users,email',
-            'edit_code' => 'required',
-            'title' => 'sometimes|string|max:255',
-            'desc' => 'nullable|string',
-            'name' => 'sometimes|string|max:255',
-            'profile_pic_url' => 'nullable|url',
-            'back_pic_link' => 'nullable|url',
-            'phones' => 'nullable|array',
-            'phones.*' => 'required|numeric|unique:digital_card_users_phones,phone',
             'social_links' => 'nullable|array',
-            'social_links.*.name' => 'required|string|max:255',
-            'social_links.*.icon' => 'nullable|string|max:255',
-            'social_links.*.link' => 'required|url',
+            'social_links.*.name' => 'nullable|string',
+            'social_links.*.icon' => 'nullable|string',
+            'social_links.*.link' => 'nullable|url',
+            'phones' => 'nullable|array',
+            'phones.*.phone' => 'nullable|string',
         ]);
-        $user = DigitalCardUser::where('email', $validated['email'])->firstOrFail();
-        if ($user->edit_code !== (string) $validated['edit_code'] || $user->edit_code_expires_at < now()) {
-            return response()->json(['message' => 'Invalid or expired edit code.'], 400);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
         }
-        $user->update($request->only(['title', 'desc', 'name', 'profile_pic_url', 'back_pic_link']));
-        if (isset($validated['phones'])) {
-            $user->phones()->delete();
-            foreach ($validated['phones'] as $phone) {
-                DigitalCardUsersPhone::create([
-                    'user_id' => $user->id,
-                    'phone' => $phone,
-                ]);
-            }
-        }
-        if (isset($validated['social_links'])) {
+        $user->update($request->only(['title', 'desc', 'profile_pic_url', 'back_pic_link']));
+        if ($request->has('social_links')) {
             $user->socialLinks()->delete();
-            foreach ($validated['social_links'] as $socialLink) {
+            foreach ($request->social_links as $socialLink) {
                 DigitalCardSocialLink::create([
                     'user_id' => $user->id,
                     'name' => $socialLink['name'],
-                    'icon' => $socialLink['icon'] ?? null,
+                    'icon' => $socialLink['icon'],
                     'link' => $socialLink['link'],
                 ]);
             }
         }
-        $user->edit_code = null;
-        $user->edit_code_expires_at = null;
-        $user->save();
-
-        return response()->json(['message' => 'Digital card updated successfully!', 'user' => $user], 200);
+        if ($request->has('phones')) {
+            $user->phones()->delete();
+            foreach ($request->phones as $phone) {
+                DigitalCardUsersPhone::create([
+                    'user_id' => $user->id,
+                    'phone' => $phone['phone'],
+                ]);
+            }
+        }
+        return response()->json([
+            'message' => 'Digital card updated successfully.',
+            'user' => $user->load('socialLinks', 'phones'),
+        ]);
     }
-    public function deleteUser($userCode)
+    /**
+     * Deactivate the user's account.
+     */
+    public function deleteAccount()
     {
-        $user = DigitalCardUser::with(['socialLinks', 'phones'])
-        ->where('user_code', $userCode)
-        ->firstOrFail();
+        $user = auth('digital_card_users')->user();
+
         $user->delete();
-        return response()->json(['message' => 'User deleted successfully']);
+
+        return response()->json(['message' => 'Account deactivated successfully.']);
+    }
+
+    /**
+     * Get the logged-in user's digital card details.
+     */
+    public function getDigitalCard()
+    {
+        $user = auth('digital_card_users')->user();
+
+        return response()->json([
+            'user' => $user->load('socialLinks', 'phones'),
+        ]);
+    }
+
+    /**
+     * Get a digital card by user_code.
+     */
+    public function viewDigitalCard($user_code)
+    {
+        $user = DigitalCardUser::with(['socialLinks', 'phones'])->where('user_code', $user_code)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'Digital card not found.'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Digital card retrieved successfully.',
+            'digital_card' => $user,
+        ]);
     }
 }
 

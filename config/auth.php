@@ -44,6 +44,10 @@ return [
             'driver' => 'sanctum',
             'provider' => 'users',
         ],
+        'digital_card_users' => [
+        'driver' => 'sanctum',
+        'provider' => 'digital_card_users',
+    ],
     ],
 
     /*
@@ -68,6 +72,10 @@ return [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
+        'digital_card_users' => [
+        'driver' => 'eloquent',
+        'model' => App\Models\DigitalCardUser::class,
+        ]
 
         // 'users' => [
         //     'driver' => 'database',

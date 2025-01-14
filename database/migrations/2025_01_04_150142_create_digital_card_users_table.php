@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('digital_card_users', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
+            $table->string('title')->nullable();
             $table->string('desc')->nullable();
             $table->string('name');
             $table->string('email');

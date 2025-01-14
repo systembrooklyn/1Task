@@ -19,6 +19,7 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskRevisionController;
 use App\Http\Controllers\TaskUserStatusController;
 use App\Http\Controllers\UserDepartmentController;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -103,43 +104,14 @@ Route::middleware('auth:sanctum')->group(function () {
 /**
  * digital users
 */
+Route::get('/digital-card/view/{user_code}', [DigitalCardController::class, 'viewDigitalCard']);
+Route::post('/digital-card/register', [DigitalCardController::class, 'register']);
+Route::post('/digital-card/verify-code', [DigitalCardController::class, 'verifyCode']);
+Route::post('/digital-card/login', [DigitalCardController::class, 'login']);
+Route::middleware('auth:digital_card_users')->put('/digital-card/update', [DigitalCardController::class, 'updateDigitalCard']);
 
-// Route::get('/digitalusers', [DigitalCardController::class, 'listUsers']);
-// Route::post('/digitalusers', [DigitalCardController::class, 'createUser']);
-// Route::get('/digitalusers/{id}', [DigitalCardController::class, 'getUser']);
-// Route::get('/digitalusers/code/{userCode}', [DigitalCardController::class, 'getUserByCode']);
-// // Route::put('/digitalusers/{id}', [DigitalCardController::class, 'updateUser']);
-// Route::delete('/digitalusers/{id}', [DigitalCardController::class, 'deleteUser']);
-
-// Route::post('/digital-cards/request-edit-code', [DigitalCardController::class, 'requestEditCode']);
-// Route::post('/digital-cards/verify-edit-code', [DigitalCardController::class, 'verifyEditCode']);
-// Route::post('/digital-cards/edit', [DigitalCardController::class, 'updateUser']);
-// Route::post('/digital-cards/users/{id}/resend-edit-code', [DigitalCardController::class, 'resendEditCode']);
-
-// Route::get('/digitalusers/{id}/social-links', [DigitalCardController::class, 'listSocialLinks']);
-// Route::post('/digitalusers/{id}/social-links', [DigitalCardController::class, 'addSocialLink']);
-// Route::put('/social-links/{id}', [DigitalCardController::class, 'updateSocialLink']);
-// Route::delete('/social-links/{id}', [DigitalCardController::class, 'deleteSocialLink']);
-
-// Route::get('/digitalusers/{userId}/phones', [DigitalCardController::class, 'listPhones']);
-// Route::post('/digitalusers/{userId}/phones', [DigitalCardController::class, 'addPhone']);
-// Route::put('/phones/{id}', [DigitalCardController::class, 'updatePhone']);
-// Route::delete('/phones/{id}', [DigitalCardController::class, 'deletePhone']);
-
-Route::post('/digitalUsers', [DigitalCardController::class, 'createUser']);
-Route::get('/digitalUsers/{userCode}', [DigitalCardController::class, 'getUserByCode']);
-Route::post('/digitalUsers/send-edit-code', [DigitalCardController::class, 'sendEditCode']);
-// Route::post('/digitalUsers/update', [DigitalCardController::class, 'updateUser']);
-// Route::delete('/digitalUsers/{id}', [DigitalCardController::class, 'deleteUser']);
-
-Route::post('/digital-card-users/register', [DigitalCardController::class, 'register']);
-
-Route::post('/digital-card-users/login', [DigitalCardController::class, 'login']);
-
-Route::post('/digital-card-users/verify-email/{id}/{hash}', [DigitalCardController::class, 'verifyEmail']);
-
-Route::middleware('auth:sanctum')->group(function () {
-    // Protected routes for user actions
-    Route::post('/digital-card-users/update', [DigitalCardController::class, 'updateUser']);
-    Route::delete('/digital-card-users/{id}', [DigitalCardController::class, 'deleteUser']);
+Route::middleware('auth:digital_card_users')->group(function () {
+            Route::get('/digital-card/user', [DigitalCardController::class, 'getDigitalCard']);
+            Route::put('/digital-card/update', [DigitalCardController::class, 'updateDigitalCard']);
+            Route::post('/digital-card/delete', [DigitalCardController::class, 'deleteAccount']);
 });
