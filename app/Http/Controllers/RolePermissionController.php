@@ -101,7 +101,7 @@ class RolePermissionController extends Controller
         $role = Role::where('company_id', $company_id)->findOrFail($id);
         $this->authorize('update', $role);
         $request->validate([
-            'name' => 'required|string|unique:roles,name,' . $id,
+            'name' => 'required|string',
             'permissions' => 'required|array',
             'permissions.*' => 'exists:permissions,id',
         ]);
