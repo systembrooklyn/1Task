@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->text('desc');
+            $table->text('desc')->nullable();
             $table->boolean('status');
             $table->dateTime('deadline')->nullable();
             $table->foreignId('edited_by')->nullable()->constrained('users')->onDelete('set null');

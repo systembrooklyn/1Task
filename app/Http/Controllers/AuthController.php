@@ -107,6 +107,7 @@ class AuthController extends Controller
         DB::table('role_user')->insert([
             'user_id'    => $user->id,
             'role_id'    => $agentRole->id,
+            'company_id' => $invitation->company_id,
             'created_at' => now(),
             'updated_at' => now(),
         ]);

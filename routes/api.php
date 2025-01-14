@@ -111,7 +111,7 @@ Route::get('/digital-card/view/{user_code}', [DigitalCardController::class, 'vie
 Route::post('/digital-card/register', [DigitalCardController::class, 'register']);
 Route::post('/digital-card/verify-code', [DigitalCardController::class, 'verifyCode']);
 Route::post('/digital-card/login', [DigitalCardController::class, 'login']);
-Route::middleware('auth:digital_card_users')->put('/digital-card/update', [DigitalCardController::class, 'updateDigitalCard']);
+// Route::middleware('auth:digital_card_users')->put('/digital-card/update', [DigitalCardController::class, 'updateDigitalCard']);
 
 Route::middleware('auth:digital_card_users')->group(function () {
             Route::get('/digital-card/user', [DigitalCardController::class, 'getDigitalCard']);
