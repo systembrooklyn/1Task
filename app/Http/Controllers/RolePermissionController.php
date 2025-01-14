@@ -34,6 +34,16 @@ class RolePermissionController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
         ]);
+
+        $existingRole = Role::where('company_id', $company_id)
+        ->where('name', $request->name)
+        ->first();
+
+        if ($existingRole) {
+            return response()->json([
+                'message' => "A role with the name {$existingRole->name} already exists in your company.",
+            ], 422);
+        }
         $role = Role::create([
             'name' => $request->name,
             'company_id' => $company_id,
