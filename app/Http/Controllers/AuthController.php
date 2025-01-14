@@ -337,5 +337,26 @@ class AuthController extends Controller
             return response()->json(['message' => 'You do not have permission to delete this user.'], 401);
         }
     }
+
+    public function editUser(Request $request, int $id)
+    {
+        $loggedInUser = Auth::user();
+        $userToEdit = User::findOrFail($id);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+        if ($loggedInUser->company_id != $userToEdit->company_id) {
+            return response()->json(['message' => 'You can only edit users within your company.'], 403);
+        }
+        $haveAccess = $loggedInUser->getAllPermissions()->contains('name', 'edit-user');
+        $isOwner = $loggedInUser->companies()->wherePivot('company_id', $loggedInUser->company_id)->exists();
+        if ($haveAccess || $isOwner || ($loggedInUser->id == $userToEdit->id)) {
+            $userToEdit->name = $validated['name'];
+            $userToEdit->save();
+
+            return response()->json(['message' => 'User name changed successfully.'], 200);
+        }
+        return response()->json(['message' => 'You do not have permission to edit this user.'], 401);
+    }
     
 }

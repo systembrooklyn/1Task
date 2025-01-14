@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CompanyOwnerController;
@@ -46,6 +47,8 @@ Route::apiResource('departments', DepartmentsController::class)->middleware('aut
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('permissions', [RolePermissionController::class, 'getPermissions']);
     Route::get('permissions/{id}', [RolePermissionController::class, 'getPermission']);
+
+    Route::post('edit-user/{id}',[AuthController::class,'editUser']);
 
     Route::post('roles', [RolePermissionController::class, 'createRole']);  
     Route::get('roles', [RolePermissionController::class, 'getRoles']);      
@@ -115,3 +118,11 @@ Route::middleware('auth:digital_card_users')->group(function () {
             Route::put('/digital-card/update', [DigitalCardController::class, 'updateDigitalCard']);
             Route::post('/digital-card/delete', [DigitalCardController::class, 'deleteAccount']);
 });
+
+
+
+/**
+ * Google login
+ */
+Route::get('/auth/google/redirect', [GoogleController::class, 'redirectToGoogle']);
+Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);

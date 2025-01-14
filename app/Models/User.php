@@ -30,6 +30,7 @@ class User extends Authenticatable
         'email',
         'password',
         'company_id',
+        'google_id'
     ];
     
     public function company()
