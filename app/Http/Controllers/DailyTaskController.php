@@ -106,8 +106,8 @@ class DailyTaskController extends Controller
             'task_type' => 'required|in:single,daily,weekly,monthly,last_day_of_month',
             'recurrent_days' => 'nullable|array',
             'day_of_month' => 'nullable|integer|min:1|max:31',
-            'from' => 'required|date_format:H:i:s',
-            'to' => 'required|date_format:H:i:s|after:from',
+            'from' => 'required|date_format:H:i',
+            'to' => 'required|date_format:H:i|after:from',
             'dept_id' => 'required|exists:departments,id',
             'assigned_to' => 'nullable|exists:users,id',
         ]);
