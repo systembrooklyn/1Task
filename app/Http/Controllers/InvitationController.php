@@ -104,4 +104,16 @@ class InvitationController extends Controller
         return response()->json(['message' => 'User registered successfully!'], 201);
     }
 
+
+    protected function getInvitations(){
+        $user = auth('sanctum')->user();
+        $invitations = Invitation::where('company_id', $user->company_id)
+                         ->where('is_accepted', 0)
+                         ->get();
+        
+                         return response()->json([
+                            'invitations'=>$invitations,
+                        ]);
+    }
+
 }

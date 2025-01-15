@@ -6,6 +6,7 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CompanyOwnerController;
 use App\Http\Controllers\DailyTaskController;
 use App\Http\Controllers\DailyTaskReportController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\DigitalCardController;
 use App\Http\Controllers\InvitationController;
@@ -120,7 +121,8 @@ Route::middleware('auth:digital_card_users')->group(function () {
 });
 
 
-
+Route::middleware('auth:sanctum')->get('/dashboard', [DashboardController::class, 'getCounts']);
+Route::middleware('auth:sanctum')->get('/getInvitations', [InvitationController::class, 'getInvitations']);
 /**
  * Google login
  */
