@@ -106,7 +106,22 @@ class InvitationController extends Controller
 
 
     protected function getInvitations(){
+        if (!auth('sanctum')->user()) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
         $user = auth('sanctum')->user();
+        $haveAccess = false;
+        $permissions = $user->getAllPermissions();
+
+        foreach ($permissions as $permission) {
+            if ($permission->name == "inivte-user") {
+                $haveAccess = true;
+                break;
+            }
+        }
+        $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
+
+        if ($haveAccess || $isOwner) {
         $invitations = Invitation::where('company_id', $user->company_id)
                          ->where('is_accepted', 0)
                          ->get();
@@ -114,6 +129,9 @@ class InvitationController extends Controller
                          return response()->json([
                             'invitations'=>$invitations,
                         ]);
+        }else return response()->json([
+            'message'=>'you dont have permission to invite user',
+        ]);
     }
 
 }
