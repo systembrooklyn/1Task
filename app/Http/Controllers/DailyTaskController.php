@@ -196,13 +196,13 @@ class DailyTaskController extends Controller
         if (!in_array($type_of, ['asc', 'desc'])) {
             $type_of = 'asc';
         }
-        
+
         $today = now()->format('Y-m-d');
         $currentDayOfWeek = now()->dayOfWeek;
         $currentDayOfMonth = now()->day;
         $departmentIds = $user->departments()->pluck('departments.id')->toArray();
         $perPage = $request->input('per_page', $per_page ? $per_page : 10);
-        
+
         $tasksQuery = DailyTask::query()
             ->where('company_id', $company_id)
             ->where('active',1)
@@ -232,8 +232,18 @@ class DailyTaskController extends Controller
                         ->whereRaw('DAY(LAST_DAY(start_date)) = ?', [now()->day]);
                 });
             })
+            ->leftJoin('daily_task_reports', function ($join) use ($today) {
+                $join->on('daily_task_reports.daily_task_id', '=', 'daily_tasks.id')
+                    ->whereDate('daily_task_reports.created_at', '=', $today);
+            })
+            ->select('daily_tasks.*', 'daily_task_reports.status as today_report_status')
+            ->orderByRaw("CASE
+            WHEN daily_task_reports.daily_task_id IS NULL THEN 1
+            WHEN daily_task_reports.status = 'done' THEN 2
+            WHEN daily_task_reports.status = 'not_done' THEN 3
+            ELSE 4 END")
             ->orderBy($sort_by, $type_of);
-        
+
         $tasks = $tasksQuery->paginate($perPage);
         $tasksData = DailyTaskResource::collection($tasks->items());
         
