@@ -184,26 +184,29 @@ class DailyTaskController extends Controller
         $user = Auth::user();
         $company_id = $user->company_id;
         $this->authorize('viewAny', DailyTask::class);
-        $sort_by = $request->input('sort_by', 'created_at');
-        $type_of = $request->input('type_of', 'desc');
-        $allowedSorts = ['start_date','created_at'];
+        $per_page = $request->input('per_page');
+        $deptFilter = $request->input('dept_filter');
+        $sort_by = $request->input('sort_by', 'from');
+        $type_of = $request->input('type_of', 'asc');
+        $allowedSorts = ['start_date','from'];
         if (!in_array($sort_by, $allowedSorts)) {
-            $sort_by = 'created_at';
+            $sort_by = 'from';
         }
         $type_of = strtolower($type_of);
         if (!in_array($type_of, ['asc', 'desc'])) {
-            $type_of = 'desc';
+            $type_of = 'asc';
         }
         
         $today = now()->format('Y-m-d');
         $currentDayOfWeek = now()->dayOfWeek;
         $currentDayOfMonth = now()->day;
         $departmentIds = $user->departments()->pluck('departments.id')->toArray();
-        $perPage = $request->input('per_page', 10);
+        $perPage = $request->input('per_page', $per_page ? $per_page : 10);
         
         $tasksQuery = DailyTask::query()
             ->where('company_id', $company_id)
-            ->whereIn('dept_id', $departmentIds)
+            ->where('active',1)
+            ->whereIn('dept_id', $deptFilter? $deptFilter : $departmentIds)
             ->where(function ($query) use ($today, $currentDayOfWeek, $currentDayOfMonth) {
                 $query->orWhere(function ($query) use ($today) {
                     $query->where('task_type', 'daily')

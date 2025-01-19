@@ -12,12 +12,6 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    // public function getUserCompanyId(): ?int
-    // {
-    //     $user = auth('sanctum')->user();
-
-    //     return $user->company_id ?? null;
-    // }
 
 
     protected $user;
@@ -249,8 +243,6 @@ class DashboardController extends Controller
             'DepartmentData' => $departmentData->values(),
         ];
     }
-
-
 
     protected function countOwnerAllDailyTasks(){
         $total = DailyTask::where('company_id', $this->companyId)->count();
