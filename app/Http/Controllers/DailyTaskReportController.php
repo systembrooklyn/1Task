@@ -58,18 +58,20 @@ class DailyTaskReportController extends Controller
 
     public function index(Request $request)
     {
-        $user = Auth::user();
+    $user = Auth::user();
 
-        $reports = DailyTaskReport::whereHas('dailyTask', function ($query) use ($user) {
-            $query->where('company_id', $user->company_id);
-        })
-        ->with(['dailyTask', 'submittedBy'])
-        ->get();
-    
-        return response()->json([
-            'reports' => $reports,
-        ]);
+    $reports = DailyTaskReport::whereHas('dailyTask', function ($query) use ($user) {
+        $query->where('company_id', $user->company_id);
+    })
+    ->with(['dailyTask.department', 'submittedBy'])
+    ->get();
+
+    return response()->json([
+        'reports' => $reports,
+    ]);
     }
+
+
     public function submitReport(Request $request, $dailyTaskId)
     {
         $user = Auth::user();

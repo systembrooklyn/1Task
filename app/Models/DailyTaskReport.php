@@ -36,4 +36,9 @@ class DailyTaskReport extends Model
     {
         return $this->belongsTo(User::class, 'submitted_by');
     }
+
+    public function department()
+{
+    return $this->belongsTo(Department::class, 'dept_id');
+}
 }
