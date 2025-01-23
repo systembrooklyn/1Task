@@ -10,48 +10,64 @@ use Illuminate\Support\Facades\Auth;
 
 class DailyTaskReportController extends Controller
 {
+    // public function index(Request $request)
+    // {
+    //     $user = Auth::user();
+    //     $query = DailyTaskReport::with(['dailyTask', 'submittedBy']);
+    //     if ($request->has(['start_date', 'end_date'])) {
+    //         $request->validate([
+    //             'start_date' => 'required|date',
+    //             'end_date' => 'required|date|after_or_equal:start_date',
+    //         ]);
+
+    //         $query->whereBetween('created_at', [
+    //             $request->start_date . ' 00:00:00',
+    //             $request->end_date . ' 23:59:59',
+    //         ]);
+    //     }
+    //     $sortBy = $request->get('sort_by', 'created_at');
+    //     $sortOrder = $request->get('sort_order', 'desc');
+
+    //     $allowedSorts = ['created_at', 'status', 'submitted_by'];
+    //     if (!in_array($sortBy, $allowedSorts)) {
+    //         $sortBy = 'created_at';
+    //     }
+
+    //     $allowedOrders = ['asc', 'desc'];
+    //     if (!in_array($sortOrder, $allowedOrders)) {
+    //         $sortOrder = 'desc';
+    //     }
+
+    //     $query->orderBy($sortBy, $sortOrder);
+    //     $perPage = $request->get('per_page', 15);
+    //     $reports = $query->paginate($perPage);
+    //     $reportsData = DailyTaskReportResource::collection($reports->items());
+    //     return response()->json([
+    //         'reports' => $reportsData,
+    //         'pagination' => [
+    //             'total' => $reports->total(),
+    //             'current_page' => $reports->currentPage(),
+    //             'per_page' => $reports->perPage(),
+    //             'last_page' => $reports->lastPage(),
+    //             'next_page_url' => $reports->nextPageUrl(),
+    //             'prev_page_url' => $reports->previousPageUrl(),
+    //         ],
+    //     ]);
+    // }
+
+
     public function index(Request $request)
     {
         $user = Auth::user();
-        $query = DailyTaskReport::with(['dailyTask', 'submittedBy']);
-        if ($request->has(['start_date', 'end_date'])) {
-            $request->validate([
-                'start_date' => 'required|date',
-                'end_date' => 'required|date|after_or_equal:start_date',
-            ]);
 
-            $query->whereBetween('created_at', [
-                $request->start_date . ' 00:00:00',
-                $request->end_date . ' 23:59:59',
-            ]);
-        }
-        $sortBy = $request->get('sort_by', 'created_at');
-        $sortOrder = $request->get('sort_order', 'desc');
-
-        $allowedSorts = ['created_at', 'status', 'submitted_by'];
-        if (!in_array($sortBy, $allowedSorts)) {
-            $sortBy = 'created_at';
-        }
-
-        $allowedOrders = ['asc', 'desc'];
-        if (!in_array($sortOrder, $allowedOrders)) {
-            $sortOrder = 'desc';
-        }
-
-        $query->orderBy($sortBy, $sortOrder);
-        $perPage = $request->get('per_page', 15);
-        $reports = $query->paginate($perPage);
-        $reportsData = DailyTaskReportResource::collection($reports->items());
+        $reports = DailyTaskReport::whereHas('dailyTask', function ($query) use ($user) {
+            $query->where('company_id', $user->company_id);
+        })
+        ->with(['dailyTask', 'submittedBy'])
+        ->get();
+    
         return response()->json([
-            'reports' => $reportsData,
-            'pagination' => [
-                'total' => $reports->total(),
-                'current_page' => $reports->currentPage(),
-                'per_page' => $reports->perPage(),
-                'last_page' => $reports->lastPage(),
-                'next_page_url' => $reports->nextPageUrl(),
-                'prev_page_url' => $reports->previousPageUrl(),
-            ],
+            'reports' => $reports,
         ]);
     }
     public function submitReport(Request $request, $dailyTaskId)
