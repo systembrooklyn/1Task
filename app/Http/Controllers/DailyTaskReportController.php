@@ -58,17 +58,25 @@ class DailyTaskReportController extends Controller
 
     public function index(Request $request)
     {
-    $user = Auth::user();
-
-    $reports = DailyTaskReport::whereHas('dailyTask', function ($query) use ($user) {
-        $query->where('company_id', $user->company_id);
-    })
-    ->with(['dailyTask.department', 'submittedBy'])
-    ->get();
-
-    return response()->json([
-        'reports' => $reports,
-    ]);
+        $user = Auth::user();
+        $hasPermission = $user->hasAssignedPermission('view-dailyTaskReports');
+        $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
+        $reports = DailyTaskReport::whereHas('dailyTask', function ($query) use ($user) {
+            $query->where('company_id', $user->company_id);
+        })
+        ->with(['dailyTask.department', 'submittedBy'])
+        ->get();
+        
+        if(!($hasPermission || $isOwner)){
+            return response()->json([
+                'message' => 'you dont have permission to view daily task reports',
+            ]);
+        }
+        else{
+            return response()->json([
+                'reports' => $reports,
+            ]);
+        }
     }
 
 
@@ -112,6 +120,8 @@ class DailyTaskReportController extends Controller
     public function todaysReports()
     {
         $user = Auth::user();
+        $hasPermission = $user->hasAssignedPermission('view-dailyTaskReports');
+        $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
         $today = now()->toDateString();
         $dailyTasks = DailyTask::with(['reports' => function ($query) use ($today) {
                                 $query->whereDate('created_at', $today);
@@ -126,9 +136,16 @@ class DailyTaskReportController extends Controller
                 'report' => $task->reports->first() ? new DailyTaskReportResource($task->reports->first()) : null,
             ];
         });
-        return response()->json([
-            'date' => $today,
-            'tasks' => $tasksData,
-        ], 200);
+        if(!($hasPermission || $isOwner)){
+            return response()->json([
+                'message' => 'you dont have permission to view daily task reports',
+            ]);
+        }
+        else{
+            return response()->json([
+                'date' => $today,
+                'tasks' => $tasksData,
+            ], 200);
+        }
     }
 }
