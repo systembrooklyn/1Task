@@ -79,7 +79,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/projects/{id}/revisions', [ProjectController::class, 'getRevisions']);
 
 
-    Route::post('/alldailytask',[DailyTaskController::class, 'allDailyTasks']);
+    Route::get('/alldailytask',[DailyTaskController::class, 'allDailyTasks']);
+    Route::post('/alldailytaskfilter',[DailyTaskController::class, 'allDailyTasksFiltered']);
     // Route::post('/submitdailytask/{id}',[DailyTaskController::class, 'submitDailyTask']);
     Route::post('/activedailytask/{id}',[DailyTaskController::class,'activeDailyTask']);
     Route::get('dailytask/{id}/revisions', [DailyTaskController::class, 'revisions']);

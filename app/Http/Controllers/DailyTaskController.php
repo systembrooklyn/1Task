@@ -271,41 +271,41 @@ class DailyTaskController extends Controller
                 ->setStatusCode(200);
     }
 
-    // public function allDailyTasks(Request $request)
-    // {
-    //     $perPage = $request->input('per_page', 10);
-    //     $user = Auth::user();
-    //     $this->authorize('viewAny', DailyTask::class);
-    //     $sort_by = $request->input('sort_by', 'created_at');
-    //     $type_of = $request->input('type_of', 'desc');
-    //     $allowedSorts = ['start_date','created_at'];
-    //     if (!in_array($sort_by, $allowedSorts)) {
-    //         $sort_by = 'created_at';
-    //     }
-    //     $type_of = strtolower($type_of);
-    //     if (!in_array($type_of, ['asc', 'desc'])) {
-    //         $type_of = 'desc';
-    //     }
-
-    //     $tasks = DailyTask::with(['department', 'creator', 'assignee', 'updatedBy', 'submittedBy'])
-    //                       ->where('company_id', $user->company_id)
-    //                       ->orderBy($sort_by, $type_of)
-    //                       ->paginate($perPage);
-    //     return response()->json([
-    //         'tasks' => DailyTaskResource::collection($tasks->items()),
-    //         'pagination' => [
-    //             'total' => $tasks->total(),
-    //             'current_page' => $tasks->currentPage(),
-    //             'per_page' => $tasks->perPage(),
-    //             'last_page' => $tasks->lastPage(),
-    //             'next_page_url' => $tasks->nextPageUrl(),
-    //             'prev_page_url' => $tasks->previousPageUrl(),
-    //         ],
-    //     ], 200);
-    // }
-
-
     public function allDailyTasks(Request $request)
+    {
+        $perPage = $request->input('per_page', 10);
+        $user = Auth::user();
+        $this->authorize('viewAny', DailyTask::class);
+        $sort_by = $request->input('sort_by', 'created_at');
+        $type_of = $request->input('type_of', 'desc');
+        $allowedSorts = ['start_date','created_at'];
+        if (!in_array($sort_by, $allowedSorts)) {
+            $sort_by = 'created_at';
+        }
+        $type_of = strtolower($type_of);
+        if (!in_array($type_of, ['asc', 'desc'])) {
+            $type_of = 'desc';
+        }
+
+        $tasks = DailyTask::with(['department', 'creator', 'assignee', 'updatedBy', 'submittedBy'])
+                          ->where('company_id', $user->company_id)
+                          ->orderBy($sort_by, $type_of)
+                          ->paginate($perPage);
+        return response()->json([
+            'tasks' => DailyTaskResource::collection($tasks->items()),
+            'pagination' => [
+                'total' => $tasks->total(),
+                'current_page' => $tasks->currentPage(),
+                'per_page' => $tasks->perPage(),
+                'last_page' => $tasks->lastPage(),
+                'next_page_url' => $tasks->nextPageUrl(),
+                'prev_page_url' => $tasks->previousPageUrl(),
+            ],
+        ], 200);
+    }
+
+
+    public function allDailyTasksFiltered(Request $request)
     {
         $perPage = $request->input('per_page', 10);
         $user = Auth::user();
