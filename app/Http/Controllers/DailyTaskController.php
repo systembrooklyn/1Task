@@ -179,35 +179,105 @@ class DailyTaskController extends Controller
         return response()->json(['message' => 'Task deleted successfully.']);
     }
 
+    // public function index(Request $request)
+    // {
+    //     $user = Auth::user();
+    //     $company_id = $user->company_id;
+    //     $this->authorize('viewAny', DailyTask::class);
+    //     $per_page = $request->input('per_page');
+    //     $deptFilter = $request->input('dept_filter');
+    //     $sort_by = $request->input('sort_by', 'from');
+    //     $type_of = $request->input('type_of', 'asc');
+    //     $allowedSorts = ['start_date','from'];
+    //     if (!in_array($sort_by, $allowedSorts)) {
+    //         $sort_by = 'from';
+    //     }
+    //     $type_of = strtolower($type_of);
+    //     if (!in_array($type_of, ['asc', 'desc'])) {
+    //         $type_of = 'asc';
+    //     }
+
+    //     $today = now()->format('Y-m-d');
+    //     $currentDayOfWeek = now()->dayOfWeek;
+    //     $currentDayOfMonth = now()->day;
+    //     $departmentIds = $user->departments()->pluck('departments.id')->toArray();
+    //     $perPage = $request->input('per_page', $per_page ? $per_page : 10);
+
+    //     $tasksQuery = DailyTask::query()
+    //         ->where('company_id', $company_id)
+    //         ->where('active',1)
+    //         ->whereIn('dept_id', $deptFilter? $deptFilter : $departmentIds)
+    //         ->where(function ($query) use ($today, $currentDayOfWeek, $currentDayOfMonth) {
+    //             $query->orWhere(function ($query) use ($today) {
+    //                 $query->where('task_type', 'daily')
+    //                     ->whereDate('start_date', '<=', $today);
+    //             })
+    //             ->orWhere(function ($query) use ($today, $currentDayOfWeek) {
+    //                 $query->where('task_type', 'weekly')
+    //                     ->whereDate('start_date', '<=', $today)
+    //                     ->whereJsonContains('recurrent_days', $currentDayOfWeek);
+    //             })
+    //             ->orWhere(function ($query) use ($today, $currentDayOfMonth) {
+    //                 $query->where('task_type', 'monthly')
+    //                     ->whereDate('start_date', '<=', $today)
+    //                     ->where('day_of_month', $currentDayOfMonth);
+    //             })
+    //             ->orWhere(function ($query) use ($today) {
+    //                 $query->where('task_type', 'single')
+    //                     ->whereDate('start_date', $today);
+    //             })
+    //             ->orWhere(function ($query) use ($today) {
+    //                 $query->where('task_type', 'last_day_of_month')
+    //                     ->whereDate('start_date', $today)
+    //                     ->whereRaw('DAY(LAST_DAY(start_date)) = ?', [now()->day]);
+    //             });
+    //         })
+    //         ->leftJoin('daily_task_reports', function ($join) use ($today) {
+    //             $join->on('daily_task_reports.daily_task_id', '=', 'daily_tasks.id')
+    //                 ->whereDate('daily_task_reports.created_at', '=', $today);
+    //         })
+    //         ->select('daily_tasks.*', 'daily_task_reports.status as today_report_status')
+    //         ->orderByRaw("CASE
+    //         WHEN daily_task_reports.daily_task_id IS NULL THEN 1
+    //         WHEN daily_task_reports.status = 'done' THEN 2
+    //         WHEN daily_task_reports.status = 'not_done' THEN 3
+    //         ELSE 4 END")
+    //         ->orderBy($sort_by, $type_of);
+
+    //     $tasks = $tasksQuery->paginate($perPage);
+    //     $tasksData = DailyTaskResource::collection($tasks->items());
+        
+    //     return response()->json([
+    //         'tasks' => $tasksData,
+    //         'pagination' => [
+    //             'total' => $tasks->total(),
+    //             'current_page' => $tasks->currentPage(),
+    //             'per_page' => $tasks->perPage(),
+    //             'last_page' => $tasks->lastPage(),
+    //             'next_page_url' => $tasks->nextPageUrl(),
+    //             'prev_page_url' => $tasks->previousPageUrl(),
+    //         ],
+    //     ]);
+    // }
+
+
     public function index(Request $request)
     {
         $user = Auth::user();
         $company_id = $user->company_id;
         $this->authorize('viewAny', DailyTask::class);
-        $per_page = $request->input('per_page');
-        $deptFilter = $request->input('dept_filter');
-        $sort_by = $request->input('sort_by', 'from');
-        $type_of = $request->input('type_of', 'asc');
-        $allowedSorts = ['start_date','from'];
-        if (!in_array($sort_by, $allowedSorts)) {
-            $sort_by = 'from';
-        }
-        $type_of = strtolower($type_of);
-        if (!in_array($type_of, ['asc', 'desc'])) {
-            $type_of = 'asc';
-        }
 
         $today = now()->format('Y-m-d');
         $currentDayOfWeek = now()->dayOfWeek;
         $currentDayOfMonth = now()->day;
-        $departmentIds = $user->departments()->pluck('departments.id')->toArray();
-        $perPage = $request->input('per_page', $per_page ? $per_page : 10);
 
+        $departmentIds = $user->departments()->pluck('departments.id')->toArray();
         $tasksQuery = DailyTask::query()
             ->where('company_id', $company_id)
-            ->where('active',1)
-            ->whereIn('dept_id', $deptFilter? $deptFilter : $departmentIds)
+            ->where('active', 1)
+            ->whereIn('dept_id', $departmentIds)
             ->where(function ($query) use ($today, $currentDayOfWeek, $currentDayOfMonth) {
+                // Filter for today's tasks
                 $query->orWhere(function ($query) use ($today) {
                     $query->where('task_type', 'daily')
                         ->whereDate('start_date', '<=', $today);
@@ -236,29 +306,29 @@ class DailyTaskController extends Controller
                 $join->on('daily_task_reports.daily_task_id', '=', 'daily_tasks.id')
                     ->whereDate('daily_task_reports.created_at', '=', $today);
             })
-            ->select('daily_tasks.*', 'daily_task_reports.status as today_report_status')
             ->orderByRaw("CASE
-            WHEN daily_task_reports.daily_task_id IS NULL THEN 1
-            WHEN daily_task_reports.status = 'done' THEN 2
-            WHEN daily_task_reports.status = 'not_done' THEN 3
-            ELSE 4 END")
-            ->orderBy($sort_by, $type_of);
+                WHEN daily_task_reports.daily_task_id IS NULL THEN 1
+                WHEN daily_task_reports.status = 'done' THEN 2
+                WHEN daily_task_reports.status = 'not_done' THEN 3
+                ELSE 4 END")
+            ->orderBy('from', 'asc')
+            ->select('daily_tasks.*', 'daily_task_reports.status as today_report_status')
+            ->with([
+                'department:id,name',
+                'creator:id,name',
+                'assignee:id,name',
+                'updatedBy:id,name',
+                'todayReport:id,daily_task_id,notes,status,submitted_by,created_at',
+                'todayReport.submittedBy:id,name',
+            ]);
+        $tasks = $tasksQuery->get();
+        $tasksData = DailyTaskResource::collection($tasks);
 
-        $tasks = $tasksQuery->paginate($perPage);
-        $tasksData = DailyTaskResource::collection($tasks->items());
-        
         return response()->json([
             'tasks' => $tasksData,
-            'pagination' => [
-                'total' => $tasks->total(),
-                'current_page' => $tasks->currentPage(),
-                'per_page' => $tasks->perPage(),
-                'last_page' => $tasks->lastPage(),
-                'next_page_url' => $tasks->nextPageUrl(),
-                'prev_page_url' => $tasks->previousPageUrl(),
-            ],
         ]);
     }
+
 
     public function show($id)
     {
