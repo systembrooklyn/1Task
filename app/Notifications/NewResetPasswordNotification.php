@@ -30,7 +30,7 @@ class NewResetPasswordNotification extends Notification
       public function toMail($notifiable)
     {
         // Custom URL for password reset (including token and email as query parameters)
-        $url = url("http://192.168.1.29:8080/reset-password?token={$this->token}&email={$notifiable->email}");
+        $url = url("https://www.1task.net/reset-password?token={$this->token}&email={$notifiable->email}");
 
         return (new \Illuminate\Notifications\Messages\MailMessage)
             ->subject('Reset Your Password')
