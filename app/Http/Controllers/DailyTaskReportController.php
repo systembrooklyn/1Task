@@ -88,6 +88,7 @@ class DailyTaskReportController extends Controller
         $validated = $request->validate([
             'notes' => 'nullable|string',
             'status' => 'required|in:done,not_done',
+            'task_found' => 'nullable|boolean'
         ]);
         $reportDate = now()->toDateString();
         $existingReport = DailyTaskReport::where('daily_task_id', $dailyTask->id)
@@ -105,6 +106,7 @@ class DailyTaskReportController extends Controller
             'submitted_by' => $user->id,
             'notes' => $validated['notes'] ?? null,
             'status' => $validated['status'],
+            'task_found' =>$validated['task_found'] ?? null
         ]);
         return response()->json([
             'message' => 'Report submitted successfully.',

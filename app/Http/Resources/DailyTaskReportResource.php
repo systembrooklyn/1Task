@@ -19,6 +19,7 @@ class DailyTaskReportResource extends JsonResource
             'daily_task' => new DailyTaskResource($this->dailyTask),
             'submitted_by' => new UserResource($this->submittedBy),
             'notes' => $this->notes,
+            'task_found' =>$this->task_found,
             'status' => $this->status,
             'report_date' => $this->created_at->toDateString(),
             'report_time' => $this->created_at->toTimeString(),

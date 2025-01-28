@@ -23,9 +23,52 @@ use App\Http\Controllers\TaskUserStatusController;
 use App\Http\Controllers\UserDepartmentController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
+
 Route::get('/user', function (Request $request) {
-    return $request->user();
+    $user = $request->user()->load([
+        'company', 
+        'departments', 
+        'roles.permissions'
+    ]);
+    $response = [
+        'user' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'google_id' => $user->google_id,
+            'company' => [
+                'id' => $user->company->id,
+                'name' => $user->company->name,
+            ],
+            'departments' => $user->departments->map(function ($department) {
+                return [
+                    'id' => $department->id,
+                    'name' => $department->name,
+                ];
+            }),
+        ],
+        'roles' => $user->roles->map(function ($role) {
+            return [
+                'id' => $role->id,
+                'name' => $role->name,
+            ];
+        }),
+        'permissions' => $user->roles->flatMap(function ($role) {
+            return $role->permissions->map(function ($permission) {
+                return [
+                    'id' => $permission->id,
+                    'name' => $permission->name,
+                ];
+            });
+        })->unique('id'),
+        'token' => $request->bearerToken(),
+    ];
+    return response()->json($response);
 })->middleware('auth:sanctum');
+
+// Route::get('/user', function (Request $request) {
+//     return $request->user();
+// })->middleware('auth:sanctum');
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])

@@ -19,6 +19,7 @@ class DailyTaskReport extends Model
         'submitted_by',
         'notes',
         'status',
+        'task_found'
     ];
 
     /**
