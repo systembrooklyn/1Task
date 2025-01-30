@@ -79,6 +79,47 @@ class DailyTaskReportController extends Controller
         }
     }
 
+    // public function index(Request $request)
+    // {
+    //     $user = Auth::user();
+    //     $hasPermission = $user->hasAssignedPermission('view-dailyTaskReports');
+    //     $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
+
+    //     // Check if the user has permission or is an owner
+    //     if (!($hasPermission || $isOwner)) {
+    //         return response()->json([
+    //             'message' => 'You don\'t have permission to view daily task reports',
+    //         ]);
+    //     }
+
+    //     // Get the current date
+    //     $currentDate = now()->toDateString();
+
+    //     // Fetch reports along with daily task data, including a flag for tasks without a report on the current day
+    //     $reports = DailyTask::where('company_id', $user->company_id)
+    //         ->with(['reports' => function ($query) use ($currentDate) {
+    //             $query->whereDate('created_at', $currentDate)
+    //             ->with('submittedBy');
+    //         }, 'department'])
+    //         ->get()
+    //         ->map(function ($task) use ($currentDate) {
+    //             // Check if the task has a report for today
+    //             $todayReport = $task->reports->first();
+    //             $hasReportToday = $todayReport ? true : false;
+
+    //             return [
+    //                 'task' => $task,
+    //                 'has_report_today' => $hasReportToday,
+    //                 'report' => $todayReport ? $todayReport : null, 
+    //                 'submitted_by_user' => $todayReport ? $todayReport->submittedBy : null, // Retrieve submittedBy user details
+    //         ];
+    //         });
+
+    //     return response()->json([
+    //         'reports' => $reports,
+    //     ]);
+    // }
+
 
     public function submitReport(Request $request, $dailyTaskId)
     {
