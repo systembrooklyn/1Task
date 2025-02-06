@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Resources\DailyTaskReportResource;
 use App\Models\DailyTask;
 use App\Models\DailyTaskReport;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class DailyTaskReportController extends Controller
@@ -54,6 +55,95 @@ class DailyTaskReportController extends Controller
     //         ],
     //     ]);
     // }
+
+    public function notReportedTasks($date)
+    {
+        $user = Auth::user();
+    
+        // Validate and parse the provided date from the URL
+        try {
+            $selectedDate = Carbon::parse($date)->toDateString();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Invalid date provided'], 422);
+        }
+    
+        // Get current day details based on the selected date
+        $currentDayOfWeek  = Carbon::parse($selectedDate)->dayOfWeek;
+        $currentDayOfMonth = Carbon::parse($selectedDate)->day;
+        $company_id        = $user->company_id;
+    
+        // Build the query to select only tasks for the company that match one of the schedule criteria
+        // and that do NOT have a report for the selected date.
+        $tasks = DailyTask::query()
+            ->where('company_id', $company_id)
+            ->where('active', 1)
+            ->where(function ($query) use ($selectedDate, $currentDayOfWeek, $currentDayOfMonth) {
+                $query->orWhere(function ($query) use ($selectedDate) {
+                    $query->where('task_type', 'daily')
+                          ->whereDate('start_date', '<=', $selectedDate);
+                })
+                ->orWhere(function ($query) use ($selectedDate, $currentDayOfWeek) {
+                    $query->where('task_type', 'weekly')
+                          ->whereDate('start_date', '<=', $selectedDate)
+                          ->whereJsonContains('recurrent_days', $currentDayOfWeek);
+                })
+                ->orWhere(function ($query) use ($selectedDate, $currentDayOfMonth) {
+                    $query->where('task_type', 'monthly')
+                          ->whereDate('start_date', '<=', $selectedDate)
+                          ->where('day_of_month', $currentDayOfMonth);
+                })
+                ->orWhere(function ($query) use ($selectedDate) {
+                    $query->where('task_type', 'single')
+                          ->whereDate('start_date', $selectedDate);
+                })
+                ->orWhere(function ($query) use ($selectedDate) {
+                    $query->where('task_type', 'last_day_of_month')
+                          ->whereDate('start_date', $selectedDate)
+                          ->whereRaw('DAY(LAST_DAY(start_date)) = ?', [Carbon::parse($selectedDate)->day]);
+                });
+            })
+            ->whereDoesntHave('reports', function ($query) use ($selectedDate) {
+                // Exclude tasks that have at least one report with a created_at date matching $selectedDate
+                $query->whereDate('created_at', $selectedDate);
+            })
+            ->with([
+                'department:id,name',
+                // Even if you eager load reports, they will be empty because of the whereDoesntHave clause.
+                'reports.submittedBy:id,name'
+            ])
+            ->select('id', 'task_name', 'task_no', 'start_date', 'task_type', 'recurrent_days', 'day_of_month', 'active', 'from', 'to', 'description', 'dept_id')
+            ->get();
+    
+        // Map the tasks to the desired output structure
+        $result = $tasks->map(function ($task) {
+            return [
+                'daily_task_id' => $task->id,
+                'daily_task'    => [
+                    'task_no'        => $task->task_no,
+                    'task_name'      => $task->task_name,
+                    'description'    => $task->description,
+                    'start_date'     => $task->start_date,
+                    'task_type'      => $task->task_type,
+                    'recurrent_days' => $task->recurrent_days,
+                    'day_of_month'   => $task->day_of_month,
+                    'active'         => $task->active,
+                    'from'           => $task->from,
+                    'to'             => $task->to,
+                ],
+                'department'    => $task->department ? [
+                    'id'   => $task->department->id,
+                    'name' => $task->department->name,
+                ] : null,
+                // Since we already filtered tasks with reports, these values are fixed.
+                'has_report'    => false,
+                'reports'       => []
+            ];
+        });
+    
+        return response()->json([
+            'tasks' => $result,
+        ]);
+    }
 
 
     public function index(Request $request)

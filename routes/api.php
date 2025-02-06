@@ -131,6 +131,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/daily-tasks/{id}/submit-report', [DailyTaskReportController::class, 'submitReport']);
     Route::get('/daily-tasks/todays-reports', [DailyTaskReportController::class, 'todaysReports']);
     Route::get('/daily-task-reports', [DailyTaskReportController::class, 'index']);
+    Route::get('/daily-task-reports/{date}', [DailyTaskReportController::class, 'notReportedTasks']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
