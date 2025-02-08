@@ -311,7 +311,7 @@ class DailyTaskController extends Controller
                 WHEN daily_task_reports.status = 'done' THEN 2
                 WHEN daily_task_reports.status = 'not_done' THEN 3
                 ELSE 4 END")
-            ->orderBy('from', 'asc')
+            ->orderBy('to', 'asc')
             ->select('daily_tasks.*', 'daily_task_reports.status as today_report_status')
             ->with([
                 'department:id,name',

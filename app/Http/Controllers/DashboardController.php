@@ -8,6 +8,7 @@ use App\Models\Department;
 use App\Models\Invitation;
 use App\Models\Project;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -24,8 +25,7 @@ class DashboardController extends Controller
     /**
      * BaseController constructor.
      */
-    public function __construct()
-    {
+    public function __construct(){
         $this->middleware(function ($request, $next) {
             $this->user = auth('sanctum')->user();
 
@@ -53,18 +53,21 @@ class DashboardController extends Controller
      *
      * @return array
      */
-    protected function getCounts(){
+    protected function getCounts($date = null){
+        $selectedDate = $date
+        ? Carbon::parse($date)
+        : now();
         if($this->isOwner || $this->permissionOwner){
-            $countEmps = $this->countOwnerEmps();
-            $countProjects = $this->countProjects();
-            $countDepartments = $this->countOwnerDepts();
-            $countDailyTasks = $this->countOwnerDeptDailyTasks();
-            $countAllDailyTasks = $this->countOwnerAllDailyTasks();
+            $countEmps = $this->countOwnerEmps($selectedDate);
+            $countProjects = $this->countProjects($selectedDate);
+            $countDepartments = $this->countOwnerDepts($selectedDate);
+            $countDailyTasks = $this->countOwnerDeptDailyTasks($selectedDate);
+            $countAllDailyTasks = $this->countOwnerAllDailyTasks($selectedDate);
         }elseif($this->permissionDashboard){
-            $countEmps = $this->countDeptEmps();
-            $countProjects = $this->countProjects();
+            $countEmps = $this->countDeptEmps($selectedDate);
+            $countProjects = $this->countProjects($selectedDate);
             $countDepartments = null;
-            $countDailyTasks = $this->countDeptDailyTasks();
+            $countDailyTasks = $this->countDeptDailyTasks($selectedDate);
             $countAllDailyTasks = null;
         }else{
             return response()->json(['message' => 'You Dont have permission to view Dashboard'], 403);
@@ -78,35 +81,46 @@ class DashboardController extends Controller
             'Departments'=>$countDepartments,
         ]);
     }
-    protected function countOwnerEmps(){
-        $total = User::where('company_id',$this->companyId)->count();
-        $Invited = Invitation::where('company_id',$this->companyId)->count();
+    protected function countOwnerEmps($date = null){
+        $total = User::where('company_id',$this->companyId)
+                        ->WhereDate('created_at','<=',$date)
+                        ->count();
+        $Invited = Invitation::where('company_id',$this->companyId)
+                                ->WhereDate('created_at','<=',$date)
+                                ->count();
         $pending = Invitation::where('company_id',$this->companyId)
+                                ->WhereDate('created_at','<=',$date)
                                ->where('is_accepted',0)
                                ->count();
         return ['total'=>$total-1,'invited'=>$Invited,'pending'=>$pending];
     }
 
-    protected function countDeptEmps(){
+    protected function countDeptEmps($date = null){
         $total = User::where('company_id',$this->companyId)
+                        ->WhereDate('created_at','<=',$date)
                        ->whereHas('departments',function($query){
                         $query->where('departments.id',$this->departmentIds);
                        })->count();
         return ['total'=>$total,'invited'=>null,'pending'=>null];
     }
 
-    protected function countProjects(){
-        $total = Project::where('company_id',$this->companyId)->count();
+    protected function countProjects($date = null){
+        $total = Project::where('company_id',$this->companyId)
+                            ->WhereDate('created_at','<=',$date)
+                            ->count();
         $active = project::where('status',1)
                            ->where('company_id',$this->companyId)
+                           ->WhereDate('created_at','<=',$date)
                            ->count();
         $inActive = $total - $active;
 
         return ['total'=>$total,'active'=>$active,'inActive'=>$inActive];
     }
 
-    protected function countOwnerDepts() {
-        $totalDept = Department::where('company_id', $this->companyId)->get();
+    protected function countOwnerDepts($date = null) {
+        $totalDept = Department::where('company_id', $this->companyId)
+                                ->WhereDate('created_at','<=',$date)
+                                ->get();
         $total = $totalDept->count();
         $departmentsWithUserCount = $totalDept->map(function($department) {
             return [
@@ -120,133 +134,158 @@ class DashboardController extends Controller
         ];
     }
 
-    protected function countOwnerDeptDailyTasks() {
-        $today = now();
-        $todayDayOfWeek = $today->dayOfWeek;
-        $todayDayOfMonth = $today->day;
-        $tasks = DailyTask::where('company_id', $this->companyId)
-                            ->where('active', 1)
-                            ->where(function($query) use ($todayDayOfWeek, $todayDayOfMonth) {
-                                $query->where('task_type', 'daily')
-                                        ->orWhere(function($query) use ($todayDayOfWeek) {
-                                            $query->where('task_type', 'weekly')
-                                                ->whereJsonContains('recurrent_days', $todayDayOfWeek);
-                                        })
-                                        ->orWhere(function($query) use ($todayDayOfMonth) {
-                                            $query->where('task_type', 'monthly')
-                                                ->where('day_of_month', $todayDayOfMonth);
-                                        });
-                            })
-                            ->with(['department', 'todayReport'])
-                            ->get();
-        $departmentData = $tasks->groupBy('dept_id')->map(function($tasks, $deptId) {
-            $departmentName = $tasks->first()->department->name;
-            $tasksWithTodayReports = $tasks->filter(function($task) {
+    protected function countOwnerDeptDailyTasks($date = null){
+        $selectedDate = $date;
+        $selectedDayOfWeek = $selectedDate->dayOfWeek;
+        $selectedDayOfMonth = $selectedDate->day;
+        $tasks = DailyTask::select([
+                'id',
+                'dept_id',
+                'task_type',
+                'recurrent_days',
+                'day_of_month',
+                'active',
+                'company_id',
+            ])
+            ->where('company_id', $this->companyId)
+            ->where('active', 1)
+            ->where(function ($query) use ($selectedDayOfWeek, $selectedDayOfMonth) {
+                $query->where('task_type', 'daily')
+                      ->orWhere(function ($query) use ($selectedDayOfWeek) {
+                          $query->where('task_type', 'weekly')
+                                ->whereJsonContains('recurrent_days', $selectedDayOfWeek);
+                      })
+                      ->orWhere(function ($query) use ($selectedDayOfMonth) {
+                          $query->where('task_type', 'monthly')
+                                ->where('day_of_month', $selectedDayOfMonth);
+                      });
+            })
+            ->with([
+                'department:id,name',
+                'reports' => function ($query) use ($selectedDate) {
+                    $query->select('id', 'daily_task_id', 'status')
+                          ->whereDate('created_at', $selectedDate);
+                },
+            ])
+            ->get();
+        $tasks->each(function ($task) {
+            $task->setRelation('todayReport', $task->reports->first());
+        });
+        $departmentData = $tasks->groupBy('dept_id')->map(function ($tasksInDept, $deptId) {
+            $departmentName = $tasksInDept->first()->department->name ?? 'Unknown';
+            $tasksWithReports = $tasksInDept->filter(function ($task) {
                 return $task->todayReport;
             });
-            $totalTasks = $tasks->count();
-            $totalReports = $tasksWithTodayReports->count();
-            $doneReports = $tasksWithTodayReports->filter(function($task) {
-                return $task->todayReport->status === 'done';
-            })->count();
-            $notDoneReports = $tasksWithTodayReports->filter(function($task) {
-                return $task->todayReport->status !== 'done';
-            })->count();
-
+    
+            $totalTasks    = $tasksInDept->count();
+            $totalReports  = $tasksWithReports->count();
+            $doneReports   = $tasksWithReports->where('todayReport.status', 'done')->count();
+            $notDoneReports= $totalReports - $doneReports;
+    
             return [
-                'department_name' => $departmentName,
-                'total_tasks' => $totalTasks,
-                'total_reports' => $totalReports,
-                'done_reports' => $doneReports,
+                'department_name'  => $departmentName,
+                'total_tasks'      => $totalTasks,
+                'total_reports'    => $totalReports,
+                'done_reports'     => $doneReports,
                 'not_done_reports' => $notDoneReports,
             ];
         });
-        $tasksWithReports = $tasks->filter(function($task) {
+        $tasksWithReports = $tasks->filter(function ($task) {
             return $task->todayReport;
         });
-
+    
         $totalReportsAcrossAllDepts = $tasksWithReports->count();
-        $doneReportsAcrossAllDepts = $tasksWithReports->filter(function($task) {
-            return $task->todayReport->status === 'done';
-        })->count();
-        $notDoneReportsAcrossAllDepts = $tasksWithReports->filter(function($task) {
-            return $task->todayReport->status !== 'done';
-        })->count();
+        $doneReportsAcrossAllDepts  = $tasksWithReports->where('todayReport.status', 'done')->count();
+        $notDoneReportsAcrossAllDepts = $totalReportsAcrossAllDepts - $doneReportsAcrossAllDepts;
         return [
             'today_total_daily_tasks' => $tasks->count(),
-            'total_reports' => $totalReportsAcrossAllDepts,
-            'done_reports' => $doneReportsAcrossAllDepts,
-            'not_done_reports' => $notDoneReportsAcrossAllDepts,
-            'DailyTaskDepts' => $departmentData->values(),
+            'total_reports'           => $totalReportsAcrossAllDepts,
+            'done_reports'            => $doneReportsAcrossAllDepts,
+            'not_done_reports'        => $notDoneReportsAcrossAllDepts,
+            'DailyTaskDepts'          => $departmentData->values(),
         ];
     }
 
-    protected function countDeptDailyTasks(){
-        $today = now();
-        $todayDayOfWeek = $today->dayOfWeek;
-        $todayDayOfMonth = $today->day;
+    protected function countDeptDailyTasks($date = null){
+        $selectedDate = $date;
+        $selectedDayOfWeek = $selectedDate->dayOfWeek;
+        $selectedDayOfMonth = $selectedDate->day;
         $departmentIds = is_array($this->departmentIds) ? $this->departmentIds : [$this->departmentIds];
-        $tasks = DailyTask::where('company_id', $this->companyId)
-                            ->where('active', 1)
-                            ->whereIn('dept_id', $departmentIds)
-                            ->where(function($query) use ($todayDayOfWeek, $todayDayOfMonth) {
-                                $query->where('task_type', 'daily')
-                                        ->orWhere(function($query) use ($todayDayOfWeek) {
-                                            $query->where('task_type', 'weekly')
-                                                ->whereJsonContains('recurrent_days', $todayDayOfWeek);
-                                        })
-                                        ->orWhere(function($query) use ($todayDayOfMonth) {
-                                            $query->where('task_type', 'monthly')
-                                                ->where('day_of_month', $todayDayOfMonth);
-                                        });
-                            })
-                            ->with(['department', 'todayReport'])
-                            ->get();
-        $departmentData = $tasks->groupBy('dept_id')->map(function($tasks, $deptId) {
-            $departmentName = $tasks->first()->department->name;
-            $tasksWithTodayReports = $tasks->filter(function($task) {
+        $tasks = DailyTask::select([
+                'id',
+                'dept_id',
+                'task_type',
+                'recurrent_days',
+                'day_of_month',
+                'active',
+                'company_id',
+            ])
+            ->where('company_id', $this->companyId)
+            ->where('active', 1)
+            ->whereIn('dept_id', $departmentIds)
+            ->where(function ($query) use ($selectedDayOfWeek, $selectedDayOfMonth) {
+                $query->where('task_type', 'daily')
+                      ->orWhere(function ($query) use ($selectedDayOfWeek) {
+                          $query->where('task_type', 'weekly')
+                                ->whereJsonContains('recurrent_days', $selectedDayOfWeek);
+                      })
+                      ->orWhere(function ($query) use ($selectedDayOfMonth) {
+                          $query->where('task_type', 'monthly')
+                                ->where('day_of_month', $selectedDayOfMonth);
+                      });
+            })
+            ->with([
+                'department:id,name',
+                'reports' => function ($query) use ($selectedDate) {
+                    $query->select('id', 'daily_task_id', 'status')
+                          ->whereDate('created_at', $selectedDate);
+                },
+            ])
+            ->get();
+        $tasks->each(function ($task) {
+            $task->setRelation('todayReport', $task->reports->first());
+        });
+        $departmentData = $tasks->groupBy('dept_id')->map(function ($tasksInDept, $deptId) {
+            $departmentName = $tasksInDept->first()->department->name ?? 'Unknown';
+            $tasksWithReports = $tasksInDept->filter(function ($task) {
                 return $task->todayReport;
             });
-            $totalTasks = $tasks->count();
-            $totalReports = $tasksWithTodayReports->count();
-            $doneReports = $tasksWithTodayReports->filter(function($task) {
-                return $task->todayReport->status === 'done';
-            })->count();
-            $notDoneReports = $tasksWithTodayReports->filter(function($task) {
-                return $task->todayReport->status !== 'done';
-            })->count();
-
+    
+            $totalTasks    = $tasksInDept->count();
+            $totalReports  = $tasksWithReports->count();
+            $doneReports   = $tasksWithReports->where('todayReport.status', 'done')->count();
+            $notDoneReports= $totalReports - $doneReports;
+    
             return [
-                'department_name' => $departmentName,
-                'total_tasks' => $totalTasks,
-                'total_reports' => $totalReports,
-                'done_reports' => $doneReports,
+                'department_name'  => $departmentName,
+                'total_tasks'      => $totalTasks,
+                'total_reports'    => $totalReports,
+                'done_reports'     => $doneReports,
                 'not_done_reports' => $notDoneReports,
             ];
         });
-        $tasksWithReports = $tasks->filter(function($task) {
+        $tasksWithReports = $tasks->filter(function ($task) {
             return $task->todayReport;
         });
-
-        $totalReportsAcrossUserDepts = $tasksWithReports->count();
-        $doneReportsAcrossUserDepts = $tasksWithReports->filter(function($task) {
-            return $task->todayReport->status === 'done';
-        })->count();
-        $notDoneReportsAcrossUserDepts = $tasksWithReports->filter(function($task) {
-            return $task->todayReport->status !== 'done';
-        })->count();
+    
+        $totalReportsAcrossAllDepts = $tasksWithReports->count();
+        $doneReportsAcrossAllDepts  = $tasksWithReports->where('todayReport.status', 'done')->count();
+        $notDoneReportsAcrossAllDepts = $totalReportsAcrossAllDepts - $doneReportsAcrossAllDepts;
         return [
             'today_total_daily_tasks' => $tasks->count(),
-            'total_reports' => $totalReportsAcrossUserDepts,
-            'done_reports' => $doneReportsAcrossUserDepts,
-            'not_done_reports' => $notDoneReportsAcrossUserDepts,
-            'DepartmentData' => $departmentData->values(),
+            'total_reports'           => $totalReportsAcrossAllDepts,
+            'done_reports'            => $doneReportsAcrossAllDepts,
+            'not_done_reports'        => $notDoneReportsAcrossAllDepts,
+            'DailyTaskDepts'          => $departmentData->values(),
         ];
     }
 
-    protected function countOwnerAllDailyTasks(){
-        $total = DailyTask::where('company_id', $this->companyId)->count();
+    protected function countOwnerAllDailyTasks($date = null){
+        $total = DailyTask::where('company_id', $this->companyId)
+                            ->WhereDate('created_at','<=',$date)
+                            ->count();
         $active = DailyTask::where('company_id', $this->companyId)
+                            ->WhereDate('created_at','<=',$date)
                             ->where('active',1)
                             ->count();
         $inActive = $total- $active;

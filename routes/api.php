@@ -166,7 +166,7 @@ Route::middleware('auth:digital_card_users')->group(function () {
 });
 
 
-Route::middleware('auth:sanctum')->get('/dashboard', [DashboardController::class, 'getCounts']);
+Route::middleware('auth:sanctum')->get('/dashboard/{date?}', [DashboardController::class, 'getCounts']);
 Route::middleware('auth:sanctum')->get('/getInvitations', [InvitationController::class, 'getInvitations']);
 /**
  * Google login
