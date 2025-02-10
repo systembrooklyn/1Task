@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\ProjectRevision;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -18,12 +19,33 @@ class ProjectController extends Controller
         $user = Auth::user();
         $companyId = $user->company_id;
         $userDepartmentIds = $user->departments->pluck('id');
-        $this->authorize('viewAny', Project::class);
-        $query = Project::where('company_id', $companyId);
-        if (!$user->companies()->wherePivot('company_id', $companyId)->exists()) {
-            $query->whereHas('departments', function ($query) use ($userDepartmentIds) {
-                $query->whereIn('department_id', $userDepartmentIds);
-            });
+        // $this->authorize('viewAny', Project::class);
+        // $this->authorize('viewAllProjects', Project::class);
+        // $query = Project::where('company_id', $companyId);
+        // if (!$user->companies()->wherePivot('company_id', $companyId)->exists()) {
+        //     $query->whereHas('departments', function ($query) use ($userDepartmentIds) {
+        //         $query->whereIn('department_id', $userDepartmentIds);
+        //     });
+        // }
+        try {
+            // 1) Try to authorize viewAllProjects
+            $this->authorize('viewAllProjects', Project::class);
+    
+            // If it passes, get *all* projects in this company
+            $query = Project::where('company_id', $companyId);
+    
+        } catch (AuthorizationException $e) {
+    
+            // 2) If we *don't* have viewAllProjects permission,
+            //    check if user has the "viewAny" permission
+            $this->authorize('viewAny', Project::class);
+    
+            // If user is authorized only for viewAny,
+            // show only projects in that user's departments
+            $query = Project::where('company_id', $companyId)
+                ->whereHas('departments', function ($q) use ($userDepartmentIds) {
+                    $q->whereIn('department_id', $userDepartmentIds);
+                });
         }
         $projects = $query->with([
             'company:id,name',

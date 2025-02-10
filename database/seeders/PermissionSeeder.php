@@ -42,7 +42,8 @@ class PermissionSeeder extends Seeder
             'report-dailytask',
             'view-dashboard-owner',
             'view-dashboard',
-            'view-dailyTaskReports'
+            'view-dailyTaskReports',
+            'view-Allproject'
         ];
         foreach ($permissions as $permission) {
             Permission::create(['name' => $permission,

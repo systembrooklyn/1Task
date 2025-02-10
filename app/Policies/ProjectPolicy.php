@@ -21,6 +21,16 @@ class ProjectPolicy
             : \Illuminate\Auth\Access\Response::deny('You do not have permission to view projects.');
     }
 
+
+    public function viewAllProjects(User $user)
+    {
+        $hasPermission = $user->assignedPermissions()->contains('name', 'view-Allproject');
+        $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
+
+        return ($hasPermission || $isOwner)
+            ? \Illuminate\Auth\Access\Response::allow()
+            : \Illuminate\Auth\Access\Response::deny('You do not have permission to view projects.');
+    }
     /**
      * Determine whether the user can view the model.
      */
