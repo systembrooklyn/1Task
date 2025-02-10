@@ -17,12 +17,12 @@ class ProjectController extends Controller
     {
         $user = Auth::user();
         $companyId = $user->company_id;
-        $departmentId = $user->dept_id;
+        $userDepartmentIds = $user->departments->pluck('id');
         $this->authorize('viewAny', Project::class);
         $query = Project::where('company_id', $companyId);
         if (!$user->companies()->wherePivot('company_id', $companyId)->exists()) {
-            $query->whereHas('departments', function ($query) use ($departmentId) {
-                $query->where('dept_id', $departmentId);
+            $query->whereHas('departments', function ($query) use ($userDepartmentIds) {
+                $query->whereIn('department_id', $userDepartmentIds);
             });
         }
         $projects = $query->with([
