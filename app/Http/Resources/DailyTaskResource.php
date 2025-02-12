@@ -43,6 +43,11 @@ class DailyTaskResource extends JsonResource
                 'id' => $this->updatedBy->id ?? null,
                 'name' => $this->updatedBy->name ?? null,
             ],
+            'project'             => $this->project ? [
+                'id'   => $this->project->id,
+                'name' => $this->project->name,
+                'status' => $this->project->status
+            ] : null,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'has_today_report' => $this->todayReport ? true : false,

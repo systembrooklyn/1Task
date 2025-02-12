@@ -38,6 +38,7 @@ class DailyTaskController extends Controller
             'to' => 'required|date_format:H:i|after:from',
             'dept_id' => 'required|exists:departments,id',
             'assigned_to' => 'nullable|exists:users,id',
+            'project_id'    => 'nullable|exists:projects,id',
         ]);
         if ($validated['task_type'] === 'daily') {
             $validated['recurrent_days'] = null;
@@ -60,6 +61,7 @@ class DailyTaskController extends Controller
                     'to' => $validated['to'],
                     'company_id' => $companyId,
                     'dept_id' => $validated['dept_id'],
+                    'project_id'      => $validated['project_id'] ?? null,
                     'created_by' => $user->id,
                     'assigned_to' => $validated['assigned_to'] ?? null,
                     'active' => true,
@@ -67,7 +69,7 @@ class DailyTaskController extends Controller
                 ]);
             });
 
-            $task->load(['department', 'creator', 'assignee', 'updatedBy', 'submittedBy']);
+            $task->load(['department', 'creator', 'assignee', 'updatedBy', 'submittedBy', 'project:id,name,status']);
 
             return response()->json([
                 'message' => 'Daily Task created successfully.',
@@ -110,6 +112,7 @@ class DailyTaskController extends Controller
             'to' => 'required|date_format:H:i|after:from',
             'dept_id' => 'required|exists:departments,id',
             'assigned_to' => 'nullable|exists:users,id',
+            'project_id'    => 'nullable|exists:projects,id',
         ]);
         if ($validated['task_type'] === 'daily') {
             $validated['recurrent_days'] = null;
@@ -129,6 +132,7 @@ class DailyTaskController extends Controller
             'from' => $validated['from'] ?? $task->from,
             'to' => $validated['to'] ?? $task->to,
             'assigned_to' => $validated['assigned_to'] ?? $task->assigned_to,
+            'project_id'     => array_key_exists('project_id', $validated) ? $validated['project_id'] : $task->project_id,
             'updated_by' => $user->id,
         ];
         $task->update($updateData);
@@ -145,6 +149,7 @@ class DailyTaskController extends Controller
             'to',
             'assigned_to',
             'note',
+            'project_id',
         ];
         foreach ($changes as $field => $newValue) {
             if (in_array($field, $trackableFields)) {
@@ -165,6 +170,7 @@ class DailyTaskController extends Controller
                 ]);
             }
         }
+        $task->load('project:id,name,status');
 
         return response()->json(['message' => 'Task updated successfully', 'task' => $task], 200);
     }
@@ -320,6 +326,7 @@ class DailyTaskController extends Controller
                 'updatedBy:id,name',
                 'todayReport:id,daily_task_id,notes,status,submitted_by,created_at',
                 'todayReport.submittedBy:id,name',
+                'project:id,name,status'
             ]);
         $tasks = $tasksQuery->get();
         $tasksData = DailyTaskResource::collection($tasks);
@@ -333,7 +340,7 @@ class DailyTaskController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        $task = DailyTask::with(['department', 'creator', 'assignee', 'updatedBy', 'submittedBy', 'revisions.user'])->findOrFail($id);
+        $task = DailyTask::with(['department', 'creator', 'assignee', 'updatedBy', 'submittedBy', 'revisions.user', 'project'])->findOrFail($id);
         $this->authorize('view', $task);
 
         return (new DailyTaskResource($task))
@@ -356,6 +363,7 @@ class DailyTaskController extends Controller
                 'updatedBy:id,name',
                 'todayReport:id,daily_task_id,notes,status,submitted_by,created_at',
                 'todayReport.submittedBy:id,name',
+                'project:id,name,status'
             ]);
         $tasks = $tasksQuery->get();
         return response()->json([
@@ -416,7 +424,7 @@ class DailyTaskController extends Controller
         if (!in_array($type_of, ['asc', 'desc'])) {
             $type_of = 'desc';
         }
-        $query = DailyTask::with(['department', 'creator', 'assignee', 'updatedBy', 'submittedBy'])
+        $query = DailyTask::with(['department', 'creator', 'assignee', 'updatedBy', 'submittedBy', 'project:id,name,status'])
                         ->where('company_id', $user->company_id);
         if (!empty($dept_ids)) {
             $query->whereIn('dept_id', $dept_ids);
@@ -510,7 +518,7 @@ class DailyTaskController extends Controller
     {
         $user = Auth::user();
         $today = now()->toDateString();
-        $dailyTasks = DailyTask::with(['todayReport', 'department', 'creator', 'assignee', 'submittedBy', 'updatedBy'])
+        $dailyTasks = DailyTask::with(['todayReport', 'department', 'creator', 'assignee', 'submittedBy', 'updatedBy' ,'project:id,name,status'])
                         ->where('company_id', $user->company_id)
                         ->whereIn('dept_id', $user->departments()->pluck('departments.id')->toArray())
                         ->get();

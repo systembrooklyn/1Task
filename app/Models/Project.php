@@ -83,7 +83,10 @@ class Project extends Model
     {
         return $this->hasMany(ProjectRevision::class);
     }
-
+    public function dailyTasks()
+    {
+        return $this->hasMany(DailyTask::class, 'project_id');
+    }
     // Modify attributes to append in the response
     protected $appends = [
         'company_name',

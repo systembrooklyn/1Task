@@ -15,7 +15,7 @@ class DailyTask extends Model
     protected $fillable = [
         'task_no', 'task_name', 'description', 'start_date', 'task_type',
         'recurrent_days', 'day_of_month', 'from', 'to', 'company_id',
-        'dept_id', 'created_by', 'assigned_to', 'note', 'status', 'updated_by','active',
+        'dept_id', 'project_id', 'created_by', 'assigned_to', 'note', 'status', 'updated_by','active',
         'submitted_by'
     ];
 
@@ -75,6 +75,10 @@ class DailyTask extends Model
     {
         return $this->todayReport ? $this->todayReport->status : null;
     }
+    public function project()
+    {
+        return $this->belongsTo(Project::class, 'project_id');
+    }
     protected static function booted()
     {
         static::creating(function ($task) {
@@ -119,4 +123,5 @@ class DailyTask extends Model
             }
         });
     }
+    
 }
