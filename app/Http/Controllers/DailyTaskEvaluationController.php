@@ -25,10 +25,22 @@ class DailyTaskEvaluationController extends Controller
      */
     public function store(Request $request, $taskId)
     {
-        $dailyTask = DailyTask::findOrFail($taskId);
-
-        // Authorize the action
+        $dailyTask = DailyTask::find($taskId);
+        if(!$dailyTask) return response()->json([
+            'message' => 'Task not found',
+        ], 404);
         $this->authorize('create', DailyTaskEvaluation::class);
+
+        $today = now()->toDateString();
+        $existingEvaluation = DailyTaskEvaluation::where('daily_task_id', $taskId)
+            ->whereDate('created_at', $today)
+            ->first();
+
+        if ($existingEvaluation) {
+            return response()->json([
+                'message' => 'This task already has an evaluation for today.',
+            ], 409);
+        }
 
         $validatedData = $request->validate([
             'comment' => 'nullable|string',

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DailyTask;
+use App\Models\DailyTaskEvaluation;
 use App\Models\DailyTaskReport;
 use App\Models\Department;
 use App\Models\Invitation;
@@ -63,12 +64,14 @@ class DashboardController extends Controller
             $countDepartments = $this->countOwnerDepts($selectedDate);
             $countDailyTasks = $this->countOwnerDeptDailyTasks($selectedDate);
             $countAllDailyTasks = $this->countOwnerAllDailyTasks($selectedDate);
+            $countEvaluations = $this->countOwnerEvaluations($selectedDate);
         }elseif($this->permissionDashboard){
             $countEmps = $this->countDeptEmps($selectedDate);
             $countProjects = $this->countProjects($selectedDate);
             $countDepartments = null;
             $countDailyTasks = $this->countDeptDailyTasks($selectedDate);
             $countAllDailyTasks = null;
+            $countEvaluations = $this->countDeptEvaluations($selectedDate); 
         }else{
             return response()->json(['message' => 'You Dont have permission to view Dashboard'], 403);
         }
@@ -79,6 +82,7 @@ class DashboardController extends Controller
             'AllDailyTasks'=>$countAllDailyTasks,
             'DailyTasks'=>$countDailyTasks,
             'Departments'=>$countDepartments,
+            'Evaluations' => $countEvaluations,
         ]);
     }
     protected function countOwnerEmps($date = null){
@@ -290,5 +294,66 @@ class DashboardController extends Controller
                             ->count();
         $inActive = $total- $active;
         return ['total'=>$total,'active'=>$active,'inActive'=>$inActive];
+    }
+
+    protected function countOwnerEvaluations($date = null)
+    {
+        $selectedDate = $date ? Carbon::parse($date)->toDateString() : now()->toDateString();
+        $totalEvaluations = DailyTaskEvaluation::whereHas('dailyTask', function ($query) use ($selectedDate) {
+            $query->where('company_id', $this->companyId);
+        })
+        ->whereDate('created_at', $selectedDate)
+        ->count();
+        $evaluationsByDept = DailyTaskEvaluation::join('daily_tasks', 'daily_tasks.id', '=', 'daily_task_evaluations.daily_task_id')
+            ->where('daily_tasks.company_id', $this->companyId)
+            ->whereDate('daily_task_evaluations.created_at', $selectedDate)
+            ->groupBy('daily_tasks.dept_id')
+            ->selectRaw('daily_tasks.dept_id, count(daily_task_evaluations.id) as total_evaluations')
+            ->get();
+        $departments = Department::where('company_id', $this->companyId)->get();
+        $evaluationsByDept = $departments->map(function ($department) use ($evaluationsByDept) {
+            $evaluationCount = $evaluationsByDept->where('dept_id', $department->id)->first();
+            return [
+                'department_name' => $department->name,
+                'total_evaluations' => $evaluationCount ? $evaluationCount->total_evaluations : 0,
+            ];
+        });
+
+        return [
+            'total_evaluations' => $totalEvaluations,
+            'evaluations_by_department' => $evaluationsByDept,
+        ];
+    }
+
+    protected function countDeptEvaluations($date = null)
+    {
+        $selectedDate = $date ? Carbon::parse($date)->toDateString() : now()->toDateString();
+        $departmentIds = $this->departmentIds;
+        $totalEvaluations = DailyTaskEvaluation::whereHas('dailyTask', function ($query) use ($selectedDate, $departmentIds) {
+            $query->where('company_id', $this->companyId)
+                ->whereIn('dept_id', $departmentIds);
+        })
+        ->whereDate('created_at', $selectedDate)
+        ->count();
+        $evaluationsByDept = DailyTaskEvaluation::join('daily_tasks', 'daily_tasks.id', '=', 'daily_task_evaluations.daily_task_id')
+            ->where('daily_tasks.company_id', $this->companyId)
+            ->whereIn('daily_tasks.dept_id', $departmentIds)
+            ->whereDate('daily_task_evaluations.created_at', $selectedDate)
+            ->groupBy('daily_tasks.dept_id')
+            ->selectRaw('daily_tasks.dept_id, count(daily_task_evaluations.id) as total_evaluations')
+            ->get();
+        $departments = Department::whereIn('id', $departmentIds)->get();
+        $evaluationsByDept = $departments->map(function ($department) use ($evaluationsByDept) {
+            $evaluationCount = $evaluationsByDept->where('dept_id', $department->id)->first();
+            return [
+                'department_name' => $department->name,
+                'total_evaluations' => $evaluationCount ? $evaluationCount->total_evaluations : 0,
+            ];
+        });
+
+        return [
+            'total_evaluations' => $totalEvaluations,
+            'evaluations_by_department' => $evaluationsByDept,
+        ];
     }
 }
