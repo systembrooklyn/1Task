@@ -145,6 +145,112 @@ class DailyTaskReportController extends Controller
         ]);
     }
 
+    // with evaluations
+    // public function notReportedTasks($date)
+    // {
+    //     $user = Auth::user();
+
+    //     // Validate and parse the provided date from the URL
+    //     try {
+    //         $selectedDate = Carbon::parse($date)->toDateString();
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => 'Invalid date provided'], 422);
+    //     }
+
+    //     // Get current day details based on the selected date
+    //     $currentDayOfWeek  = Carbon::parse($selectedDate)->dayOfWeek;
+    //     $currentDayOfMonth = Carbon::parse($selectedDate)->day;
+    //     $company_id        = $user->company_id;
+
+    //     // Build the query to select only tasks for the company that match one of the schedule criteria
+    //     // and that do NOT have a report for the selected date.
+    //     $tasks = DailyTask::query()
+    //         ->where('company_id', $company_id)
+    //         ->where('active', 1)
+    //         ->where(function ($query) use ($selectedDate, $currentDayOfWeek, $currentDayOfMonth) {
+    //             $query->orWhere(function ($query) use ($selectedDate) {
+    //                 $query->where('task_type', 'daily')
+    //                     ->whereDate('start_date', '<=', $selectedDate);
+    //             })
+    //             ->orWhere(function ($query) use ($selectedDate, $currentDayOfWeek) {
+    //                 $query->where('task_type', 'weekly')
+    //                     ->whereDate('start_date', '<=', $selectedDate)
+    //                     ->whereJsonContains('recurrent_days', $currentDayOfWeek);
+    //             })
+    //             ->orWhere(function ($query) use ($selectedDate, $currentDayOfMonth) {
+    //                 $query->where('task_type', 'monthly')
+    //                     ->whereDate('start_date', '<=', $selectedDate)
+    //                     ->where('day_of_month', $currentDayOfMonth);
+    //             })
+    //             ->orWhere(function ($query) use ($selectedDate) {
+    //                 $query->where('task_type', 'single')
+    //                     ->whereDate('start_date', $selectedDate);
+    //             })
+    //             ->orWhere(function ($query) use ($selectedDate) {
+    //                 $query->where('task_type', 'last_day_of_month')
+    //                     ->whereDate('start_date', $selectedDate)
+    //                     ->whereRaw('DAY(LAST_DAY(start_date)) = ?', [Carbon::parse($selectedDate)->day]);
+    //             });
+    //         })
+    //         ->whereDoesntHave('reports', function ($query) use ($selectedDate) {
+    //             // Exclude tasks that have at least one report with a created_at date matching $selectedDate
+    //             $query->whereDate('created_at', $selectedDate);
+    //         })
+    //         ->with([
+    //             'department:id,name',
+    //             'reports.submittedBy:id,name',
+    //             'evaluations' => function ($query) use ($selectedDate) {
+    //                 // Filter evaluations by the created_at date
+    //                 $query->whereDate('created_at', $selectedDate)
+    //                     ->with('evaluator:id,name');
+    //             },
+    //         ])
+    //         ->select('id', 'task_name', 'task_no', 'start_date', 'task_type', 'recurrent_days', 'day_of_month', 'active', 'from', 'to', 'description', 'dept_id')
+    //         ->get();
+
+    //     // Map the tasks to the desired output structure
+    //     $result = $tasks->map(function ($task) {
+    //         return [
+    //             'daily_task_id' => $task->id,
+    //             'daily_task'    => [
+    //                 'task_no'        => $task->task_no,
+    //                 'task_name'      => $task->task_name,
+    //                 'description'    => $task->description,
+    //                 'start_date'     => $task->start_date,
+    //                 'task_type'      => $task->task_type,
+    //                 'recurrent_days' => $task->recurrent_days,
+    //                 'day_of_month'   => $task->day_of_month,
+    //                 'active'         => $task->active,
+    //                 'from'           => $task->from,
+    //                 'to'             => $task->to,
+    //             ],
+    //             'department'    => $task->department ? [
+    //                 'id'   => $task->department->id,
+    //                 'name' => $task->department->name,
+    //             ] : null,
+    //             'has_report'    => false, // Since we already filtered tasks with reports, these values are fixed.
+    //             'reports'       => [],
+    //             'evaluations'   => $task->evaluations->map(function ($evaluation) {
+    //                 return [
+    //                     'id'      => $evaluation->id,
+    //                     'comment' => $evaluation->comment,
+    //                     'rating'  => $evaluation->rating,
+    //                     'evaluator' => $evaluation->evaluator ? [
+    //                         'id'   => $evaluation->evaluator->id,
+    //                         'name' => $evaluation->evaluator->name,
+    //                     ] : null,
+    //                 ];
+    //             }),
+    //         ];
+    //     });
+
+    //     return response()->json([
+    //         'tasks' => $result,
+    //     ]);
+    // }
+
+
+
 
     public function index(Request $request)
     {
@@ -168,6 +274,66 @@ class DailyTaskReportController extends Controller
             ]);
         }
     }
+
+    //with evaluations
+//     public function index(Request $request)
+// {
+//     $user = Auth::user();
+//     $hasPermission = $user->hasAssignedPermission('view-dailyTaskReports');
+//     $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
+
+//     // Fetch reports with evaluations and related data
+//     $reports = DailyTaskReport::whereHas('dailyTask', function ($query) use ($user) {
+//         $query->where('company_id', $user->company_id);
+//     })
+//     ->with([
+//         'dailyTask.department',
+//         'dailyTask.evaluations.evaluator:id,name', // Eager load evaluations and evaluator details
+//         'submittedBy:id,name',
+//     ])
+//     ->get();
+
+//     if (!($hasPermission || $isOwner)) {
+//         return response()->json([
+//             'message' => 'You don\'t have permission to view daily task reports.',
+//         ], 403);
+//     }
+
+//     // Map the reports to include evaluations
+//     $reports = $reports->map(function ($report) {
+//         return [
+//             'id'          => $report->id,
+//             'daily_task'   => [
+//                 'id'          => $report->dailyTask->id,
+//                 'task_name'   => $report->dailyTask->task_name,
+//                 'description' => $report->dailyTask->description,
+//                 'department' => $report->dailyTask->department ? [
+//                     'id'   => $report->dailyTask->department->id,
+//                     'name' => $report->dailyTask->department->name,
+//                 ] : null,
+//             ],
+//             'submitted_by' => $report->submittedBy ? [
+//                 'id'   => $report->submittedBy->id,
+//                 'name' => $report->submittedBy->name,
+//             ] : null,
+//             'evaluations'  => $report->dailyTask->evaluations->map(function ($evaluation) {
+//                 return [
+//                     'id'      => $evaluation->id,
+//                     'comment' => $evaluation->comment,
+//                     'rating'  => $evaluation->rating,
+//                     'evaluator' => $evaluation->evaluator ? [
+//                         'id'   => $evaluation->evaluator->id,
+//                         'name' => $evaluation->evaluator->name,
+//                     ] : null,
+//                 ];
+//             }),
+//         ];
+//     });
+
+//     return response()->json([
+//         'reports' => $reports,
+//     ]);
+// }
 
     // public function index(Request $request)
     // {

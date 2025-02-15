@@ -3,12 +3,14 @@
 namespace App\Providers;
 
 use App\Models\DailyTask;
+use App\Models\DailyTaskEvaluation;
 use App\Models\DailyTaskReport;
 use App\Models\Department;
 use App\Models\Invitation;
 use App\Models\Project;
 use App\Models\Role;
 use App\Observers\DailyTaskReportObserver;
+use App\Policies\DailyTaskEvaluationPolicy;
 use App\Policies\DailyTaskPolicy;
 use App\Policies\DepartmentPolicy;
 use App\Policies\InvitationPolicy;
@@ -41,6 +43,7 @@ class AppServiceProvider extends ServiceProvider
         Invitation::class => InvitationPolicy::class,
         Project::class => ProjectPolicy::class,
         Role::class => RolePolicy::class,
+        DailyTaskEvaluation::class => DailyTaskEvaluationPolicy::class,
 
     ];
 }

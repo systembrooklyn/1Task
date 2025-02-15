@@ -79,6 +79,10 @@ class DailyTask extends Model
     {
         return $this->belongsTo(Project::class, 'project_id');
     }
+    public function evaluations()
+    {
+        return $this->hasMany(DailyTaskEvaluation::class);
+    }
     protected static function booted()
     {
         static::creating(function ($task) {

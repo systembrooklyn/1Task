@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CompanyOwnerController;
 use App\Http\Controllers\DailyTaskController;
+use App\Http\Controllers\DailyTaskEvaluationController;
 use App\Http\Controllers\DailyTaskReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentsController;
@@ -132,6 +133,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/daily-tasks/todays-reports', [DailyTaskReportController::class, 'todaysReports']);
     Route::get('/daily-task-reports', [DailyTaskReportController::class, 'index']);
     Route::get('/daily-task-reports/{date}', [DailyTaskReportController::class, 'notReportedTasks']);
+
+    Route::get('evaluations/{taskId}', [DailyTaskEvaluationController::class, 'index']);
+    Route::get('evaluation/{id}', [DailyTaskEvaluationController::class, 'show']);
+    Route::post('evaluations/{taskId}', [DailyTaskEvaluationController::class, 'store']);
+    Route::put('evaluations/{id}', [DailyTaskEvaluationController::class, 'update']);
+    Route::delete('evaluations/{id}', [DailyTaskEvaluationController::class, 'destroy']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
