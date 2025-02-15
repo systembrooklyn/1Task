@@ -299,26 +299,34 @@ class DashboardController extends Controller
     protected function countOwnerEvaluations($date = null)
     {
         $selectedDate = $date ? Carbon::parse($date)->toDateString() : now()->toDateString();
+    
         $totalEvaluations = DailyTaskEvaluation::whereHas('dailyTask', function ($query) use ($selectedDate) {
             $query->where('company_id', $this->companyId);
         })
         ->whereDate('created_at', $selectedDate)
         ->count();
+    
         $evaluationsByDept = DailyTaskEvaluation::join('daily_tasks', 'daily_tasks.id', '=', 'daily_task_evaluations.daily_task_id')
             ->where('daily_tasks.company_id', $this->companyId)
             ->whereDate('daily_task_evaluations.created_at', $selectedDate)
             ->groupBy('daily_tasks.dept_id')
-            ->selectRaw('daily_tasks.dept_id, count(daily_task_evaluations.id) as total_evaluations')
+            ->selectRaw('daily_tasks.dept_id, avg(daily_task_evaluations.rating) as average_rating, count(daily_task_evaluations.id) as total_evaluations')
             ->get();
+    
         $departments = Department::where('company_id', $this->companyId)->get();
         $evaluationsByDept = $departments->map(function ($department) use ($evaluationsByDept) {
-            $evaluationCount = $evaluationsByDept->where('dept_id', $department->id)->first();
+            $evaluationData = $evaluationsByDept->where('dept_id', $department->id)->first();
+            $averageRating = $evaluationData ? $evaluationData->average_rating : 0;
+            $percentage = $averageRating * 10;
+    
             return [
                 'department_name' => $department->name,
-                'total_evaluations' => $evaluationCount ? $evaluationCount->total_evaluations : 0,
+                'total_evaluations' => $evaluationData ? $evaluationData->total_evaluations : 0,
+                'average_rating' => round($averageRating, 2),
+                'percentage' => round($percentage, 2),
             ];
         });
-
+    
         return [
             'total_evaluations' => $totalEvaluations,
             'evaluations_by_department' => $evaluationsByDept,
@@ -329,9 +337,10 @@ class DashboardController extends Controller
     {
         $selectedDate = $date ? Carbon::parse($date)->toDateString() : now()->toDateString();
         $departmentIds = $this->departmentIds;
+    
         $totalEvaluations = DailyTaskEvaluation::whereHas('dailyTask', function ($query) use ($selectedDate, $departmentIds) {
             $query->where('company_id', $this->companyId)
-                ->whereIn('dept_id', $departmentIds);
+                  ->whereIn('dept_id', $departmentIds);
         })
         ->whereDate('created_at', $selectedDate)
         ->count();
@@ -340,17 +349,23 @@ class DashboardController extends Controller
             ->whereIn('daily_tasks.dept_id', $departmentIds)
             ->whereDate('daily_task_evaluations.created_at', $selectedDate)
             ->groupBy('daily_tasks.dept_id')
-            ->selectRaw('daily_tasks.dept_id, count(daily_task_evaluations.id) as total_evaluations')
+            ->selectRaw('daily_tasks.dept_id, avg(daily_task_evaluations.rating) as average_rating, count(daily_task_evaluations.id) as total_evaluations')
             ->get();
+    
         $departments = Department::whereIn('id', $departmentIds)->get();
         $evaluationsByDept = $departments->map(function ($department) use ($evaluationsByDept) {
-            $evaluationCount = $evaluationsByDept->where('dept_id', $department->id)->first();
+            $evaluationData = $evaluationsByDept->where('dept_id', $department->id)->first();
+            $averageRating = $evaluationData ? $evaluationData->average_rating : 0;
+            $percentage = $averageRating * 10;
+    
             return [
                 'department_name' => $department->name,
-                'total_evaluations' => $evaluationCount ? $evaluationCount->total_evaluations : 0,
+                'total_evaluations' => $evaluationData ? $evaluationData->total_evaluations : 0,
+                'average_rating' => round($averageRating, 2),
+                'percentage' => round($percentage, 2),
             ];
         });
-
+    
         return [
             'total_evaluations' => $totalEvaluations,
             'evaluations_by_department' => $evaluationsByDept,
