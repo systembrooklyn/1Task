@@ -12,9 +12,9 @@ class DailyTaskEvaluationController extends Controller
 {
     public function index($taskId)
     {
-        $dailyTask = DailyTask::with('evaluations')->findOrFail($taskId);
+        $dailyTask = DailyTask::with('evaluations',
+        'evaluations.evaluator:id,name')->findOrFail($taskId);
 
-        // Authorize the action
         $this->authorize('viewAny', DailyTaskEvaluation::class);
 
         return response()->json($dailyTask);
@@ -67,7 +67,6 @@ class DailyTaskEvaluationController extends Controller
         $evaluation = DailyTaskEvaluation::findOrFail($id);
         $this->authorize('view', $evaluation);
 
-        // Authorize the action
 
         return response()->json($evaluation);
     }
@@ -79,7 +78,6 @@ class DailyTaskEvaluationController extends Controller
     {
         $evaluation = DailyTaskEvaluation::findOrFail($id);
 
-        // Authorize the action
         $this->authorize('update', $evaluation);
 
         $validatedData = $request->validate([
@@ -126,7 +124,6 @@ class DailyTaskEvaluationController extends Controller
     {
         $evaluation = DailyTaskEvaluation::findOrFail($id);
 
-        // Authorize the action
         $this->authorize('delete', $evaluation);
 
         $evaluation->delete();
