@@ -139,6 +139,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('evaluations/{taskId}', [DailyTaskEvaluationController::class, 'store']);
     Route::put('evaluations/{id}', [DailyTaskEvaluationController::class, 'update']);
     Route::delete('evaluations/{id}', [DailyTaskEvaluationController::class, 'destroy']);
+    Route::get('daily-tasks-evaluations/{date?}', [DailyTaskEvaluationController::class, 'tasksOfTheDay']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
