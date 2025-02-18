@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\DailytaskevaluationResource;
 use App\Models\DailyTask;
 use App\Models\DailyTaskEvaluation;
 use App\Models\DailyTaskEvaluationRevision;
@@ -53,12 +54,13 @@ class DailyTaskEvaluationController extends Controller
             'user_id' => Auth::id(),
             'comment' => $validatedData['comment'] ?? null,
             'rating'  => $validatedData['rating'],
+            'label'   => $validatedData['label'] ?? null
         ]);
 
         return response()->json([
             'message'    => 'Evaluation created successfully!',
-            'evaluation' => $evaluation,
-        ]);
+            'evaluation' => new DailytaskevaluationResource($evaluation),
+        ],201);
     }
 
     /**
@@ -116,8 +118,8 @@ class DailyTaskEvaluationController extends Controller
 
         return response()->json([
             'message'    => 'Evaluation updated successfully!',
-            'evaluation' => $evaluation,
-        ]);
+            'evaluation' => new DailytaskevaluationResource($evaluation),
+        ],200);
     }
 
     /**
