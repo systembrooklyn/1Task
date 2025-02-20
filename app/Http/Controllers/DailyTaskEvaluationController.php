@@ -47,14 +47,16 @@ class DailyTaskEvaluationController extends Controller
         $validatedData = $request->validate([
             'comment' => 'nullable|string',
             'rating'  => 'required|integer|min:0|max:10',
-            'label'   => 'nullable|string'
+            'label'   => 'nullable|string',
+            'task_for' => 'nullable|date'
         ]);
 
         $evaluation = $dailyTask->evaluations()->create([
             'user_id' => Auth::id(),
             'comment' => $validatedData['comment'] ?? null,
             'rating'  => $validatedData['rating'],
-            'label'   => $validatedData['label'] ?? null
+            'label'   => $validatedData['label'] ?? null,
+            'task_for' =>$validatedData['task_for'] ?? null
         ]);
 
         return response()->json([
@@ -87,7 +89,8 @@ class DailyTaskEvaluationController extends Controller
         $validatedData = $request->validate([
             'comment' => 'nullable|string',
             'rating'  => 'required|integer|min:0|max:10',
-            'label'   => 'nullable|string'
+            'label'   => 'nullable|string',
+            'task_for' => 'nullable|date'
         ]);
 
         $user = Auth::user();
@@ -121,10 +124,6 @@ class DailyTaskEvaluationController extends Controller
             'evaluation' => new DailytaskevaluationResource($evaluation),
         ],200);
     }
-
-    /**
-     * Delete an evaluation.
-     */
     public function destroy($id)
     {
         $evaluation = DailyTaskEvaluation::findOrFail($id);
@@ -142,21 +141,13 @@ class DailyTaskEvaluationController extends Controller
         $user = Auth::user();
         $company_id = $user->company_id;
         $this->authorize('viewAny', DailyTaskEvaluation::class);
-    
-        // 1) Parse the date from the URL param; fallback to today if invalid
         try {
             $selectedDate = Carbon::parse($date)->toDateString();
         } catch (\Exception $e) {
             $selectedDate = Carbon::today()->toDateString();
         }
-    
-        // 2) (Optional) If you need the daily/weekly/monthly logic, define it:
         $currentDayOfWeek  = Carbon::parse($selectedDate)->dayOfWeek; 
         $currentDayOfMonth = Carbon::parse($selectedDate)->day;       
-    
-        // 3) Build query to fetch tasks *only* if:
-        //    - They match the daily/weekly/monthly schedule, etc.
-        //    - They *have* an evaluation for the given date.
         $tasksQuery = DailyTask::where('company_id', $company_id)
             ->where('active', 1)
             ->where(function ($query) use ($selectedDate, $currentDayOfWeek, $currentDayOfMonth) {
@@ -185,15 +176,16 @@ class DailyTaskEvaluationController extends Controller
                 });
             })
             ->whereHas('evaluations', function ($q) use ($selectedDate) {
-                // Only include tasks that have an evaluation on the selected date
-                $q->whereDate('created_at', $selectedDate);
+                $q->whereDate('task_for', $selectedDate);
             })
             ->with([
-                // Eager-load department
                 'department:id,name',
-                // Eager-load only the evaluations from that date
+                'reports' => function ($q) use ($selectedDate) {
+                    $q->whereDate('created_at','=', $selectedDate)
+                    ->with('submittedBy:id,name');
+                },
                 'evaluations' => function ($q) use ($selectedDate) {
-                    $q->whereDate('created_at', $selectedDate)
+                    $q->whereDate('task_for', $selectedDate)
                       ->with('evaluator:id,name');
                 },
             ])
@@ -211,14 +203,9 @@ class DailyTaskEvaluationController extends Controller
                 'to',
                 'dept_id',
             ]);
-    
-        // 4) Get the tasks
         $tasks = $tasksQuery->get();
-    
-        // 5) Transform them into your desired response structure
         $result = $tasks->map(function ($task) use ($selectedDate) {
-            // There is at least one evaluation (by definition of whereHas),
-            // but let's show the first as an "object" or all if you need.
+            $report = $task->reports->first();
             $evaluation = $task->evaluations->first();
     
             return [
@@ -235,24 +222,34 @@ class DailyTaskEvaluationController extends Controller
                     'from'           => $task->from,
                     'to'             => $task->to,
                 ],
+                'report' => $report ? (object) [
+                    'id' => $report->id,
+                    "daily_task_id" => $report->daily_task_id,
+                    "notes" => $report->notes,
+                    "status" => $report->status,
+                    "created_at" => $report->created_at->toDateTimeString(),
+                    "updated_at" => $report->updated_at->toDateTimeString(),
+                    "task_found" => $report->task_found,
+                    'user' => (object) [
+                        'id' => $report->submittedBy->id,
+                        'name' => $report->submittedBy->name
+                    ]
+                ] : null,
                 'department' => $task->department
                     ? [
                         'id'   => $task->department->id,
                         'name' => $task->department->name,
                     ]
                     : null,
-    
-                // We already know it has an evaluation, but let's keep a clear boolean
                 'has_evaluation' => true,
-    
-                // Return single evaluation as an object
                 'evaluation' => $evaluation
                     ? [
                         'id'         => $evaluation->id,
                         'comment'    => $evaluation->comment,
                         'rating'     => $evaluation->rating,
                         'label'      => $evaluation->label,
-                        'created_at' => $evaluation->created_at,
+                        'task_for'   => $evaluation->task_for,
+                        'created_at' => $evaluation->created_at->toDateTimeString(),
                         'evaluator'  => $evaluation->evaluator
                             ? [
                                 'id'   => $evaluation->evaluator->id,
@@ -263,8 +260,6 @@ class DailyTaskEvaluationController extends Controller
                     : null
             ];
         });
-    
-        // 6) Return JSON
         return response()->json([
             'date'  => $selectedDate,
             'data' => $result,

@@ -15,7 +15,8 @@ class DailyTaskEvaluation extends Model
         'user_id',
         'comment',
         'rating',
-        'label'
+        'label',
+        'task_for'
     ];
     public function dailyTask()
     {
