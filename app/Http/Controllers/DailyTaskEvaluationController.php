@@ -34,15 +34,7 @@ class DailyTaskEvaluationController extends Controller
         $this->authorize('create', DailyTaskEvaluation::class);
 
         $today = now()->toDateString();
-        $existingEvaluation = DailyTaskEvaluation::where('daily_task_id', $taskId)
-            ->whereDate('created_at', $today)
-            ->first();
-
-        if ($existingEvaluation) {
-            return response()->json([
-                'message' => 'This task already has an evaluation for today.',
-            ], 409);
-        }
+        
 
         $validatedData = $request->validate([
             'comment' => 'nullable|string',
@@ -50,6 +42,15 @@ class DailyTaskEvaluationController extends Controller
             'label'   => 'nullable|string',
             'task_for' => 'nullable|date'
         ]);
+        $existingEvaluation = DailyTaskEvaluation::where('daily_task_id', $taskId)
+            ->whereDate('task_for', $validatedData['task_for'])
+            ->first();
+
+        if ($existingEvaluation) {
+            return response()->json([
+                'message' => 'This task already has an evaluation for today.',
+            ], 409);
+        }
 
         $evaluation = $dailyTask->evaluations()->create([
             'user_id' => Auth::id(),
