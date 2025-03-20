@@ -6,6 +6,7 @@ use App\Models\Task;
 use App\Models\TaskRevision;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class TaskController extends Controller
 {
@@ -33,10 +34,11 @@ class TaskController extends Controller
         ->where('creator_user_id', $userId)
         ->orWhere('assigned_user_id', $userId)
         ->orWhere('supervisor_user_id', $userId)
+        ->withCount('comments')
         ->with([
-            'creator:id,name,email',
-            'assignedUser:id,name,email',
-            'supervisor:id,name,email',
+            'creator:id,name',
+            'assignedUser:id,name',
+            'supervisor:id,name',
             'project:id,name',
             'department:id,name',
             'userStatuses' => function ($query) use ($userId) {
@@ -56,6 +58,99 @@ class TaskController extends Controller
 
         return response()->json($tasks, 200);
     }
+
+    // public function index(Request $request)
+    // {
+    //     $user = $request->user();
+    //     if (Gate::allows('view-any', Task::class)) {
+    //         $tasks = Task::with([
+    //                 'project:id,name', 
+    //                 'department:id,name', 
+    //                 'creator:id,name', 
+    //                 'assignedUser:id,name', 
+    //                 'supervisor:id,name',
+    //                 'userStatuses' => function ($query) use ($user) {
+    //                     $query->where('user_id', $user->id);
+    //                 }
+    //             ])
+    //             ->where('company_id', $user->company_id)
+    //             ->get()
+    //             ->map(function($task) {
+    //                 $status = $task->userStatuses->first();
+    //                 $task->is_starred = $status ? $status->is_starred : false;
+    //                 $task->is_archived = $status ? $status->is_archived : false;
+    //                 $task->makeHidden(['company_id', 'department_id', 'project_id', 'creator_user_id', 'assigned_user_id', 'supervisor_user_id', 'userStatuses']);
+    
+    //                 if ($task->project) {
+    //                     $task->project->setAppends([]);
+    //                 }
+    
+    //                 return [
+    //                     'id' => $task->id,
+    //                     'title' => $task->title,
+    //                     'description' => $task->description,
+    //                     'start_date' => $task->start_date,
+    //                     'deadline' => $task->deadline,
+    //                     'is_urgent' => $task->is_urgent,
+    //                     'priority' => $task->priority,
+    //                     'status' => $task->status,
+    //                     'is_starred' => $task->is_starred,
+    //                     'is_archived' => $task->is_archived,
+    //                     'project' => $task->project->only(['id', 'name']),
+    //                     'department' => $task->department->only(['id', 'name']),
+    //                     'creator' => $task->creator->only(['id', 'name']),
+    //                     'assignedUser' => $task->assignedUser->only(['id', 'name']),
+    //                     'supervisor' => $task->supervisor->only(['id', 'name']),
+    //                 ];
+    //             });
+    //     } else {
+    //         $tasks = Task::with([
+    //                 'project:id,name', 
+    //                 'department:id,name', 
+    //                 'creator:id,name', 
+    //                 'assignedUser:id,name', 
+    //                 'supervisor:id,name',
+    //                 'userStatuses' => function ($query) use ($user) {
+    //                     $query->where('user_id', $user->id);
+    //                 }
+    //             ])
+    //             ->where(function($query) use ($user) {
+    //                 $query->where('assigned_user_id', $user->id)
+    //                       ->orWhere('creator_user_id', $user->id)
+    //                       ->orWhere('supervisor_user_id', $user->id);
+    //             })
+    //             ->get()
+    //             ->map(function($task) {
+    //                 $status = $task->userStatuses->first();
+    //                 $task->is_starred = $status ? $status->is_starred : false;
+    //                 $task->is_archived = $status ? $status->is_archived : false;
+    //                 $task->makeHidden(['company_id', 'department_id', 'project_id', 'creator_user_id', 'assigned_user_id', 'supervisor_user_id', 'userStatuses']);
+    
+    //                 if ($task->project) {
+    //                     $task->project->setAppends([]);
+    //                 }
+    
+    //                 return [
+    //                     'id' => $task->id,
+    //                     'title' => $task->title,
+    //                     'description' => $task->description,
+    //                     'start_date' => $task->start_date,
+    //                     'deadline' => $task->deadline,
+    //                     'is_urgent' => $task->is_urgent,
+    //                     'priority' => $task->priority,
+    //                     'status' => $task->status,
+    //                     'is_starred' => $task->is_starred,
+    //                     'is_archived' => $task->is_archived,
+    //                     'project' => $task->project->only(['id', 'name']),
+    //                     'department' => $task->department->only(['id', 'name']),
+    //                     'creator' => $task->creator->only(['id', 'name']),
+    //                     'assignedUser' => $task->assignedUser->only(['id', 'name']),
+    //                     'supervisor' => $task->supervisor->only(['id', 'name']),
+    //                 ];
+    //             });
+    //     }
+    //     return response()->json($tasks);
+    // }
 
     public function store(Request $request)
     {
@@ -105,7 +200,7 @@ class TaskController extends Controller
             'deadline' => 'sometimes|date|after_or_equal:start_date',
             'is_urgent' => 'sometimes|boolean',
             'priority' => 'sometimes|in:low,normal,high',
-            'status' => 'sometimes|in:pending,rework,done',
+            'status' => 'sometimes|in:pending,rework,done,review',
             'assigned_user_id' => 'sometimes|exists:users,id',
             'supervisor_user_id' => 'sometimes|exists:users,id',
         ]);
