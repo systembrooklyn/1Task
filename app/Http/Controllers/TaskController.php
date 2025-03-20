@@ -200,7 +200,7 @@ class TaskController extends Controller
             'deadline' => 'sometimes|date|after_or_equal:start_date',
             'is_urgent' => 'sometimes|boolean',
             'priority' => 'sometimes|in:low,normal,high',
-            'status' => 'sometimes|in:pending,rework,done,review',
+            'status' => 'sometimes|in:pending,rework,done,review,inProgress',
             'assigned_user_id' => 'sometimes|exists:users,id',
             'supervisor_user_id' => 'sometimes|exists:users,id',
         ]);
@@ -242,6 +242,23 @@ class TaskController extends Controller
         $task->delete();
 
         return response()->json(['message' => 'Task deleted'], 200);
+    }
+
+    public function updateStatus(Request $request, $taskId)
+    {
+        $validated = $request->validate([
+            'status' => 'required|string|in:pending,rework,done,review,inProgress',
+        ]);
+        $task = Task::findOrFail($taskId);
+        $userId = Auth::id();
+        if (!in_array($userId, [$task->creator_user_id, $task->assigned_user_id, $task->supervisor_user_id])) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        $task->status = $validated['status'];
+        $task->save();
+        return response()->json([
+            'message' => 'Task status updated successfully',
+        ], 200);
     }
 
     protected function authorizeUserForTask(Task $task)
