@@ -148,6 +148,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/tasks/{id}', [TaskController::class, 'show']);
     Route::put('/tasks/{id}', [TaskController::class, 'update']);
     Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
+    Route::put('tasks/{taskId}/status', [TaskController::class, 'updateStatus']);
     Route::post('/tasks/{id}/comments', [TaskCommentController::class, 'store']);
     Route::post('/tasks/{id}/attachments', [TaskAttachmentController::class, 'store']);
     Route::post('/tasks/{id}/star', [TaskUserStatusController::class, 'toggleStar']);
