@@ -179,9 +179,11 @@ class TaskController extends Controller
 
     public function show($id)
     {
-        $task = Task::with(['comments.user','attachments.uploadedBy','revisions.user','company','project','department','creator','assignedUser','supervisor'])
+        $task = Task::with(['comments.user','comments.replies','attachments.uploadedBy','revisions.user','company','project','department','creator','assignedUser','supervisor'])
                     ->findOrFail($id);
-
+        $task->comments->each(function ($comment) {
+            $comment->replies_count = $comment->replies->count();
+            });
         $task->makeHidden(['company_id', 'department_id','project_id','creator_user_id','assigned_user_id','supervisor_user_id']);    
         $this->authorizeUserForTask($task);
 

@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\TaskAttachmentController;
 use App\Http\Controllers\TaskCommentController;
+use App\Http\Controllers\TaskCommentRepliesController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskRevisionController;
 use App\Http\Controllers\TaskUserStatusController;
@@ -156,6 +157,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/tasks/{id}/revisions', [TaskRevisionController::class, 'index']);
     Route::delete('/attachments/{id}', [TaskAttachmentController::class, 'destroy'])->name('attachments.delete');
     Route::get('/attachments/{id}/download', [TaskAttachmentController::class, 'download'])->name('attachments.download');
+
+    Route::post('taskComments/{commentId}/replies', [TaskCommentRepliesController::class, 'addReply']);
+    Route::get('taskComments/{commentId}/replies', [TaskCommentRepliesController::class, 'getReplies']);
+    Route::put('taskCommentReplies/{replyId}', [TaskCommentRepliesController::class, 'updateReply']);
+    Route::delete('taskCommentReplies/{replyId}', [TaskCommentRepliesController::class, 'deleteReply']);
+    
 });
 
 
