@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\TaskRevision;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -219,12 +220,21 @@ class TaskController extends Controller
         $task->update($data);
         $changes = $task->getChanges();
         foreach ($changes as $field => $newValue) {
-            if (in_array($field, ['deadline','status','title','description','assigned_user_id','supervisor_user_id','priority','is_urgent'])) {
+            if (in_array($field, ['deadline','status','title','description','assigned_user_id','supervisor_user_id','priority','is_urgent','start_date'])) {
+                $oldValue = $original[$field] ?? null;
+            if (in_array($field, ['assigned_user_id', 'supervisor_user_id'])) {
+                $oldValue = $oldValue ? optional(User::find($oldValue))->name : null;
+                $newValue = $newValue ? optional(User::find($newValue))->name : null;
+            }
+            if ($field === 'is_urgent') {
+                $oldValue = $oldValue ? 'Yes' : 'No';
+                $newValue = $newValue ? 'Yes' : 'No';
+            }
                 TaskRevision::create([
                     'task_id' => $task->id,
                     'user_id' => Auth::id(),
                     'field' => $field,
-                    'old_value' => $original[$field] ?? null,
+                    'old_value' => $oldValue ?? null,
                     'new_value' => $newValue,
                     'created_at' => now()
                 ]);
