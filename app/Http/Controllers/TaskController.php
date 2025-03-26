@@ -180,7 +180,7 @@ class TaskController extends Controller
 
     public function show($id)
     {
-        $task = Task::with(['comments.user','comments.replies','attachments.uploadedBy','revisions.user','company','project','department','creator','assignedUser','supervisor'])
+        $task = Task::with(['comments.user','comments.replies','comments.replies.user','attachments.uploadedBy','revisions.user','company','project','department','creator','assignedUser','supervisor'])
                     ->findOrFail($id);
         $task->comments->each(function ($comment) {
             $comment->replies_count = $comment->replies->count();
