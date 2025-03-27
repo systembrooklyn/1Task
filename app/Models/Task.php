@@ -8,8 +8,7 @@ class Task extends Model
 {
     protected $fillable = [
         'company_id', 'project_id', 'department_id', 'creator_user_id', 'assigned_user_id', 
-        'supervisor_user_id', 'title', 'description', 'start_date', 'deadline', 
-        'is_urgent', 'priority', 'status'
+        'supervisor_user_id', 'title', 'description', 'start_date', 'deadline',  'priority', 'status'
     ];
 
     public function company() { return $this->belongsTo(Company::class); }

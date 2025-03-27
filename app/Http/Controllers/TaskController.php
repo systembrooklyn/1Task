@@ -26,7 +26,6 @@ class TaskController extends Controller
             'description',
             'start_date',
             'deadline',
-            'is_urgent',
             'priority',
             'status',
             'created_at',
