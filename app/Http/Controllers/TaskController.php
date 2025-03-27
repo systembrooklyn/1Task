@@ -162,8 +162,7 @@ class TaskController extends Controller
             'description' => 'required|string',
             'start_date' => 'required|date',
             'deadline' => 'required|date|after_or_equal:start_date',
-            'is_urgent' => 'boolean',
-            'priority' => 'in:low,normal,high',
+            'priority' => 'in:low,normal,high,urgent',
             'project_id' => 'nullable|exists:projects,id',
             'department_id' => 'nullable|exists:departments,id',
         ]);
@@ -201,8 +200,7 @@ class TaskController extends Controller
             'description' => 'sometimes|string',
             'start_date' => 'sometimes|date',
             'deadline' => 'sometimes|date|after_or_equal:start_date',
-            'is_urgent' => 'sometimes|boolean',
-            'priority' => 'sometimes|in:low,normal,high',
+            'priority' => 'sometimes|in:low,normal,high,urgent',
             'status' => 'sometimes|in:pending,rework,done,review,inProgress',
             'assigned_user_id' => 'sometimes|exists:users,id',
             'supervisor_user_id' => 'sometimes|exists:users,id',
@@ -220,15 +218,11 @@ class TaskController extends Controller
         $task->update($data);
         $changes = $task->getChanges();
         foreach ($changes as $field => $newValue) {
-            if (in_array($field, ['deadline','status','title','description','assigned_user_id','supervisor_user_id','priority','is_urgent','start_date'])) {
+            if (in_array($field, ['deadline','status','title','description','assigned_user_id','supervisor_user_id','priority','start_date'])) {
                 $oldValue = $original[$field] ?? null;
             if (in_array($field, ['assigned_user_id', 'supervisor_user_id'])) {
                 $oldValue = $oldValue ? optional(User::find($oldValue))->name : null;
                 $newValue = $newValue ? optional(User::find($newValue))->name : null;
-            }
-            if ($field === 'is_urgent') {
-                $oldValue = $oldValue ? 'Yes' : 'No';
-                $newValue = $newValue ? 'Yes' : 'No';
             }
                 TaskRevision::create([
                     'task_id' => $task->id,

@@ -45,7 +45,7 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('deadline');
             $table->boolean('is_urgent')->default(false);
-            $table->enum('priority', ['low', 'normal', 'high'])->default('normal');
+            $table->enum('priority', ['low', 'normal', 'high', 'urgent'])->default('normal');
             $table->enum('status', ['pending', 'rework', 'done', 'review', 'inProgress'])->default('pending');
             $table->timestamps();
         });
