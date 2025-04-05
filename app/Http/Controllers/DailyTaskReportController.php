@@ -252,14 +252,16 @@ class DailyTaskReportController extends Controller
 
 
 
-    public function index(Request $request)
+    public function index($date = null)
     {
         $user = Auth::user();
         $hasPermission = $user->hasAssignedPermission('view-dailyTaskReports');
         $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
+        $date = $date ? Carbon::parse($date)->toDateString() : Carbon::today()->toDateString();
         $reports = DailyTaskReport::whereHas('dailyTask', function ($query) use ($user) {
             $query->where('company_id', $user->company_id);
         })
+        ->whereDate('created_at', $date)
         ->with(['dailyTask.department', 'submittedBy'])
         ->get();
         
