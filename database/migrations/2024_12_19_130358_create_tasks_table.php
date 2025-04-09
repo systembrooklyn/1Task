@@ -43,7 +43,7 @@ return new class extends Migration
             $table->string('title');
             $table->text('description');
             $table->date('start_date');
-            $table->date('deadline');
+            $table->date('deadline')->nullable();
             $table->boolean('is_urgent')->default(false);
             $table->enum('priority', ['low', 'normal', 'high', 'urgent'])->default('normal');
             $table->enum('status', ['pending', 'rework', 'done', 'review', 'inProgress'])->default('pending');
