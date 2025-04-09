@@ -94,6 +94,19 @@ class User extends Authenticatable
         return $this->hasMany(DailyTaskReport::class, 'submitted_by');
     }
 
+    public function taskComments()
+    {
+        return $this->belongsToMany(TaskComment::class, 'task_comment_user')
+                    ->withPivot('read_at')
+                    ->withTimestamps();
+    }
+    public function taskCommentReplies()
+    {
+        return $this->belongsToMany(TaskCommentReply::class, 'task_comment_reply_user')
+                    ->withPivot('read_at')
+                    ->withTimestamps();
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *

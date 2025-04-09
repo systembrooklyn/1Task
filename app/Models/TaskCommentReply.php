@@ -17,4 +17,10 @@ class TaskCommentReply extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'task_comment_reply_user')
+                    ->withPivot('read_at')
+                    ->withTimestamps();
+    }
 }

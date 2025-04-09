@@ -162,6 +162,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('taskComments/{commentId}/replies', [TaskCommentRepliesController::class, 'getReplies']);
     Route::put('taskCommentReplies/{replyId}', [TaskCommentRepliesController::class, 'updateReply']);
     Route::delete('taskCommentReplies/{replyId}', [TaskCommentRepliesController::class, 'deleteReply']);
+
+    Route::post('taskComments/read', [TaskCommentController::class, 'markCommentAsRead']);
+    Route::post('taskReplies/read', [TaskCommentRepliesController::class, 'markReplyAsRead']);
     
 });
 

@@ -179,16 +179,100 @@ class TaskController extends Controller
         return response()->json($task, 201);
     }
 
+    // public function show($id)
+    // {
+    //     $task = Task::with(['comments.user','comments.replies','comments.replies.user','attachments.uploadedBy','revisions.user','company','project','department','creator','assignedUser','supervisor'])
+    //                 ->findOrFail($id);
+    //     $task->comments->each(function ($comment) {
+    //         $comment->replies_count = $comment->replies->count();
+    //         });
+    //     $task->makeHidden(['company_id', 'department_id','project_id','creator_user_id','assigned_user_id','supervisor_user_id']);    
+    //     $this->authorizeUserForTask($task);
+    //     return response()->json($task, 200);
+    // }
+
     public function show($id)
     {
-        $task = Task::with(['comments.user','comments.replies','comments.replies.user','attachments.uploadedBy','revisions.user','company','project','department','creator','assignedUser','supervisor'])
-                    ->findOrFail($id);
-        $task->comments->each(function ($comment) {
+        // Fetch the task with all related data
+        $task = Task::with([
+            'comments.user', // The user who created the comment
+            'comments.users', // Users who have seen the comment
+            'comments.replies.user', // The user who created the reply
+            'comments.replies.users', // Users who have seen the reply
+            'attachments.uploadedBy',
+            'revisions.user',
+            'company',
+            'project',
+            'department',
+            'creator',
+            'assignedUser',
+            'supervisor'
+        ])->findOrFail($id);
+    
+        // Get the authenticated user's ID
+        $currentUserId = Auth::id();
+    
+        // Process comments and replies
+        $task->comments->each(function ($comment) use ($currentUserId) {
+            // Count the number of replies for the comment
             $comment->replies_count = $comment->replies->count();
+    
+            // Get users who have seen the comment (exclude the creator)
+            $comment->seen_by = $comment->users->filter(function ($user) use ($comment) {
+                return !is_null($user->pivot->read_at) && $user->id !== $comment->user_id; // Exclude the creator
+            })->map(function ($user) {
+                return [
+                    'user_id' => $user->id,
+                    'name' => $user->name, // Adjust based on your User model attributes
+                    'read_at' => $user->pivot->read_at,
+                ];
+            })->values(); // Reset keys to ensure it's an array of objects
+    
+            // Check if the current user has seen the comment
+            $comment->is_seen = $comment->users->contains(function ($user) use ($currentUserId) {
+                return $user->id === $currentUserId && !is_null($user->pivot->read_at);
             });
-        $task->makeHidden(['company_id', 'department_id','project_id','creator_user_id','assigned_user_id','supervisor_user_id']);    
+    
+            // Remove the "users" relationship to avoid redundancy
+            unset($comment->users);
+    
+            // Process replies within the comment
+            $comment->replies->each(function ($reply) use ($currentUserId) {
+                // Get users who have seen the reply (exclude the creator)
+                $reply->seen_by = $reply->users->filter(function ($user) use ($reply) {
+                    return !is_null($user->pivot->read_at) && $user->id !== $reply->user_id; // Exclude the creator
+                })->map(function ($user) {
+                    return [
+                        'user_id' => $user->id,
+                        'name' => $user->name, // Adjust based on your User model attributes
+                        'read_at' => $user->pivot->read_at,
+                    ];
+                })->values(); // Reset keys to ensure it's an array of objects
+    
+                // Check if the current user has seen the reply
+                $reply->is_seen = $reply->users->contains(function ($user) use ($currentUserId) {
+                    return $user->id === $currentUserId && !is_null($user->pivot->read_at);
+                });
+    
+                // Remove the "users" relationship to avoid redundancy
+                unset($reply->users);
+            });
+        });
+    
+        // Hide unnecessary fields
+        $task->makeHidden([
+            'company_id', 
+            'department_id',
+            'project_id',
+            'creator_user_id',
+            'assigned_user_id',
+            'supervisor_user_id'
+        ]);
+    
+        // Authorize the user for the task
         $this->authorizeUserForTask($task);
-
+    
+        // Return the task as JSON
         return response()->json($task, 200);
     }
 

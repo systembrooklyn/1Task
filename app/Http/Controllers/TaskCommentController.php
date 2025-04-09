@@ -43,7 +43,38 @@ class TaskCommentController extends Controller
             'comment_text' => $request->input('comment_text')
         ]);
 
+        $relatedUsers = collect([
+            $task->assignedUser,
+            $task->supervisor,
+            $task->creator,
+        ])->filter();
+        foreach ($relatedUsers as $user) {
+            if ($user->id !== Auth::id()) {
+                $comment->users()->attach($user->id, ['read_at' => null]);
+            }else{
+                $comment->users()->attach($user->id, ['read_at' => now()]);
+            }
+        }
         return response()->json($comment, 201);
+    }
+
+
+    public function markCommentAsRead(Request $request)
+    {
+        $validated = $request->validate([
+            'comment_id' => 'required|exists:task_comments,id',
+        ]);
+        $userId = Auth::id();
+        $comment = TaskComment::findOrFail($validated['comment_id']);
+        $pivot = $comment->users()->where('user_id', $userId)->first();
+
+        if ($pivot && is_null($pivot->pivot->read_at)) {
+            $comment->users()->updateExistingPivot($userId, ['read_at' => now()]);
+        }
+
+        return response()->json([
+            'message' => 'Comment marked as read successfully',
+        ], 200);
     }
 
     protected function authorizeUserForTask(Task $task)

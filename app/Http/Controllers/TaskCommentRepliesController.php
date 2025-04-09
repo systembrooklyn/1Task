@@ -28,6 +28,19 @@ class TaskCommentRepliesController extends Controller
         ]);
         
         $reply->save();
+        $task = $taskComment->task;
+        $relatedUsers = collect([
+            $task->assignedUser,
+            $task->supervisor,
+            $task->creator,
+        ])->filter();
+        foreach ($relatedUsers as $user) {
+            if ($user->id !== $userId) {
+                $reply->users()->attach($user->id, ['read_at' => null]);
+            }else{
+                $reply->users()->attach($user->id, ['read_at' => now()]);
+            }
+    }
         return response()->json([
             'message' => 'Reply created successfully',
             'data'    => new TaskCommentReplyResource($reply)
@@ -69,5 +82,23 @@ class TaskCommentRepliesController extends Controller
         }
         $reply->delete();
         return response()->json(['message' => 'Reply deleted successfully'], 200);
+    }
+
+
+    public function markReplyAsRead(Request $request)
+    {
+        $validated = $request->validate([
+            'reply_id' => 'required|exists:task_comment_replies,id',
+        ]);
+        $userId = Auth::id();
+        $reply = TaskCommentReply::findOrFail($validated['reply_id']);
+        $pivot = $reply->users()->where('user_id', $userId)->first();
+
+        if ($pivot && is_null($pivot->pivot->read_at)) {
+            $reply->users()->updateExistingPivot($userId, ['read_at' => now()]);
+        }
+        return response()->json([
+            'message' => 'Reply marked as read successfully',
+        ], 200);
     }
 }
