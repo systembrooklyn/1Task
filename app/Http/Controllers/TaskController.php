@@ -7,6 +7,7 @@ use App\Models\TaskRevision;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class TaskController extends Controller
@@ -58,6 +59,84 @@ class TaskController extends Controller
 
         return response()->json($tasks, 200);
     }
+
+
+    // public function index()
+    // {
+    //     $userId = Auth::id();
+
+    //     // Fetch tasks related to the logged-in user
+    //     $tasks = Task::select(
+    //         'id',
+    //         'company_id',
+    //         'project_id',
+    //         'department_id',
+    //         'creator_user_id',
+    //         'assigned_user_id',
+    //         'supervisor_user_id',
+    //         'title',
+    //         'description',
+    //         'start_date',
+    //         'deadline',
+    //         'priority',
+    //         'status',
+    //         'created_at',
+    //         'updated_at'
+    //     )
+    //     ->where('creator_user_id', $userId)
+    //     ->orWhere('assigned_user_id', $userId)
+    //     ->orWhere('supervisor_user_id', $userId)
+    //     ->withCount('comments')
+    //     ->with([
+    //         'creator:id,name',
+    //         'assignedUser:id,name',
+    //         'supervisor:id,name',
+    //         'project:id,name',
+    //         'department:id,name',
+    //         'userStatuses' => function ($query) use ($userId) {
+    //             $query->where('user_id', $userId);
+    //         },
+    //     ])
+    //     ->get();
+
+    //     // Process each task
+    //     $tasks->each(function ($task) use ($userId) {
+    //         // Check if there are any unread comments for the logged-in user
+    //         $hasUnreadComments = DB::table('task_comment_user')
+    //             ->join('task_comments', 'task_comment_user.task_comment_id', '=', 'task_comments.id')
+    //             ->where('task_comments.task_id', $task->id)
+    //             ->where('task_comment_user.user_id', $userId)
+    //             ->whereNull('task_comment_user.read_at')
+    //             ->exists();
+
+    //         // Check if there are any unread replies for the logged-in user
+    //         $hasUnreadReplies = DB::table('task_comment_reply_user')
+    //             ->join('task_comment_replies', 'task_comment_reply_user.task_comment_reply_id', '=', 'task_comment_replies.id')
+    //             ->join('task_comments', 'task_comment_replies.task_comment_id', '=', 'task_comments.id')
+    //             ->where('task_comments.task_id', $task->id)
+    //             ->where('task_comment_reply_user.user_id', $userId)
+    //             ->whereNull('task_comment_reply_user.read_at')
+    //             ->exists();
+
+    //         // Add the `is_read` property
+    //         $task->is_read = !($hasUnreadComments || $hasUnreadReplies);
+
+    //         // Add starred and archived status
+    //         $status = $task->userStatuses->first();
+    //         $task->is_starred = $status ? $status->is_starred : false;
+    //         $task->is_archived = $status ? $status->is_archived : false;
+
+    //         // Hide unnecessary fields
+    //         $task->makeHidden(['company_id', 'department_id', 'project_id', 'creator_user_id', 'assigned_user_id', 'supervisor_user_id', 'userStatuses']);
+
+    //         // Ensure project attributes are not appended
+    //         if ($task->project) {
+    //             $task->project->setAppends([]);
+    //         }
+    //     });
+
+    //     return response()->json($tasks, 200);
+    // }
 
     // public function index(Request $request)
     // {
@@ -165,7 +244,7 @@ class TaskController extends Controller
             'project_id' => 'nullable|exists:projects,id',
             'department_id' => 'nullable|exists:departments,id',
         ]);
-
+        $this->authorize('create', Task::class);
         $data = $request->all();
         if (empty($data['start_date'])) {
             $data['start_date'] = today();
@@ -193,12 +272,11 @@ class TaskController extends Controller
 
     public function show($id)
     {
-        // Fetch the task with all related data
         $task = Task::with([
-            'comments.user', // The user who created the comment
-            'comments.users', // Users who have seen the comment
-            'comments.replies.user', // The user who created the reply
-            'comments.replies.users', // Users who have seen the reply
+            'comments.user',
+            'comments.users',
+            'comments.replies.user',
+            'comments.replies.users',
             'attachments.uploadedBy',
             'revisions.user',
             'company',
@@ -208,58 +286,38 @@ class TaskController extends Controller
             'assignedUser',
             'supervisor'
         ])->findOrFail($id);
-    
-        // Get the authenticated user's ID
         $currentUserId = Auth::id();
-    
-        // Process comments and replies
         $task->comments->each(function ($comment) use ($currentUserId) {
-            // Count the number of replies for the comment
             $comment->replies_count = $comment->replies->count();
-    
-            // Get users who have seen the comment (exclude the creator)
             $comment->seen_by = $comment->users->filter(function ($user) use ($comment) {
-                return !is_null($user->pivot->read_at) && $user->id !== $comment->user_id; // Exclude the creator
+                return !is_null($user->pivot->read_at) && $user->id !== $comment->user_id;
             })->map(function ($user) {
                 return [
                     'user_id' => $user->id,
-                    'name' => $user->name, // Adjust based on your User model attributes
+                    'name' => $user->name,
                     'read_at' => $user->pivot->read_at,
                 ];
-            })->values(); // Reset keys to ensure it's an array of objects
-    
-            // Check if the current user has seen the comment
+            })->values();
             $comment->is_seen = $comment->users->contains(function ($user) use ($currentUserId) {
                 return $user->id === $currentUserId && !is_null($user->pivot->read_at);
             });
-    
-            // Remove the "users" relationship to avoid redundancy
             unset($comment->users);
-    
-            // Process replies within the comment
             $comment->replies->each(function ($reply) use ($currentUserId) {
-                // Get users who have seen the reply (exclude the creator)
                 $reply->seen_by = $reply->users->filter(function ($user) use ($reply) {
-                    return !is_null($user->pivot->read_at) && $user->id !== $reply->user_id; // Exclude the creator
+                    return !is_null($user->pivot->read_at) && $user->id !== $reply->user_id;
                 })->map(function ($user) {
                     return [
                         'user_id' => $user->id,
-                        'name' => $user->name, // Adjust based on your User model attributes
+                        'name' => $user->name,
                         'read_at' => $user->pivot->read_at,
                     ];
-                })->values(); // Reset keys to ensure it's an array of objects
-    
-                // Check if the current user has seen the reply
+                })->values();
                 $reply->is_seen = $reply->users->contains(function ($user) use ($currentUserId) {
                     return $user->id === $currentUserId && !is_null($user->pivot->read_at);
                 });
-    
-                // Remove the "users" relationship to avoid redundancy
                 unset($reply->users);
             });
         });
-    
-        // Hide unnecessary fields
         $task->makeHidden([
             'company_id', 
             'department_id',
@@ -268,18 +326,16 @@ class TaskController extends Controller
             'assigned_user_id',
             'supervisor_user_id'
         ]);
-    
-        // Authorize the user for the task
         $this->authorizeUserForTask($task);
-    
-        // Return the task as JSON
         return response()->json($task, 200);
     }
 
     public function update(Request $request, $id)
     {
         $task = Task::findOrFail($id);
-        $this->authorizeUserForTask($task);
+        // $this->authorizeUserForTask($task);
+        $user = Auth::user();
+        if($user->id !== $task->creator_user_id) return response()->json(['message' => 'Only creator can update the task'], 403);
         $original = $task->getOriginal();
         $request->validate([
             'title' => 'sometimes|string',
