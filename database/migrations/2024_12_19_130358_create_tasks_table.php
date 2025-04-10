@@ -41,7 +41,7 @@ return new class extends Migration
                   ->cascadeOnDelete();
 
             $table->string('title');
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->date('start_date');
             $table->date('deadline')->nullable();
             $table->boolean('is_urgent')->default(false);
