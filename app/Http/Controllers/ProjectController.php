@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use App\Models\Project;
 use App\Models\ProjectRevision;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -125,7 +126,8 @@ class ProjectController extends Controller
             'status' => 'required|boolean',
             'leader_id' => 'nullable|exists:users,id',
             'deadline' => 'nullable|date',
-            'department_id' => 'nullable|exists:departments,id',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:departments,id',
             'start_date' => 'nullable|date',
         ]);
         $user = Auth::user();
@@ -141,8 +143,8 @@ class ProjectController extends Controller
         $project->start_date = $request->start_date;
         $project->leader_id = $request->leader_id;
         $project->save();
-        if ($request->has('department_id')) {
-            $project->departments()->attach($request->department_id);
+        if ($request->has('department_ids') && is_array($request->department_ids)) {
+            $project->departments()->attach($request->department_ids);
         }
         return response()->json([
             'message' => 'Project created successfully'
@@ -151,47 +153,106 @@ class ProjectController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Find the project by ID
         $project = Project::find($id);
+    
+        // Check if the project exists
+        if (!$project) {
+            return response()->json(['message' => 'Project not found'], 404);
+        }
+    
+        // Authorize the user to update the project
         $this->authorize('update', $project);
+    
+        // Store the original values of the project for revision tracking
         $original = $project->getOriginal();
+    
+        // Validate the incoming request data
         $request->validate([
             'name' => 'required|string',
             'desc' => 'nullable|string',
             'status' => 'required|boolean',
             'leader_id' => 'nullable|exists:users,id',
             'deadline' => 'nullable|date',
-            'department_id' => 'nullable|exists:departments,id',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:departments,id',
             'start_date' => 'nullable|date',
         ]);
-        if (!$project) {
-            return response()->json(['message' => 'Project not found'], 404);
-        }
+    
+        // Fetch the original department IDs and names before syncing
+        $originalDepartmentIds = $project->departments()->pluck('departments.id')->toArray();
+        $originalDepartmentNames = Department::whereIn('id', $originalDepartmentIds)->pluck('name', 'id');
+    
+        // Update the project fields
         $project->name = $request->name;
         $project->desc = $request->desc;
         $project->status = $request->status;
         $project->deadline = $request->deadline;
         $project->start_date = $request->start_date;
         $project->leader_id = $request->leader_id;
-        if ($request->has('department_id')) {
-            $project->departments()->sync([$request->department_id]);
+    
+        // Sync departments if department_ids are provided
+        if ($request->has('department_ids') && is_array($request->department_ids)) {
+            $project->departments()->sync($request->department_ids);
         }
-        
+    
+        // Save the updated project
         $project->save();
-        $changes = $project->getChanges();
+    
+        // Track changes for revision history
+        $changes = $project->getChanges(); // Get only changed attributes
         foreach ($changes as $field => $newValue) {
-            if (in_array($field, ['name','status','desc','deadline','department_id','start_date'])) {
-                
+            if (in_array($field, ['name', 'status', 'desc', 'deadline', 'start_date'])) {
+                $oldValue = $original[$field] ?? null;
+    
+                // Only create a revision entry if the value has actually changed
+                if ($oldValue !== $newValue) {
                     ProjectRevision::create([
                         'project_id' => $project->id,
                         'user_id' => Auth::id(),
                         'field' => $field,
-                        'old_value' => $original[$field] ?? null,
+                        'old_value' => $oldValue,
                         'new_value' => $newValue,
-                        'created_at' => now()
+                        'created_at' => now(),
                     ]);
-                
+                }
             }
         }
+    
+        // Track changes to department associations
+        if ($request->has('department_ids')) {
+            // Fetch the new department IDs and names
+            $newDepartmentIds = $request->department_ids;
+            $newDepartmentNames = Department::whereIn('id', $newDepartmentIds)->pluck('name', 'id');
+    
+            // Find added departments
+            $addedDepartments = array_diff($newDepartmentIds, $originalDepartmentIds);
+            foreach ($addedDepartments as $departmentId) {
+                ProjectRevision::create([
+                    'project_id' => $project->id,
+                    'user_id' => Auth::id(),
+                    'field' => 'departments',
+                    'old_value' => null,
+                    'new_value' => $newDepartmentNames[$departmentId] ?? null,
+                    'created_at' => now(),
+                ]);
+            }
+    
+            // Find removed departments
+            $removedDepartments = array_diff($originalDepartmentIds, $newDepartmentIds);
+            foreach ($removedDepartments as $departmentId) {
+                ProjectRevision::create([
+                    'project_id' => $project->id,
+                    'user_id' => Auth::id(),
+                    'field' => 'departments',
+                    'old_value' => $originalDepartmentNames[$departmentId] ?? null,
+                    'new_value' => null,
+                    'created_at' => now(),
+                ]);
+            }
+        }
+    
+        // Return a success response
         return response()->json([
             'message' => 'Project updated successfully'
         ]);
