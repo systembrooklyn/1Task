@@ -47,9 +47,19 @@ class AuthController extends Controller
         ]);
         $viewPermission = Permission::where('name', 'view-dailytask')->first();
         $reportPermission = Permission::where('name', 'report-dailytask')->first();
+        $viewProjectPermission = Permission::where('name', 'view-project')->first();
+        $createTaskPermission = Permission::where('name', 'create-task')->first();
         DB::table('role_has_permissions')->insert([
             'role_id'       => $agentRole->id,
             'permission_id' => $viewPermission->id,
+        ]);
+        DB::table('role_has_permissions')->insert([
+            'role_id'       => $agentRole->id,
+            'permission_id' => $createTaskPermission->id,
+        ]);
+        DB::table('role_has_permissions')->insert([
+            'role_id'       => $agentRole->id,
+            'permission_id' => $viewProjectPermission->id,
         ]);
         DB::table('role_has_permissions')->insert([
             'role_id'       => $agentRole->id,
