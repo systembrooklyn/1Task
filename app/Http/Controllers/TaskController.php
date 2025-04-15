@@ -319,7 +319,7 @@ class TaskController extends Controller
             'description' => 'nullable|string',
             'start_date' => 'sometimes|date',
             'deadline' => 'nullable|date|after_or_equal:start_date',
-            'priority' => 'in:low,normal,high,urgent',
+            'priority' => 'nullable|in:low,normal,high,urgent',
             'project_id' => 'nullable|exists:projects,id',
             'department_id' => 'nullable|exists:departments,id',
         ]);
@@ -327,6 +327,9 @@ class TaskController extends Controller
         $data = $request->all();
         if (empty($data['start_date'])) {
             $data['start_date'] = today();
+        }
+        if (!$data['priority']) {
+            $data['priority'] = "normal";
         }
         $data['creator_user_id'] = Auth::id();
         $data['company_id'] = Auth::user()->company_id;
