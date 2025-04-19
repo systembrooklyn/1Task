@@ -481,7 +481,7 @@ class TaskController extends Controller
                 $comment = TaskComment::create([
                     'task_id' => $task->id,
                     'user_id' => Auth::id(),
-                    'comment_text' => "<p><p class='text-danger cst-cmnt'>System Log:</p> $user->name changed '$field' from '$oldValue' to '$newValue'</p>",
+                    'comment_text' => "<p><span class='text-danger cst-cmnt'>System Log:</span> $user->name changed '$field' from '$oldValue' to '$newValue'</p>",
                     'created_at' => now()
                 ]);
                 $relatedUsers = collect([
