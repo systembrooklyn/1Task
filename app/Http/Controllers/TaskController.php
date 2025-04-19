@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Department;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\TaskComment;
 use App\Models\TaskRevision;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -477,6 +478,24 @@ class TaskController extends Controller
                     'new_value' => $newValue,
                     'created_at' => now()
                 ]);
+                $comment = TaskComment::create([
+                    'task_id' => $task->id,
+                    'user_id' => Auth::id(),
+                    'comment_text' => "System Log: $user->name changed $field from $oldValue to $newValue",
+                    'created_at' => now()
+                ]);
+                $relatedUsers = collect([
+                    $task->assignedUser,
+                    $task->supervisor,
+                    $task->creator,
+                ])->filter();
+                foreach ($relatedUsers as $user) {
+                    if ($user->id !== Auth::id()) {
+                        $comment->users()->attach($user->id, ['read_at' => null]);
+                    }else{
+                        $comment->users()->attach($user->id, ['read_at' => now()]);
+                    }
+                }
             }
         }
 
