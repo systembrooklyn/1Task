@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class TaskAttachment extends Model
 {
-    protected $fillable = ['task_id', 'uploaded_by_user_id', 'file_path'];
+    protected $fillable = ['task_id', 'uploaded_by_user_id', 'file_path', 'file_size', 'file_name', 'download_url'];
 
     public function task()
     {

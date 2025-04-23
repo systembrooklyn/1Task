@@ -156,7 +156,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tasks/{id}/archive', [TaskUserStatusController::class, 'toggleArchive']);
     Route::get('/tasks/{id}/revisions', [TaskRevisionController::class, 'index']);
     Route::delete('/attachments/{id}', [TaskAttachmentController::class, 'destroy'])->name('attachments.delete');
-    Route::get('/attachments/{id}/download', [TaskAttachmentController::class, 'download'])->name('attachments.download');
+    Route::get('/tasks/{id}/attachments/{attachmentId}/download', [TaskAttachmentController::class, 'download'])->name('attachments.download');
 
     Route::post('taskComments/{commentId}/replies', [TaskCommentRepliesController::class, 'addReply']);
     Route::get('taskComments/{commentId}/replies', [TaskCommentRepliesController::class, 'getReplies']);

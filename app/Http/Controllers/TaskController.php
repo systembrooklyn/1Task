@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Http;
 
 class TaskController extends Controller
 {
@@ -524,10 +525,24 @@ class TaskController extends Controller
         if (Auth::id() !== $task->creator_user_id) {
             return response()->json(['error' => 'Forbidden'], 403);
         }
-
+        $attachments = $task->attachments;
+        $firebaseConfig = [
+            'storageBucket' => "brooklyn-chat.appspot.com",
+        ];
+        $storageBucket = $firebaseConfig['storageBucket'];
+        $deleteToken = "YOUR_DELETE_TOKEN";
+        foreach ($attachments as $attachment) {
+            $filePath = parse_url($attachment->file_path, PHP_URL_PATH);
+            $filePath = ltrim($filePath, '/');
+            $filePath = urlencode($filePath);
+            $firebaseDeletionUrl = "https://firebasestorage.googleapis.com/v0/b/{$storageBucket}/o/{$filePath}";
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$deleteToken}",
+            ])->delete($firebaseDeletionUrl);
+            $attachment->delete();
+        }
         $task->delete();
-
-        return response()->json(['message' => 'Task deleted'], 200);
+        return response()->json(['message' => 'Task and its attachments deleted successfully'], 200);
     }
 
     public function updateStatus(Request $request, $taskId)
