@@ -16,9 +16,9 @@ class CompanyController extends Controller
         }
         $company_id = $user->company_id;
         $companyUsers = User::where('company_id', $company_id)
-                            ->whereDoesntHave('companies', function ($query) use ($company_id) {
-                                $query->where('company_id', $company_id);
-                            })
+                            // ->whereDoesntHave('companies', function ($query) use ($company_id) {
+                            //     $query->where('company_id', $company_id);
+                            // })
                             ->with(['departments', 'roles'])
                             ->get();
         if ($companyUsers->isEmpty()) {

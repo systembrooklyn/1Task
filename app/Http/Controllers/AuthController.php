@@ -327,7 +327,10 @@ class AuthController extends Controller
             }
         }
         $isOwner = $loggedInUser->companies()->wherePivot('company_id', $loggedInUser->company_id)->exists();
-
+        $Owner = $userToDelete->companies()->wherePivot('company_id', $userToDelete->company_id)->exists();
+        if ($Owner) {
+            return response()->json(['message' => 'Owners cannot be deleted.'], 403);
+        }
         if ($haveAccess || $isOwner) {
             DB::beginTransaction();
 
@@ -361,6 +364,10 @@ class AuthController extends Controller
         }
         $haveAccess = $loggedInUser->getAllPermissions()->contains('name', 'edit-user');
         $isOwner = $loggedInUser->companies()->wherePivot('company_id', $loggedInUser->company_id)->exists();
+        $Owner = $userToEdit->companies()->wherePivot('company_id', $userToEdit->company_id)->exists();
+        if ($Owner && $loggedInUser->id !== $userToEdit->id) {
+            return response()->json(['message' => 'Only the owner can edit their own account.'], 403);
+        }
         if ($haveAccess || $isOwner || ($loggedInUser->id == $userToEdit->id)) {
             $userToEdit->name = $validated['name'];
             $userToEdit->save();
