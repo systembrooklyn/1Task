@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Task extends Model
 {
     protected $fillable = [
-        'company_id', 'project_id', 'department_id', 'creator_user_id', 'assigned_user_id', 
+        'company_id', 'project_id', 'department_id', 'creator_user_id', 'assigned_user_id', 'consult_user_id' ,  'inform_user_id', 
         'supervisor_user_id', 'title', 'description', 'start_date', 'deadline',  'priority', 'status'
     ];
 
@@ -17,6 +17,8 @@ class Task extends Model
     public function creator() { return $this->belongsTo(User::class, 'creator_user_id'); }
     public function assignedUser() { return $this->belongsTo(User::class, 'assigned_user_id'); }
     public function supervisor() { return $this->belongsTo(User::class, 'supervisor_user_id'); }
+    public function consult() { return $this->belongsTo(User::class, 'consult_user_id'); }
+    public function informer() { return $this->belongsTo(User::class, 'inform_user_id'); }
 
     public function comments() { return $this->hasMany(TaskComment::class); }
     public function attachments() { return $this->hasMany(TaskAttachment::class); }

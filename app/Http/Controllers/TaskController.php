@@ -74,6 +74,8 @@ class TaskController extends Controller
             'creator_user_id',
             'assigned_user_id',
             'supervisor_user_id',
+            'consult_user_id',
+            'inform_user_id',
             'title',
             'description',
             'start_date',
@@ -86,11 +88,15 @@ class TaskController extends Controller
         ->where('creator_user_id', $userId)
         ->orWhere('assigned_user_id', $userId)
         ->orWhere('supervisor_user_id', $userId)
+        ->orWhere('consult_user_id', $userId)
+        ->orWhere('inform_user_id', $userId)
         ->withCount('comments')
         ->with([
             'creator:id,name',
             'assignedUser:id,name',
             'supervisor:id,name',
+            'consult:id,name',
+            'informer:id,name',
             'project:id,name',
             'department:id,name',
             'userStatuses' => function ($query) use ($userId) {
@@ -316,6 +322,8 @@ class TaskController extends Controller
         $request->validate([
             'assigned_user_id' => 'required|exists:users,id',
             'supervisor_user_id' => 'nullable|exists:users,id',
+            'consult_user_id' => 'nullable|exists:users,id',
+            'inform_user_id' => 'nullable|exists:users,id',
             'title' => 'required|string',
             'description' => 'nullable|string',
             'start_date' => 'sometimes|date',
@@ -367,7 +375,9 @@ class TaskController extends Controller
             'department',
             'creator',
             'assignedUser',
-            'supervisor'
+            'supervisor',
+            'consult',
+            'informer'
         ])->findOrFail($id);
         $currentUserId = Auth::id();
         $task->comments->each(function ($comment) use ($currentUserId) {
@@ -407,7 +417,9 @@ class TaskController extends Controller
             'project_id',
             'creator_user_id',
             'assigned_user_id',
-            'supervisor_user_id'
+            'supervisor_user_id', 
+            'consult_user_id',
+            'inform_user_id'
         ]);
         $task->comments->each(function ($comment) use ($currentUserId) {
             $comment->users()->updateExistingPivot($currentUserId, [
@@ -434,6 +446,8 @@ class TaskController extends Controller
             'status' => 'sometimes|in:pending,rework,done,review,inProgress',
             'assigned_user_id' => 'sometimes|exists:users,id|nullable',
             'supervisor_user_id' => 'sometimes|exists:users,id|nullable',
+            'consult_user_id' => 'sometimes|exists:users,id|nullable',
+            'inform_user_id' => 'sometimes|exists:users,id|nullable',
             'project_id' => 'sometimes|exists:projects,id|nullable',
             'department_id' => 'sometimes|exists:departments,id|nullable',
         ]);
@@ -453,10 +467,10 @@ class TaskController extends Controller
         $changes = $task->getChanges();
         foreach ($changes as $field => $newValue) {
             if (in_array($field, ['deadline', 'status', 'title', 'description',
-            'assigned_user_id', 'supervisor_user_id', 'priority',
+            'assigned_user_id', 'supervisor_user_id', 'priority', 'consult_user_id' , 'inform_user_id' ,
             'start_date', 'project_id', 'department_id'])) {
                 $oldValue = $original[$field] ?? null;
-            if (in_array($field, ['assigned_user_id', 'supervisor_user_id'])) {
+            if (in_array($field, ['assigned_user_id', 'supervisor_user_id' ,'consult_user_id' , 'inform_user_id'])) {
                 $oldValue = $oldValue ? optional(User::find($oldValue))->name : null;
                 $newValue = $newValue ? optional(User::find($newValue))->name : null;
             }
@@ -488,6 +502,8 @@ class TaskController extends Controller
                     $task->assignedUser,
                     $task->supervisor,
                     $task->creator,
+                    $task->consult,
+                    $task->informer,
                 ])->filter();
                 foreach ($relatedUsers as $user) {
                     if ($user->id !== Auth::id()) {

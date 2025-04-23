@@ -33,6 +33,8 @@ class TaskCommentRepliesController extends Controller
             $task->assignedUser,
             $task->supervisor,
             $task->creator,
+            $task->consult_user_id,
+            $task->inform_user_id
         ])->filter();
         foreach ($relatedUsers as $user) {
             if ($user->id !== $userId) {

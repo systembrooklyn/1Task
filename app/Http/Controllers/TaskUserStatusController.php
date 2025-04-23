@@ -44,7 +44,7 @@ class TaskUserStatusController extends Controller
     protected function authorizeUserForTask(Task $task)
     {
         $userId = Auth::id();
-        if (!in_array($userId, [$task->creator_user_id, $task->assigned_user_id, $task->supervisor_user_id])) {
+        if (!in_array($userId, [$task->creator_user_id, $task->assigned_user_id, $task->supervisor_user_id, $task->consult_user_id, $task->inform_user_id])) {
             abort(403, 'Forbidden');
         }
     }

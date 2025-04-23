@@ -47,6 +47,8 @@ class TaskCommentController extends Controller
             $task->assignedUser,
             $task->supervisor,
             $task->creator,
+            $task->consult_user_id,
+            $task->inform_user_id
         ])->filter();
         foreach ($relatedUsers as $user) {
             if ($user->id !== Auth::id()) {
@@ -80,7 +82,7 @@ class TaskCommentController extends Controller
     protected function authorizeUserForTask(Task $task)
     {
         $userId = Auth::id();
-        if (!in_array($userId, [$task->creator_user_id, $task->assigned_user_id, $task->supervisor_user_id])) {
+        if (!in_array($userId, [$task->creator_user_id, $task->assigned_user_id, $task->supervisor_user_id, $task->consult_user_id, $task->inform_user_id])) {
             abort(403, 'Forbidden');
         }
     }
