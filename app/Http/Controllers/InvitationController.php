@@ -44,6 +44,7 @@ class InvitationController extends Controller
         $expiresAt = now()->addMinutes(60);
 
         $invitation = Invitation::create([
+            'inviter' => $user->name,
             'inviter_id' => $user->id,
             'email' => $request->email,
             'token' => $token,

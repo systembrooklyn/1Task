@@ -23,6 +23,7 @@ class InvitationMail extends Mailable
         return $this->subject('You have been invited to join the platform!')
                     ->view('emails.invitation')
                     ->with([
+                        'inviter' => $this->invitation->inviter ? $this->invitation->inviter : "1Task",
                         'companyName' => $this->invitation->company ? $this->invitation->company->name : 'No Company',
                         'token' => $this->invitation->token,               
                         'expiresAt' => $this->invitation->expires_at,
