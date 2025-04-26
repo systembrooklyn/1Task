@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
 use App\Http\Resources\DailyTaskResource;
 use App\Models\DailyTaskRevision;
+use App\Models\Department;
+use App\Models\Project;
 use Illuminate\Support\Facades\Log;
 
 class DailyTaskController extends Controller
@@ -124,6 +126,7 @@ class DailyTaskController extends Controller
         }
         $updateData = [
             'task_name' => $validated['task_name'] ?? $task->name,
+            'dept_id' => $validated['dept_id'] ?? $task->dept_id,
             'description' => $validated['description'] ?? $task->description,
             'start_date' => $validated['start_date'] ?? $task->start_date,
             'task_type' => $validated['task_type'] ?? $task->task_type,
@@ -150,6 +153,7 @@ class DailyTaskController extends Controller
             'assigned_to',
             'note',
             'project_id',
+            'dept_id'
         ];
         foreach ($changes as $field => $newValue) {
             if (in_array($field, $trackableFields)) {
@@ -159,6 +163,16 @@ class DailyTaskController extends Controller
                 }
                 if (is_array($newValue)) {
                     $newValue = json_encode($newValue);
+                }
+                if ($field === 'dept_id') {
+                    $oldValue = $oldValue ? optional(Department::find($oldValue))->name : null;
+                    $newValue = $newValue ? optional(Department::find($newValue))->name : null;
+                }
+    
+                // For project-related fields, fetch the project's name instead of its ID
+                if ($field === 'project_id') {
+                    $oldValue = $oldValue ? optional(Project::find($oldValue))->name : null;
+                    $newValue = $newValue ? optional(Project::find($newValue))->name : null;
                 }
                 DailyTaskRevision::create([
                     'daily_task_id' => $task->id,
