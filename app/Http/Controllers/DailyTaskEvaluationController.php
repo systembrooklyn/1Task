@@ -6,12 +6,14 @@ use App\Http\Resources\DailytaskevaluationResource;
 use App\Models\DailyTask;
 use App\Models\DailyTaskEvaluation;
 use App\Models\DailyTaskEvaluationRevision;
+use App\Models\DailyTaskReport;
 use App\Models\Department;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
-use function PHPUnit\Framework\isEmpty;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class DailyTaskEvaluationController extends Controller
 {
@@ -353,5 +355,121 @@ class DailyTaskEvaluationController extends Controller
                 'dept_performance' => $result,
             ]
         ], 200);
+    }
+    public function getUserPerformance(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'nullable|exists:users,id',
+            'from' => 'nullable|date',
+            'to' => 'nullable|date',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+        $userId = $request->input('user_id')? $request->input('user_id') : Auth::user()->id;
+        $from = $request->input('from');
+        $to = $request->input('to');
+        $targetUser = User::where('id',$userId)->first(['name','email']);
+        if (!$from && !$to) {
+            $from = Carbon::now()->startOfMonth()->toDateString();
+            $to = Carbon::now()->toDateString();
+        } elseif ($from && !$to) {
+            $to = $from;
+        }
+        try {
+            $fromDate = Carbon::parse($from)->startOfDay();
+            $toDate = Carbon::parse($to)->endOfDay();
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Invalid date format. Use YYYY-MM-DD.',
+            ], 400);
+        }
+        $reports = DailyTaskReport::where('submitted_by', $userId)
+            ->whereBetween('created_at', [$fromDate, $toDate])
+            ->select('daily_task_id', DB::raw('DATE(created_at) as report_date'))
+            ->get()
+            ->groupBy('daily_task_id');
+    
+        if ($reports->isEmpty()) {
+            return response()->json([
+                'message' => 'No reports found for the selected period.',
+                'data' => [],
+            ]);
+        }
+        $taskDateMap = [];
+    
+        foreach ($reports as $taskId => $reportGroup) {
+            $taskDateMap[$taskId] = $reportGroup->pluck('report_date')->unique()->toArray();
+        }
+        $bindings = [];
+        foreach ($taskDateMap as $taskId => $dates) {
+            foreach ($dates as $date) {
+                $bindings[] = ['daily_task_id' => $taskId, 'date' => $date];
+            }
+        }
+        if (empty($bindings)) {
+            return response()->json([
+                'message' => 'No matching evaluations found.',
+                'data' => [],
+            ]);
+        }
+        $evaluations = DailyTaskEvaluation::whereIn('daily_task_id', array_keys($taskDateMap))
+            ->whereBetween('task_for', [$fromDate->format('Y-m-d'), $toDate->format('Y-m-d')])
+            ->join('daily_tasks', 'daily_tasks.id', '=', 'daily_task_evaluations.daily_task_id')
+            ->select(
+                'daily_task_evaluations.*',
+                'daily_tasks.dept_id'
+            )
+            ->get();
+        if ($evaluations->isEmpty()) {
+            return response()->json([
+                'message' => 'No evaluations found for your reports in the selected period.',
+                'data' => [],
+            ]);
+        }
+        $deptStats = [];
+    
+        foreach ($evaluations as $evaluation) {
+            $deptId = $evaluation->dept_id;
+    
+            if (!isset($deptStats[$deptId])) {
+                $department = Department::find($deptId);
+                $deptStats[$deptId] = [
+                    'department_name' => optional($department)->name ?? 'Unknown',
+                    'sum_rating' => 0,
+                    'count' => 0,
+                ];
+            }
+            $rating = data_get($evaluation, 'rating');
+    
+            if ($rating !== null) {
+                $deptStats[$deptId]['sum_rating'] += $rating;
+                $deptStats[$deptId]['count'] += 1;
+            }
+        }
+        $result = [];
+        foreach ($deptStats as $deptId => $stats) {
+            $totalRate = $stats['count'] > 0
+                ? round(($stats['sum_rating'] / ($stats['count'] * 10)) * 100, 2)
+                : 0;
+    
+            $result[] = [
+                'department_name' => $stats['department_name'],
+                'total_rate' => $totalRate,
+                'evaluation_count' => $stats['count']
+            ];
+        }
+        $overallPerformance = collect($result)->avg('total_rate');
+        $overallPerformance = round($overallPerformance, 2);
+    
+        return response()->json([
+            'message' => "Performance Retrieved Successfully between $from to $to",
+            'data' => [
+                'user' => $targetUser,
+                'user_performance' => $overallPerformance,
+                'range' => compact('from', 'to'),
+                'performance_by_department' => $result,
+            ]
+        ]);
     }
 }

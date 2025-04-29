@@ -142,6 +142,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('evaluations/{id}', [DailyTaskEvaluationController::class, 'destroy']);
     Route::get('daily-tasks-evaluations/{date?}', [DailyTaskEvaluationController::class, 'tasksOfTheDay']);
     Route::get('deptPerformance', [DailyTaskEvaluationController::class, 'getDeptPerformance']);
+    Route::get('userPerformance', [DailyTaskEvaluationController::class, 'getUserPerformance']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
