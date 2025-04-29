@@ -6,16 +6,21 @@ use App\Http\Resources\DailytaskevaluationResource;
 use App\Models\DailyTask;
 use App\Models\DailyTaskEvaluation;
 use App\Models\DailyTaskEvaluationRevision;
+use App\Models\Department;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+
+use function PHPUnit\Framework\isEmpty;
 
 class DailyTaskEvaluationController extends Controller
 {
     public function index($taskId)
     {
-        $dailyTask = DailyTask::with('evaluations',
-        'evaluations.evaluator:id,name')->findOrFail($taskId);
+        $dailyTask = DailyTask::with(
+            'evaluations',
+            'evaluations.evaluator:id,name'
+        )->findOrFail($taskId);
 
         $this->authorize('viewAny', DailyTaskEvaluation::class);
 
@@ -28,13 +33,13 @@ class DailyTaskEvaluationController extends Controller
     public function store(Request $request, $taskId)
     {
         $dailyTask = DailyTask::find($taskId);
-        if(!$dailyTask) return response()->json([
+        if (!$dailyTask) return response()->json([
             'message' => 'Task not found',
         ], 404);
         $this->authorize('create', DailyTaskEvaluation::class);
 
         $today = now()->toDateString();
-        
+
 
         $validatedData = $request->validate([
             'comment' => 'nullable|string',
@@ -57,13 +62,13 @@ class DailyTaskEvaluationController extends Controller
             'comment' => $validatedData['comment'] ?? null,
             'rating'  => $validatedData['rating'],
             'label'   => $validatedData['label'] ?? null,
-            'task_for' =>$validatedData['task_for'] ?? null
+            'task_for' => $validatedData['task_for'] ?? null
         ]);
 
         return response()->json([
             'message'    => 'Evaluation created successfully!',
             'evaluation' => new DailytaskevaluationResource($evaluation),
-        ],201);
+        ], 201);
     }
 
     /**
@@ -123,7 +128,7 @@ class DailyTaskEvaluationController extends Controller
         return response()->json([
             'message'    => 'Evaluation updated successfully!',
             'evaluation' => new DailytaskevaluationResource($evaluation),
-        ],200);
+        ], 200);
     }
     public function destroy($id)
     {
@@ -147,34 +152,34 @@ class DailyTaskEvaluationController extends Controller
         } catch (\Exception $e) {
             $selectedDate = Carbon::today()->toDateString();
         }
-        $currentDayOfWeek  = Carbon::parse($selectedDate)->dayOfWeek; 
-        $currentDayOfMonth = Carbon::parse($selectedDate)->day;       
+        $currentDayOfWeek  = Carbon::parse($selectedDate)->dayOfWeek;
+        $currentDayOfMonth = Carbon::parse($selectedDate)->day;
         $tasksQuery = DailyTask::where('company_id', $company_id)
             ->where('active', 1)
             ->where(function ($query) use ($selectedDate, $currentDayOfWeek, $currentDayOfMonth) {
                 $query->orWhere(function ($query) use ($selectedDate) {
                     $query->where('task_type', 'daily')
-                          ->whereDate('start_date', '<=', $selectedDate);
+                        ->whereDate('start_date', '<=', $selectedDate);
                 })
-                ->orWhere(function ($query) use ($selectedDate, $currentDayOfWeek) {
-                    $query->where('task_type', 'weekly')
-                          ->whereDate('start_date', '<=', $selectedDate)
-                          ->whereJsonContains('recurrent_days', $currentDayOfWeek);
-                })
-                ->orWhere(function ($query) use ($selectedDate, $currentDayOfMonth) {
-                    $query->where('task_type', 'monthly')
-                          ->whereDate('start_date', '<=', $selectedDate)
-                          ->where('day_of_month', $currentDayOfMonth);
-                })
-                ->orWhere(function ($query) use ($selectedDate) {
-                    $query->where('task_type', 'single')
-                          ->whereDate('start_date', $selectedDate);
-                })
-                ->orWhere(function ($query) use ($selectedDate) {
-                    $query->where('task_type', 'last_day_of_month')
-                          ->whereDate('start_date', $selectedDate)
-                          ->whereRaw('DAY(LAST_DAY(start_date)) = ?', [Carbon::parse($selectedDate)->day]);
-                });
+                    ->orWhere(function ($query) use ($selectedDate, $currentDayOfWeek) {
+                        $query->where('task_type', 'weekly')
+                            ->whereDate('start_date', '<=', $selectedDate)
+                            ->whereJsonContains('recurrent_days', $currentDayOfWeek);
+                    })
+                    ->orWhere(function ($query) use ($selectedDate, $currentDayOfMonth) {
+                        $query->where('task_type', 'monthly')
+                            ->whereDate('start_date', '<=', $selectedDate)
+                            ->where('day_of_month', $currentDayOfMonth);
+                    })
+                    ->orWhere(function ($query) use ($selectedDate) {
+                        $query->where('task_type', 'single')
+                            ->whereDate('start_date', $selectedDate);
+                    })
+                    ->orWhere(function ($query) use ($selectedDate) {
+                        $query->where('task_type', 'last_day_of_month')
+                            ->whereDate('start_date', $selectedDate)
+                            ->whereRaw('DAY(LAST_DAY(start_date)) = ?', [Carbon::parse($selectedDate)->day]);
+                    });
             })
             ->whereHas('evaluations', function ($q) use ($selectedDate) {
                 $q->whereDate('task_for', $selectedDate);
@@ -182,12 +187,12 @@ class DailyTaskEvaluationController extends Controller
             ->with([
                 'department:id,name',
                 'reports' => function ($q) use ($selectedDate) {
-                    $q->whereDate('created_at','=', $selectedDate)
-                    ->with('submittedBy:id,name');
+                    $q->whereDate('created_at', '=', $selectedDate)
+                        ->with('submittedBy:id,name');
                 },
                 'evaluations' => function ($q) use ($selectedDate) {
                     $q->whereDate('task_for', $selectedDate)
-                      ->with('evaluator:id,name');
+                        ->with('evaluator:id,name');
                 },
             ])
             ->select([
@@ -208,7 +213,7 @@ class DailyTaskEvaluationController extends Controller
         $result = $tasks->map(function ($task) use ($selectedDate) {
             $report = $task->reports->first();
             $evaluation = $task->evaluations->first();
-    
+
             return [
                 'daily_task_id' => $task->id,
                 'daily_task'    => [
@@ -265,5 +270,83 @@ class DailyTaskEvaluationController extends Controller
             'date'  => $selectedDate,
             'data' => $result,
         ]);
+    }
+
+    public function getDeptPerformance(Request $request)
+    {
+        $user = Auth::user();
+        $this->authorize('viewAny', DailyTaskEvaluation::class);
+        $from = $request->input('from');
+        $to = $request->input('to');
+
+        if (!$from && !$to) {
+            $from = Carbon::now()->startOfMonth()->toDateString();
+            $to = Carbon::now()->toDateString();
+        } elseif ($from && !$to) {
+            $to = $from;
+        }
+        try {
+            $fromDate = Carbon::parse($from);
+            $toDate = Carbon::parse($to)->endOfDay();
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Invalid date format. Use YYYY-MM-DD.',
+            ], 400);
+        }
+        $departments = Department::where('company_id', $user->company_id)
+            ->pluck('name', 'id');
+
+        if ($departments->isEmpty()) {
+            return response()->json(['evaluations_by_department' => []]);
+        }
+        $taskIds = DailyTask::where('company_id', $user->company_id)
+            ->pluck('id');
+        if ($taskIds->isEmpty()) {
+            return response()->json(['evaluations_by_department' => []]);
+        }
+        $evaluations = DailyTaskEvaluation::whereIn('daily_task_id', $taskIds)
+            ->whereBetween('task_for', [$from, $to])
+            ->with('dailyTask:id,dept_id')
+            ->get(['id', 'daily_task_id', 'rating']);
+        $deptStats = [];
+
+        foreach ($evaluations as $evaluation) {
+            $deptId = $evaluation->dailyTask->dept_id;
+
+            if (!isset($deptStats[$deptId])) {
+                $deptStats[$deptId] = [
+                    'department_name' => $departments[$deptId],
+                    'sum_rating' => 0,
+                    'count' => 0,
+                ];
+            }
+
+            $deptStats[$deptId]['sum_rating'] += $evaluation->rating;
+            $deptStats[$deptId]['count'] += 1;
+        }
+        $result = [];
+
+        foreach ($deptStats as $deptId => $stats) {
+            $totalRate = $stats['count'] > 0
+                ? round($stats['sum_rating'] / ($stats['count'] * 10), 2) * 100
+                : 0;
+
+            $result[] = [
+                'department_name' => $stats['department_name'],
+                'total_rate' => $totalRate,
+            ];
+        }
+        if (empty($result)) {
+            return response()->json([
+                'message' => 'No evaluations found for the selected period.',
+                'data' => [],
+                'range' => compact('from', 'to')
+            ], 200);
+        }
+        return response()->json([
+            'message' => "Performance Retrieved Successfully between $from to $to",
+            'data' => $result,
+            'range' => compact('from', 'to')
+        ], 200);
     }
 }
