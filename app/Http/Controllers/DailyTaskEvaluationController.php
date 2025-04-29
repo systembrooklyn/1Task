@@ -343,10 +343,15 @@ class DailyTaskEvaluationController extends Controller
                 'range' => compact('from', 'to')
             ], 200);
         }
+        $overallPerformance = collect($result)->avg('total_rate');
+        $overallPerformance = round($overallPerformance, 2);
         return response()->json([
             'message' => "Performance Retrieved Successfully between $from to $to",
-            'data' => $result,
-            'range' => compact('from', 'to')
+            'data' => [
+                'company_performance' => $overallPerformance,
+                'range' => compact('from', 'to'),
+                'dept_performance' => $result,
+            ]
         ], 200);
     }
 }
