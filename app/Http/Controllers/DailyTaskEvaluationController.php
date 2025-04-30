@@ -277,7 +277,7 @@ class DailyTaskEvaluationController extends Controller
     public function getDeptPerformance(Request $request)
     {
         $user = Auth::user();
-        $this->authorize('viewAny', DailyTaskEvaluation::class);
+        $this->authorize('view-chartReports', DailyTaskEvaluation::class);
         $from = $request->input('from');
         $to = $request->input('to');
 
@@ -358,6 +358,7 @@ class DailyTaskEvaluationController extends Controller
     }
     public function getUserPerformance(Request $request)
     {
+        $this->authorize('view-chartReports', DailyTaskEvaluation::class);
         $validator = Validator::make($request->all(), [
             'user_id' => 'nullable|exists:users,id',
             'from' => 'nullable|date',

@@ -93,4 +93,14 @@ class DailyTaskEvaluationPolicy
 
         return Response::allow();
     }
+
+    public function viewChartReports(User $user)
+    {
+        $hasPermission = $user->assignedPermissions()->contains('name', 'view-chartReports');
+        $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
+
+        return ($hasPermission || $isOwner)
+            ? Response::allow()
+            : Response::deny('You do not have permission to view chart reports.');
+    }
 }
