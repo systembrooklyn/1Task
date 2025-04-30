@@ -55,7 +55,8 @@ class TaskAttachmentController extends Controller
     public function store(Request $request, $id)
     {
         $request->validate([
-            'file' => 'required|file'
+            'file' => 'required|file',
+            'comment_text' => 'nullable|string',
         ]);
         $file = $request->file('file');
         $extension = strtolower($file->getClientOriginalExtension());
@@ -103,14 +104,16 @@ class TaskAttachmentController extends Controller
                 'download_url' => $downloadUrl,
             ]);
             if ($isImage) {
-                $dataType = "<div class='w-50'>
+                $dataType = "<div class='w-50 imgComment'>
                     <a href='{$downloadUrl}' target='blank' download='{$fileOriginalName}' style='text-decoration: none; display: inline-block;'>
                     <img src='{$downloadUrl}' alt='{$fileOriginalName}' style='max-width: 100%; height: auto; cursor: pointer;'/>
                     </a>
+                    $request->comment_text
                 </div>";
             } else {
-                $dataType = "<div>
+                $dataType = "<div class='fileComment'>
                     <a href='{$downloadUrl}' download='{$fileOriginalName}' style='display: inline-block; padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px;'>Download File: {$fileOriginalName}</a>
+                    $request->comment_text
                 </div>";
             }
             $comment = TaskComment::create([
