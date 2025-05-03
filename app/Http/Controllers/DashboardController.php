@@ -382,12 +382,11 @@ class DashboardController extends Controller
             'evaluations_by_department' => $evaluationsByDept,
         ];
     }
-    protected function counDept()
+    protected function counDept($date = null)
     {
         $totalDept = $this->user->departments()
             ->where('company_id', $this->companyId)
             ->get();
-        echo $totalDept;
         $total = $totalDept->count();
         $departmentsWithUserCount = $totalDept->map(function ($department) {
             return [
