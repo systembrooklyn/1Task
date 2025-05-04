@@ -489,7 +489,7 @@
                                                     <td class="v-text-align"
                                                         style="padding-right: 0px; padding-left: 0px" align="center">
                                                         <img align="center" border="0"
-                                                            src="https://firebasestorage.googleapis.com/v0/b/brooklyn-chat.appspot.com/o/invitation%20imgs%2Fimage-1.png?alt=media&token=7a3dc209-847a-4c52-a4f8-ef723a4a20f4"
+                                                            src="https://firebasestorage.googleapis.com/v0/b/brooklyn-chat.appspot.com/o/invitation%20imgs%2Fimage-1.png?alt=media&token=c2c2a817-7186-4f3d-af62-73302aca2b3a"
                                                             alt="image" title="image"
                                                             style="
                                   outline: none;
