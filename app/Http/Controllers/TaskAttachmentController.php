@@ -56,7 +56,7 @@ class TaskAttachmentController extends Controller
     {
         ini_set('max_execution_time', 10000);
         $request->validate([
-            'file' => 'required|file',
+            'file' => 'required|file|max:20480',
             'comment_text' => 'nullable|string',
         ]);
         $file = $request->file('file');
@@ -84,11 +84,11 @@ class TaskAttachmentController extends Controller
         $firebaseStorageUrl = "https://firebasestorage.googleapis.com/v0/b/{$storageBucket}/o/" . urlencode($filePath) . "?uploadType=media";
         $uploadToken = "YOUR_UPLOAD_TOKEN";
         $fileContent = fopen($file->getPathname(), 'r');
-        $response = Http::withHeaders([
+        $response = Http::timeout(300)
+        ->withHeaders([
             'Authorization' => "Bearer {$uploadToken}",
             'Content-Type' => $file->getMimeType(),
         ])
-        ->timeout(300)
         ->withBody($fileContent, $file->getMimeType())
         ->post($firebaseStorageUrl);
         fclose($fileContent);
