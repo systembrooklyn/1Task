@@ -55,6 +55,8 @@ class TaskAttachmentController extends Controller
     public function store(Request $request, $id)
     {
         ini_set('max_execution_time', 10000);
+        ini_set('upload_max_filesize', '100M');
+        ini_set('post_max_size', '105M');
         $request->validate([
             'file' => 'required|file',
             'comment_text' => 'nullable|string',
@@ -85,12 +87,12 @@ class TaskAttachmentController extends Controller
         $uploadToken = "YOUR_UPLOAD_TOKEN";
         $fileContent = fopen($file->getPathname(), 'r');
         $response = Http::timeout(300)
-        ->withHeaders([
-            'Authorization' => "Bearer {$uploadToken}",
-            'Content-Type' => $file->getMimeType(),
-        ])
-        ->withBody($fileContent, $file->getMimeType())
-        ->post($firebaseStorageUrl);
+            ->withHeaders([
+                'Authorization' => "Bearer {$uploadToken}",
+                'Content-Type' => $file->getMimeType(),
+            ])
+            ->withBody($fileContent, $file->getMimeType())
+            ->post($firebaseStorageUrl);
         fclose($fileContent);
         if ($response->successful()) {
             $fileMetadata = $response->json();
