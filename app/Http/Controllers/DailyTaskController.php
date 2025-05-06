@@ -41,7 +41,9 @@ class DailyTaskController extends Controller
             'dept_id' => 'required|exists:departments,id',
             'assigned_to' => 'nullable|exists:users,id',
             'project_id'    => 'nullable|exists:projects,id',
+            'priority' => 'nullable|in:normal,critical',
         ]);
+        // return $validated;
         if ($validated['task_type'] === 'daily') {
             $validated['recurrent_days'] = null;
             $validated['day_of_month'] = null;
@@ -61,6 +63,7 @@ class DailyTaskController extends Controller
                     'day_of_month' => $validated['day_of_month'] ?? null,
                     'from' => $validated['from'],
                     'to' => $validated['to'],
+                    'priority' => $validated['priority'] ?? 'normal',
                     'company_id' => $companyId,
                     'dept_id' => $validated['dept_id'],
                     'project_id'      => $validated['project_id'] ?? null,
@@ -115,6 +118,7 @@ class DailyTaskController extends Controller
             'dept_id' => 'required|exists:departments,id',
             'assigned_to' => 'nullable|exists:users,id',
             'project_id'    => 'nullable|exists:projects,id',
+            'priority' => 'nullable|in:normal,critical',
         ]);
         if ($validated['task_type'] === 'daily') {
             $validated['recurrent_days'] = null;
@@ -134,6 +138,7 @@ class DailyTaskController extends Controller
             'day_of_month' => $validated['day_of_month'] ?? null,
             'from' => $validated['from'] ?? $task->from,
             'to' => $validated['to'] ?? $task->to,
+            'priority' => $validated['priority'] ?? $task->priority,
             'assigned_to' => $validated['assigned_to'] ?? $task->assigned_to,
             'project_id'     => array_key_exists('project_id', $validated) ? $validated['project_id'] : $task->project_id,
             'updated_by' => $user->id,

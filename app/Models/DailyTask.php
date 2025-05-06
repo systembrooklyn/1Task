@@ -13,10 +13,26 @@ class DailyTask extends Model
     use HasFactory;
 
     protected $fillable = [
-        'task_no', 'task_name', 'description', 'start_date', 'task_type',
-        'recurrent_days', 'day_of_month', 'from', 'to', 'company_id',
-        'dept_id', 'project_id', 'created_by', 'assigned_to', 'note', 'status', 'updated_by','active',
-        'submitted_by'
+        'task_no',
+        'task_name',
+        'description',
+        'start_date',
+        'task_type',
+        'recurrent_days',
+        'day_of_month',
+        'from',
+        'to',
+        'company_id',
+        'dept_id',
+        'project_id',
+        'created_by',
+        'assigned_to',
+        'note',
+        'status',
+        'updated_by',
+        'active',
+        'submitted_by',
+        'priority',
     ];
 
     protected $casts = [
@@ -69,7 +85,7 @@ class DailyTask extends Model
     public function todayReport()
     {
         return $this->hasOne(DailyTaskReport::class)
-                    ->whereDate('created_at', now()->toDateString());
+            ->whereDate('created_at', now()->toDateString());
     }
     public function getTodayReportStatusAttribute()
     {
@@ -127,5 +143,4 @@ class DailyTask extends Model
             }
         });
     }
-    
 }

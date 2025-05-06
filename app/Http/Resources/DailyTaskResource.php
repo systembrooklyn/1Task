@@ -25,6 +25,7 @@ class DailyTaskResource extends JsonResource
             'day_of_month' => $this->day_of_month,
             'from' => $this->from,
             'to' => $this->to,
+            'priority' => $this->priority,
             'company_id' => $this->company_id,
             'department' => [
                 'dept_id' => $this->dept_id,
