@@ -56,7 +56,7 @@ class TaskAttachmentController extends Controller
     {
         ini_set('max_execution_time', 10000);
         $request->validate([
-            'file' => 'required|file|max:20480',
+            'file' => 'required|file',
             'comment_text' => 'nullable|string',
         ]);
         $file = $request->file('file');
