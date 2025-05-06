@@ -54,6 +54,7 @@ class TaskAttachmentController extends Controller
 
     public function store(Request $request, $id)
     {
+        ini_set('max_execution_time', 10000);
         $request->validate([
             'file' => 'required|file',
             'comment_text' => 'nullable|string',
@@ -86,12 +87,15 @@ class TaskAttachmentController extends Controller
         $response = Http::withHeaders([
             'Authorization' => "Bearer {$uploadToken}",
             'Content-Type' => $file->getMimeType(),
-        ])->withBody($fileContent, $file->getMimeType())->post($firebaseStorageUrl);
+        ])
+        ->timeout(300)
+        ->withBody($fileContent, $file->getMimeType())
+        ->post($firebaseStorageUrl);
         fclose($fileContent);
         if ($response->successful()) {
             $fileMetadata = $response->json();
             $fileName = basename($fileMetadata['name']);
-            $fileSize = $fileMetadata['size']/1024;
+            $fileSize = $fileMetadata['size'] / 1024;
             $downloadToken = $fileMetadata['downloadTokens'];
             $downloadUrl = "https://firebasestorage.googleapis.com/v0/b/{$storageBucket}/o/" .
                 urlencode($filePath) . "?alt=media&token={$downloadToken}";
@@ -132,7 +136,7 @@ class TaskAttachmentController extends Controller
             foreach ($relatedUsers as $user) {
                 if ($user->id !== Auth::id()) {
                     $comment->users()->attach($user->id, ['read_at' => null]);
-                }else{
+                } else {
                     $comment->users()->attach($user->id, ['read_at' => now()]);
                 }
             }
