@@ -86,25 +86,25 @@ class TaskController extends Controller
             'created_at',
             'updated_at'
         )
-        ->where('creator_user_id', $userId)
-        ->orWhere('assigned_user_id', $userId)
-        ->orWhere('supervisor_user_id', $userId)
-        ->orWhere('consult_user_id', $userId)
-        ->orWhere('inform_user_id', $userId)
-        ->withCount('comments')
-        ->with([
-            'creator:id,name',
-            'assignedUser:id,name',
-            'supervisor:id,name',
-            'consult:id,name',
-            'informer:id,name',
-            'project:id,name',
-            'department:id,name',
-            'userStatuses' => function ($query) use ($userId) {
-                $query->where('user_id', $userId);
-            }
-        ])
-        ->get();
+            ->where('creator_user_id', $userId)
+            ->orWhere('assigned_user_id', $userId)
+            ->orWhere('supervisor_user_id', $userId)
+            ->orWhere('consult_user_id', $userId)
+            ->orWhere('inform_user_id', $userId)
+            ->withCount('comments')
+            ->with([
+                'creator:id,name',
+                'assignedUser:id,name',
+                'supervisor:id,name',
+                'consult:id,name',
+                'informer:id,name',
+                'project:id,name',
+                'department:id,name',
+                'userStatuses' => function ($query) use ($userId) {
+                    $query->where('user_id', $userId);
+                }
+            ])
+            ->get();
         $taskIds = $tasks->pluck('id')->toArray();
         $tasksWithUnreadComments = DB::table('task_comments as tc')
             ->join('task_comment_user as tcu', 'tc.id', '=', 'tcu.task_comment_id')
@@ -143,7 +143,7 @@ class TaskController extends Controller
                 $task->project->setAppends([]);
             }
         });
-    
+
         return response()->json($tasks, 200);
     }
 
@@ -246,11 +246,11 @@ class TaskController extends Controller
     //                 $task->is_starred = $status ? $status->is_starred : false;
     //                 $task->is_archived = $status ? $status->is_archived : false;
     //                 $task->makeHidden(['company_id', 'department_id', 'project_id', 'creator_user_id', 'assigned_user_id', 'supervisor_user_id', 'userStatuses']);
-    
+
     //                 if ($task->project) {
     //                     $task->project->setAppends([]);
     //                 }
-    
+
     //                 return [
     //                     'id' => $task->id,
     //                     'title' => $task->title,
@@ -291,11 +291,11 @@ class TaskController extends Controller
     //                 $task->is_starred = $status ? $status->is_starred : false;
     //                 $task->is_archived = $status ? $status->is_archived : false;
     //                 $task->makeHidden(['company_id', 'department_id', 'project_id', 'creator_user_id', 'assigned_user_id', 'supervisor_user_id', 'userStatuses']);
-    
+
     //                 if ($task->project) {
     //                     $task->project->setAppends([]);
     //                 }
-    
+
     //                 return [
     //                     'id' => $task->id,
     //                     'title' => $task->title,
@@ -413,12 +413,12 @@ class TaskController extends Controller
             });
         });
         $task->makeHidden([
-            'company_id', 
+            'company_id',
             'department_id',
             'project_id',
             'creator_user_id',
             'assigned_user_id',
-            'supervisor_user_id', 
+            'supervisor_user_id',
             'consult_user_id',
             'inform_user_id'
         ]);
@@ -436,7 +436,7 @@ class TaskController extends Controller
         $task = Task::findOrFail($id);
         // $this->authorizeUserForTask($task);
         $user = Auth::user();
-        if($user->id !== $task->creator_user_id) return response()->json(['message' => 'Only creator can update the task'], 403);
+        if ($user->id !== $task->creator_user_id) return response()->json(['message' => 'Only creator can update the task'], 403);
         $original = $task->getOriginal();
         $request->validate([
             'title' => 'sometimes|string|nullable',
@@ -467,24 +467,35 @@ class TaskController extends Controller
         $task->update($data);
         $changes = $task->getChanges();
         foreach ($changes as $field => $newValue) {
-            if (in_array($field, ['deadline', 'status', 'title', 'description',
-            'assigned_user_id', 'supervisor_user_id', 'priority', 'consult_user_id' , 'inform_user_id' ,
-            'start_date', 'project_id', 'department_id'])) {
+            if (in_array($field, [
+                'deadline',
+                'status',
+                'title',
+                'description',
+                'assigned_user_id',
+                'supervisor_user_id',
+                'priority',
+                'consult_user_id',
+                'inform_user_id',
+                'start_date',
+                'project_id',
+                'department_id'
+            ])) {
                 $oldValue = $original[$field] ?? null;
-            if (in_array($field, ['assigned_user_id', 'supervisor_user_id' ,'consult_user_id' , 'inform_user_id'])) {
-                $oldValue = $oldValue ? optional(User::find($oldValue))->name : null;
-                $newValue = $newValue ? optional(User::find($newValue))->name : null;
-            }
-            if ($field === 'department_id') {
-                $oldValue = $oldValue ? optional(Department::find($oldValue))->name : null;
-                $newValue = $newValue ? optional(Department::find($newValue))->name : null;
-            }
+                if (in_array($field, ['assigned_user_id', 'supervisor_user_id', 'consult_user_id', 'inform_user_id'])) {
+                    $oldValue = $oldValue ? optional(User::find($oldValue))->name : null;
+                    $newValue = $newValue ? optional(User::find($newValue))->name : null;
+                }
+                if ($field === 'department_id') {
+                    $oldValue = $oldValue ? optional(Department::find($oldValue))->name : null;
+                    $newValue = $newValue ? optional(Department::find($newValue))->name : null;
+                }
 
-            // For project-related fields, fetch the project's name instead of its ID
-            if ($field === 'project_id') {
-                $oldValue = $oldValue ? optional(Project::find($oldValue))->name : null;
-                $newValue = $newValue ? optional(Project::find($newValue))->name : null;
-            }
+                // For project-related fields, fetch the project's name instead of its ID
+                if ($field === 'project_id') {
+                    $oldValue = $oldValue ? optional(Project::find($oldValue))->name : null;
+                    $newValue = $newValue ? optional(Project::find($newValue))->name : null;
+                }
                 TaskRevision::create([
                     'task_id' => $task->id,
                     'user_id' => Auth::id(),
@@ -509,7 +520,7 @@ class TaskController extends Controller
                 foreach ($relatedUsers as $user) {
                     if ($user->id !== Auth::id()) {
                         $comment->users()->attach($user->id, ['read_at' => null]);
-                    }else{
+                    } else {
                         $comment->users()->attach($user->id, ['read_at' => now()]);
                     }
                 }
@@ -551,12 +562,42 @@ class TaskController extends Controller
             'status' => 'required|string|in:pending,rework,done,review,inProgress',
         ]);
         $task = Task::findOrFail($taskId);
-        $userId = Auth::id();
-        if (!in_array($userId, [$task->creator_user_id, $task->assigned_user_id, $task->supervisor_user_id])) {
+        $user = Auth::user();
+        $oldValue = $task->status;
+        $newValue = $request->status;
+        if (!in_array($user->id, [$task->creator_user_id, $task->assigned_user_id, $task->supervisor_user_id, $task->consult_user_id, $task->inform_user_id])) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
         $task->status = $validated['status'];
         $task->save();
+        TaskRevision::create([
+            'task_id' => $task->id,
+            'user_id' => Auth::id(),
+            'field' => 'status',
+            'old_value' => $oldValue ?? null,
+            'new_value' => $newValue,
+            'created_at' => now()
+        ]);
+        $comment = TaskComment::create([
+            'task_id' => $task->id,
+            'user_id' => Auth::id(),
+            'comment_text' => "<p><span class='text-danger cst-cmnt'>System Log:</span> $user->name changed status from '$oldValue' to '$newValue'</p>",
+            'created_at' => now()
+        ]);
+        $relatedUsers = collect([
+            $task->assignedUser,
+            $task->supervisor,
+            $task->creator,
+            $task->consult,
+            $task->informer,
+        ])->filter();
+        foreach ($relatedUsers as $user) {
+            if ($user->id !== Auth::id()) {
+                $comment->users()->attach($user->id, ['read_at' => null]);
+            } else {
+                $comment->users()->attach($user->id, ['read_at' => now()]);
+            }
+        }
         return response()->json([
             'message' => 'Task status updated successfully',
         ], 200);
