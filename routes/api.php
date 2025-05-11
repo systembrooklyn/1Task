@@ -145,8 +145,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('userPerformance', [DailyTaskEvaluationController::class, 'getUserPerformance']);
 
 
-    Route::get('tasks/yesterday', [DailyTaskController::class, 'getYesterdayEvaluationTasks']);
-    Route::post('tasks/setRandomCount', [DailyTaskController::class, 'updateRandomTaskCount']);
+    Route::get('dailyTasks/yesterday', [DailyTaskController::class, 'getYesterdayEvaluationTasks']);
+    Route::post('dailyTasks/setRandomCount', [DailyTaskController::class, 'updateRandomTaskCount']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
