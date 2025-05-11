@@ -50,4 +50,43 @@ class TaskNumberGenerator
             return 'TASK-' . strtoupper($numberPart);
         });
     }
+
+    public static function getRandomDailyTaskNum(int $companyId): int
+    {
+        $row = DB::table('daily_task_counters')
+            ->where('company_id', $companyId)
+            ->first();
+
+        return $row?->rndm_DT_num_dept ?? 2;
+    }
+
+    /**
+     * Set or update the random task count for a company
+     *
+     * @param int $companyId
+     * @param int $value
+     * @return void
+     */
+    public static function setRandomDailyTaskNum(int $companyId, int $value): void
+    {
+        DB::transaction(function () use ($companyId, $value) {
+            $exists = DB::table('daily_task_counters')
+                ->where('company_id', $companyId)
+                ->exists();
+
+            if ($exists) {
+                DB::table('daily_task_counters')
+                    ->where('company_id', $companyId)
+                    ->update([
+                        'rndm_DT_num_dept' => $value,
+                    ]);
+            } else {
+                DB::table('daily_task_counters')->insert([
+                    'company_id' => $companyId,
+                    'last_daily_task_no' => 0,
+                    'rndm_DT_num_dept' => $value,
+                ]);
+            }
+        });
+    }
 }

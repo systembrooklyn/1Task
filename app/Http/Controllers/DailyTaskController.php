@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\TaskNumberGenerator;
 use App\Models\DailyTask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,9 @@ use App\Http\Resources\DailyTaskResource;
 use App\Models\DailyTaskRevision;
 use App\Models\Department;
 use App\Models\Project;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class DailyTaskController extends Controller
@@ -173,7 +177,7 @@ class DailyTaskController extends Controller
                     $oldValue = $oldValue ? optional(Department::find($oldValue))->name : null;
                     $newValue = $newValue ? optional(Department::find($newValue))->name : null;
                 }
-    
+
                 // For project-related fields, fetch the project's name instead of its ID
                 if ($field === 'project_id') {
                     $oldValue = $oldValue ? optional(Project::find($oldValue))->name : null;
@@ -271,7 +275,7 @@ class DailyTaskController extends Controller
 
     //     $tasks = $tasksQuery->paginate($perPage);
     //     $tasksData = DailyTaskResource::collection($tasks->items());
-        
+
     //     return response()->json([
     //         'tasks' => $tasksData,
     //         'pagination' => [
@@ -307,25 +311,25 @@ class DailyTaskController extends Controller
                     $query->where('task_type', 'daily')
                         ->whereDate('start_date', '<=', $today);
                 })
-                ->orWhere(function ($query) use ($today, $currentDayOfWeek) {
-                    $query->where('task_type', 'weekly')
-                        ->whereDate('start_date', '<=', $today)
-                        ->whereJsonContains('recurrent_days', $currentDayOfWeek);
-                })
-                ->orWhere(function ($query) use ($today, $currentDayOfMonth) {
-                    $query->where('task_type', 'monthly')
-                        ->whereDate('start_date', '<=', $today)
-                        ->where('day_of_month', $currentDayOfMonth);
-                })
-                ->orWhere(function ($query) use ($today) {
-                    $query->where('task_type', 'single')
-                        ->whereDate('start_date', $today);
-                })
-                ->orWhere(function ($query) use ($today) {
-                    $query->where('task_type', 'last_day_of_month')
-                        ->whereDate('start_date', $today)
-                        ->whereRaw('DAY(LAST_DAY(start_date)) = ?', [now()->day]);
-                });
+                    ->orWhere(function ($query) use ($today, $currentDayOfWeek) {
+                        $query->where('task_type', 'weekly')
+                            ->whereDate('start_date', '<=', $today)
+                            ->whereJsonContains('recurrent_days', $currentDayOfWeek);
+                    })
+                    ->orWhere(function ($query) use ($today, $currentDayOfMonth) {
+                        $query->where('task_type', 'monthly')
+                            ->whereDate('start_date', '<=', $today)
+                            ->where('day_of_month', $currentDayOfMonth);
+                    })
+                    ->orWhere(function ($query) use ($today) {
+                        $query->where('task_type', 'single')
+                            ->whereDate('start_date', $today);
+                    })
+                    ->orWhere(function ($query) use ($today) {
+                        $query->where('task_type', 'last_day_of_month')
+                            ->whereDate('start_date', $today)
+                            ->whereRaw('DAY(LAST_DAY(start_date)) = ?', [now()->day]);
+                    });
             })
             ->leftJoin('daily_task_reports', function ($join) use ($today) {
                 $join->on('daily_task_reports.daily_task_id', '=', 'daily_tasks.id')
@@ -363,8 +367,8 @@ class DailyTaskController extends Controller
         $this->authorize('view', $task);
 
         return (new DailyTaskResource($task))
-                ->response()
-                ->setStatusCode(200);
+            ->response()
+            ->setStatusCode(200);
     }
 
     public function allDailyTasks()
@@ -444,7 +448,7 @@ class DailyTaskController extends Controller
             $type_of = 'desc';
         }
         $query = DailyTask::with(['department', 'creator', 'assignee', 'updatedBy', 'submittedBy', 'project:id,name,status'])
-                        ->where('company_id', $user->company_id);
+            ->where('company_id', $user->company_id);
         if (!empty($dept_ids)) {
             $query->whereIn('dept_id', $dept_ids);
         }
@@ -484,8 +488,9 @@ class DailyTaskController extends Controller
     //     $task->save();
     //     return response()->json(['message' => 'Task submitted successfully!']);
     // }
-    
-    public function activeDailyTask(Request $request, $id){
+
+    public function activeDailyTask(Request $request, $id)
+    {
         $user = Auth::user();
         $task = DailyTask::findOrFail($id);
         $this->authorize('update', $task);
@@ -537,14 +542,134 @@ class DailyTaskController extends Controller
     {
         $user = Auth::user();
         $today = now()->toDateString();
-        $dailyTasks = DailyTask::with(['todayReport', 'department', 'creator', 'assignee', 'submittedBy', 'updatedBy' ,'project:id,name,status'])
-                        ->where('company_id', $user->company_id)
-                        ->whereIn('dept_id', $user->departments()->pluck('departments.id')->toArray())
-                        ->get();
+        $dailyTasks = DailyTask::with(['todayReport', 'department', 'creator', 'assignee', 'submittedBy', 'updatedBy', 'project:id,name,status'])
+            ->where('company_id', $user->company_id)
+            ->whereIn('dept_id', $user->departments()->pluck('departments.id')->toArray())
+            ->get();
         $tasksData = DailyTaskResource::collection($dailyTasks);
         return response()->json([
             'date' => $today,
             'tasks' => $tasksData,
         ], 200);
+    }
+
+
+    public function getYesterdayEvaluationTasks(): JsonResponse
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+        $companyId = $user->company_id;
+        $today = Carbon::now();
+        $yesterday = $today->copy()->subDay();
+        $formattedDate = $yesterday->format('d/m/Y');
+        $cacheKey = "evaluation_tasks_{$companyId}_" . $yesterday->format('Y-m-d');
+        $cached = Cache::get($cacheKey);
+
+        if ($cached) {
+            return response()->json([
+                'message' => "Random Daily Tasks Retrieved Successfully for: {$cached['data']['date']}",
+                'data' => $cached['data']
+            ]);
+        }
+        for ($i = 1; $i <= 15; $i++) {
+            $oldDate = $today->copy()->subDays($i);
+            $oldCacheKey = "evaluation_tasks_{$companyId}_" . $oldDate->format('Y-m-d');
+            Cache::forget($oldCacheKey);
+        }
+        $tasks = DailyTask::where('company_id', $companyId)
+            ->where('active', true)
+            ->select('id', 'start_date', 'task_type', 'recurrent_days', 'day_of_month', 'company_id', 'dept_id')
+            ->get();
+
+        $validTasks = $tasks->filter(function ($task) use ($yesterday) {
+            return $this->shouldTaskAppearOnDate($task, $yesterday);
+        });
+        $numTasksPerDept = TaskNumberGenerator::getRandomDailyTaskNum($companyId);
+        $groupedTasks = $validTasks
+            ->groupBy('dept_id')
+            ->map(function ($departmentTasks) use ($numTasksPerDept) {
+                return $departmentTasks->random(min($numTasksPerDept, $departmentTasks->count()));
+            })
+            ->filter()
+            ->flatten(1);
+
+        $taskIds = $groupedTasks->pluck('id')->values()->toArray();
+
+        $responseData = [
+            'date' => $formattedDate,
+            'dailytask_ids' => $taskIds,
+            'count' => count($taskIds),
+        ];
+        Cache::put($cacheKey, ['data' => $responseData], now()->addDay());
+
+        return response()->json([
+            'message' => "Random Daily Tasks Retrieved Successfully for: $formattedDate",
+            'data' => $responseData
+        ]);
+    }
+
+    public function updateRandomTaskCount(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $request->validate([
+            'random_daily_task_count' => 'required|integer'
+        ]);
+
+        $companyId = $user->company_id;
+        $randomCount = $request->input('random_daily_task_count');
+        if ($randomCount > 10 || $randomCount < 1) {
+            return response()->json([
+                'notify' => "please insert number between 1 to 10",
+                'message' => "Random count can't be less than 1 or bigger than 10 : {$randomCount}"
+            ]);
+        }
+        try {
+            TaskNumberGenerator::setRandomDailyTaskNum($companyId, $randomCount);
+
+            return response()->json([
+                'notify' => "this count will change in the next day not for today",
+                'message' => "Random task count updated successfully to {$randomCount}"
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update random task count',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Determine if a task should appear on a given date.
+     *
+     * @param DailyTask $task
+     * @param Carbon $date
+     * @return bool
+     */
+    private function shouldTaskAppearOnDate(DailyTask $task, Carbon $date): bool
+    {
+        switch ($task->task_type) {
+            case 'daily':
+                return true;
+
+            case 'weekly':
+                return is_array($task->recurrent_days) &&
+                    in_array($date->format('l'), $task->recurrent_days);
+
+            case 'monthly':
+                return $date->day == $task->day_of_month;
+
+            default:
+                return false;
+        }
     }
 }

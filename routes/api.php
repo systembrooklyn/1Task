@@ -28,8 +28,8 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 Route::get('/user', function (Request $request) {
     $user = $request->user()->load([
-        'company', 
-        'departments', 
+        'company',
+        'departments',
         'roles.permissions'
     ]);
     $response = [
@@ -74,7 +74,7 @@ Route::get('/user', function (Request $request) {
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])
-->middleware('auth:sanctum');
+    ->middleware('auth:sanctum');
 Route::post('forgot-password', [AuthController::class, 'sendPasswordResetLink']);
 
 
@@ -94,13 +94,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('permissions', [RolePermissionController::class, 'getPermissions']);
     Route::get('permissions/{id}', [RolePermissionController::class, 'getPermission']);
 
-    Route::post('edit-user/{id}',[AuthController::class,'editUser']);
+    Route::post('edit-user/{id}', [AuthController::class, 'editUser']);
 
-    Route::post('roles', [RolePermissionController::class, 'createRole']);  
-    Route::get('roles', [RolePermissionController::class, 'getRoles']);      
-    Route::get('roles/{id}', [RolePermissionController::class, 'getRole']); 
+    Route::post('roles', [RolePermissionController::class, 'createRole']);
+    Route::get('roles', [RolePermissionController::class, 'getRoles']);
+    Route::get('roles/{id}', [RolePermissionController::class, 'getRole']);
     Route::put('roles/{id}', [RolePermissionController::class, 'updateRole']);
-    Route::delete('roles/{id}', [RolePermissionController::class, 'deleteRole']); 
+    Route::delete('roles/{id}', [RolePermissionController::class, 'deleteRole']);
     Route::post('/roles/assign-permissions', [RolePermissionController::class, 'assignPermissions']);
     Route::get('/roles/get-permissions/{id}', [RolePermissionController::class, 'getRolePermissions']);
     Route::post('/users/assign-role', [AuthController::class, 'assignRoleToUser']);
@@ -112,22 +112,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/department/assign-manager', [UserDepartmentController::class, 'assignManagerToDepartment']);
     Route::get('company-owner', [CompanyOwnerController::class, 'getCompanyOwner']);
     Route::get('isOwner', [CompanyOwnerController::class, 'checkOwner']);
-    
-    
+
+
     Route::get('company-users', [CompanyController::class, 'getCompanyUsers']);
     Route::post('/unassign-role', [AuthController::class, 'unassignRoleFromUser']);
     Route::delete('/delete-user/{id}', [AuthController::class, 'deleteUser']);
-    
-    
+
+
     Route::apiResource('projects', ProjectController::class);
     Route::post('/projects/{id}/status', [ProjectController::class, 'updatestatus']);
     Route::get('/projects/{id}/revisions', [ProjectController::class, 'getRevisions']);
 
 
-    Route::get('/alldailytask',[DailyTaskController::class, 'allDailyTasks']);
-    Route::post('/alldailytaskfilter',[DailyTaskController::class, 'allDailyTasksFiltered']);
+    Route::get('/alldailytask', [DailyTaskController::class, 'allDailyTasks']);
+    Route::post('/alldailytaskfilter', [DailyTaskController::class, 'allDailyTasksFiltered']);
     // Route::post('/submitdailytask/{id}',[DailyTaskController::class, 'submitDailyTask']);
-    Route::post('/activedailytask/{id}',[DailyTaskController::class,'activeDailyTask']);
+    Route::post('/activedailytask/{id}', [DailyTaskController::class, 'activeDailyTask']);
     Route::get('dailytask/{id}/revisions', [DailyTaskController::class, 'revisions']);
     Route::apiResource('dailytask', DailyTaskController::class);
     Route::post('/daily-tasks/{id}/submit-report', [DailyTaskReportController::class, 'submitReport']);
@@ -143,6 +143,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('daily-tasks-evaluations/{date?}', [DailyTaskEvaluationController::class, 'tasksOfTheDay']);
     Route::post('deptPerformance', [DailyTaskEvaluationController::class, 'getDeptPerformance']);
     Route::post('userPerformance', [DailyTaskEvaluationController::class, 'getUserPerformance']);
+
+
+    Route::get('tasks/yesterday', [DailyTaskController::class, 'getYesterdayEvaluationTasks']);
+    Route::post('tasks/setRandomCount', [DailyTaskController::class, 'updateRandomTaskCount']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -167,13 +171,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('taskComments/read', [TaskCommentController::class, 'markCommentAsRead']);
     Route::post('taskReplies/read', [TaskCommentRepliesController::class, 'markReplyAsRead']);
-    
 });
 
 
 /**
  * digital users
-*/
+ */
 Route::get('/digital-card/view/{user_code}', [DigitalCardController::class, 'viewDigitalCard']);
 Route::post('/digital-card/register', [DigitalCardController::class, 'register']);
 Route::post('/digital-card/verify-code', [DigitalCardController::class, 'verifyCode']);
@@ -181,9 +184,9 @@ Route::post('/digital-card/login', [DigitalCardController::class, 'login']);
 // Route::middleware('auth:digital_card_users')->put('/digital-card/update', [DigitalCardController::class, 'updateDigitalCard']);
 
 Route::middleware('auth:digital_card_users')->group(function () {
-            Route::get('/digital-card/user', [DigitalCardController::class, 'getDigitalCard']);
-            Route::put('/digital-card/update', [DigitalCardController::class, 'updateDigitalCard']);
-            Route::post('/digital-card/delete', [DigitalCardController::class, 'deleteAccount']);
+    Route::get('/digital-card/user', [DigitalCardController::class, 'getDigitalCard']);
+    Route::put('/digital-card/update', [DigitalCardController::class, 'updateDigitalCard']);
+    Route::post('/digital-card/delete', [DigitalCardController::class, 'deleteAccount']);
 });
 
 
