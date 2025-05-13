@@ -23,6 +23,7 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskRevisionController;
 use App\Http\Controllers\TaskUserStatusController;
 use App\Http\Controllers\UserDepartmentController;
+use App\Http\Controllers\UserProfileController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 
@@ -86,7 +87,8 @@ Route::post('/registerViaInvitation', [AuthController::class, 'registerViaInvita
 Route::get('invitation/{token}', [InvitationController::class, 'registerUsingInvitation']);
 Route::post('invitation/{token}/register', [InvitationController::class, 'completeRegistration']);
 Route::apiResource('departments', DepartmentsController::class)->middleware('auth:sanctum');
-
+Route::apiResource('userProfile', UserProfileController::class)->middleware('auth:sanctum');
+Route::put('userProfile', [UserProfileController::class, 'update'])->middleware('auth:sanctum');
 
 
 

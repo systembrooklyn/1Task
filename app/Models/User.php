@@ -107,6 +107,21 @@ class User extends Authenticatable
                     ->withTimestamps();
     }
 
+    public function profile()
+    {
+        return $this->hasOne(UsersProfile::class);
+    }
+
+    public function phones()
+    {
+        return $this->hasMany(UsersPhone::class);
+    }
+
+    public function links()
+    {
+        return $this->hasMany(UsersLink::class);
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *

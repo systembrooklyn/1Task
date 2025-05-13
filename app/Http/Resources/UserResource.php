@@ -18,6 +18,9 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
+            'profile' => new UserProfileResource($this->whenLoaded('profile')),
+            'phones' => UserPhoneResource::collection($this->whenLoaded('phones')),
+            'links' => UserLinkResource::collection($this->whenLoaded('links')),
         ];
     }
 }
