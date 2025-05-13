@@ -99,8 +99,8 @@
       <div class="footer">
         <p>If you didn't request a password reset, you can ignore this email. Your password will not be changed.</p>
       </div>
-        <p class="team-note">Task-Com Team</p>
-        <p class="copright-note">© 2024, Task-Com managing your tasks</p>
+        <p class="team-note">1Task Team</p>
+        <p class="copright-note">© 2025, 1Task managing your tasks</p>
     </div>
   </body>
   </html>`;
