@@ -210,6 +210,7 @@ class DailyTaskEvaluationController extends Controller
                 'from',
                 'to',
                 'dept_id',
+                'priority'
             ]);
         $tasks = $tasksQuery->get();
         $result = $tasks->map(function ($task) use ($selectedDate) {
@@ -229,6 +230,7 @@ class DailyTaskEvaluationController extends Controller
                     'active'         => $task->active,
                     'from'           => $task->from,
                     'to'             => $task->to,
+                    'priority'       => $task->priority
                 ],
                 'report' => $report ? (object) [
                     'id' => $report->id,

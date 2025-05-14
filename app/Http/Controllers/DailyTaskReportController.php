@@ -111,7 +111,7 @@ class DailyTaskReportController extends Controller
                 // Even if you eager load reports, they will be empty because of the whereDoesntHave clause.
                 'reports.submittedBy:id,name'
             ])
-            ->select('id', 'task_name', 'task_no', 'start_date', 'task_type', 'recurrent_days', 'day_of_month', 'active', 'from', 'to', 'description', 'dept_id')
+            ->select('id', 'task_name', 'task_no', 'start_date', 'task_type', 'recurrent_days', 'day_of_month', 'active', 'from', 'to', 'description', 'dept_id', 'priority')
             ->get();
     
         // Map the tasks to the desired output structure
@@ -129,6 +129,7 @@ class DailyTaskReportController extends Controller
                     'active'         => $task->active,
                     'from'           => $task->from,
                     'to'             => $task->to,
+                    'priority'       => $task->priority
                 ],
                 'department'    => $task->department ? [
                     'id'   => $task->department->id,
