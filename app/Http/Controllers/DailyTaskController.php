@@ -566,7 +566,7 @@ class DailyTaskController extends Controller
         $companyId = $user->company_id;
         $today = Carbon::now();
         $yesterday = $today->copy()->subDay();
-        $formattedDate = $yesterday->format('d/m/Y');
+        $formattedDate = $yesterday->format('Y-m-d');
         $cacheKey = "evaluation_tasks_{$companyId}_" . $yesterday->format('Y-m-d');
         $cached = Cache::get($cacheKey);
 
