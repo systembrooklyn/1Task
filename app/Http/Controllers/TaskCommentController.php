@@ -34,30 +34,36 @@ class TaskCommentController extends Controller
             'comment_text' => 'required|string',
         ]);
 
-        $task = Task::findOrFail($id);
-        $this->authorizeUserForTask($task);
+        $task = Task::with([
+            'creator',
+            'supervisor',
+            'assignedUsers',
+            'consultUsers',
+            'informerUsers'
+        ])->findOrFail($id);
 
+        $this->authorizeUserForTask($task);
         $comment = TaskComment::create([
             'task_id' => $task->id,
             'user_id' => Auth::id(),
-            'comment_text' => $request->input('comment_text')
+            'comment_text' => $request->input('comment_text'),
         ]);
-
         $relatedUsers = collect([
-            $task->assignedUser,
-            $task->supervisor,
             $task->creator,
-            $task->consult_user_id,
-            $task->inform_user_id
-        ])->filter();
+            $task->supervisor,
+            ...$task->assignedUsers->all(),
+            ...$task->consultUsers->all(),
+            ...$task->informerUsers->all(),
+        ])->filter()->unique('id');
         foreach ($relatedUsers as $user) {
-            if ($user->id !== Auth::id()) {
-                $comment->users()->attach($user->id, ['read_at' => null]);
-            }else{
+            if ($user->id === Auth::id()) {
                 $comment->users()->attach($user->id, ['read_at' => now()]);
+            } else {
+                $comment->users()->attach($user->id, ['read_at' => null]);
             }
         }
-        return response()->json($comment, 201);
+
+        return response()->json($comment->load('user:id,name'), 201);
     }
 
 
@@ -82,8 +88,16 @@ class TaskCommentController extends Controller
     protected function authorizeUserForTask(Task $task)
     {
         $userId = Auth::id();
-        if (!in_array($userId, [$task->creator_user_id, $task->assigned_user_id, $task->supervisor_user_id, $task->consult_user_id, $task->inform_user_id])) {
-            abort(403, 'Forbidden');
+        $relatedUserIds = collect([
+            $task->creator_user_id,
+            $task->supervisor_user_id,
+            ...$task->assignedUsers->pluck('id')->toArray(),
+            ...$task->consultUsers->pluck('id')->toArray(),
+            ...$task->informerUsers->pluck('id')->toArray(),
+        ])->filter()->unique();
+
+        if (!$relatedUserIds->contains($userId)) {
+            abort(403, 'Forbidden: You are not authorized to perform this action.');
         }
     }
 

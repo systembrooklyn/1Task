@@ -67,7 +67,13 @@ class TaskAttachmentController extends Controller
         $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'jfif'];
         $dataType = '';
         $isImage = in_array($extension, $imageExtensions);
-        $task = Task::findOrFail($id);
+        $task = Task::with([
+            'creator',
+            'supervisor',
+            'assignedUsers',
+            'consultUsers',
+            'informerUsers'
+        ])->findOrFail($id);
         $user = Auth::user();
         $company = $user->company;
         $this->authorizeUserForTask($task);
@@ -129,12 +135,12 @@ class TaskAttachmentController extends Controller
                 'created_at' => now()
             ]);
             $relatedUsers = collect([
-                $task->assignedUser,
-                $task->supervisor,
                 $task->creator,
-                $task->consult,
-                $task->informer,
-            ])->filter();
+                $task->supervisor,
+                ...$task->assignedUsers->all(),
+                ...$task->consultUsers->all(),
+                ...$task->informerUsers->all(),
+            ])->filter()->unique('id');
             foreach ($relatedUsers as $user) {
                 if ($user->id !== Auth::id()) {
                     $comment->users()->attach($user->id, ['read_at' => null]);
@@ -154,8 +160,16 @@ class TaskAttachmentController extends Controller
     protected function authorizeUserForTask(Task $task)
     {
         $userId = Auth::id();
-        if (!in_array($userId, [$task->creator_user_id, $task->assigned_user_id, $task->supervisor_user_id])) {
-            abort(403, 'Forbidden');
+        $relatedUserIds = collect([
+            $task->creator_user_id,
+            $task->supervisor_user_id,
+            ...$task->assignedUsers->pluck('id')->toArray(),
+            ...$task->consultUsers->pluck('id')->toArray(),
+            ...$task->informerUsers->pluck('id')->toArray(),
+        ])->filter()->unique();
+
+        if (!$relatedUserIds->contains($userId)) {
+            abort(403, 'Forbidden: You are not authorized to perform this action.');
         }
     }
 

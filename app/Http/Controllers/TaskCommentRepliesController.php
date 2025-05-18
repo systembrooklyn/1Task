@@ -26,26 +26,27 @@ class TaskCommentRepliesController extends Controller
             'user_id' => $userId,
             'reply_text' => $validated['reply_text'],
         ]);
-        
+
         $reply->save();
         $task = $taskComment->task;
         $relatedUsers = collect([
-            $task->assignedUser,
-            $task->supervisor,
             $task->creator,
-            $task->consult_user_id,
-            $task->inform_user_id
-        ])->filter();
+            $task->supervisor,
+            ...$task->assignedUsers->all(),
+            ...$task->consultUsers->all(),
+            ...$task->informerUsers->all(),
+        ])->filter()->unique('id');
         foreach ($relatedUsers as $user) {
-            if ($user->id !== $userId) {
-                $reply->users()->attach($user->id, ['read_at' => null]);
-            }else{
+            if ($user->id === $userId) {
                 $reply->users()->attach($user->id, ['read_at' => now()]);
+            } else {
+                $reply->users()->attach($user->id, ['read_at' => null]);
             }
-    }
+        }
+
         return response()->json([
             'message' => 'Reply created successfully',
-            'data'    => new TaskCommentReplyResource($reply)
+            'data' => new TaskCommentReplyResource($reply->load('user:id,name')),
         ], 201);
     }
     public function getReplies($commentId)
