@@ -10,12 +10,15 @@ use App\Http\Controllers\DailyTaskReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\DigitalCardController;
+// use App\Http\Controllers\FeatureController;
 use App\Http\Controllers\InvitationController;
+// use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RolePermissionController;
+// use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TaskAttachmentController;
 use App\Http\Controllers\TaskCommentController;
 use App\Http\Controllers\TaskCommentRepliesController;
@@ -89,7 +92,7 @@ Route::post('invitation/{token}/register', [InvitationController::class, 'comple
 Route::apiResource('departments', DepartmentsController::class)->middleware('auth:sanctum');
 Route::apiResource('userProfile', UserProfileController::class)->middleware('auth:sanctum');
 Route::put('userProfile', [UserProfileController::class, 'update'])->middleware('auth:sanctum');
-
+Route::post('user/upload-profile-picture', [UserProfileController::class, 'uploadProfilePicture'])->middleware('auth:sanctum');
 
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -199,3 +202,20 @@ Route::middleware('auth:sanctum')->get('/getInvitations', [InvitationController:
  */
 Route::get('/auth/google/redirect', [GoogleController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
+
+
+
+// Route::prefix('plans')->group(function () {
+//     Route::get('/', [PlanController::class, 'index']);
+//     Route::post('/', [PlanController::class, 'store']); // Create plan
+//     Route::post('/{plan}/features', [PlanController::class, 'attachFeatures']); // Attach features
+// });
+
+// Route::prefix('features')->group(function () {
+//     Route::get('/', [FeatureController::class, 'index']); // get feature
+//     Route::post('/', [FeatureController::class, 'store']); // Create feature
+// });
+
+// Route::middleware('auth:sanctum')->prefix('companies')->group(function () {
+//     Route::post('subscribe', [SubscriptionController::class, 'subscribe']); // Subscribe company to plan
+// });

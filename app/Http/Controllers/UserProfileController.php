@@ -5,16 +5,30 @@ namespace App\Http\Controllers;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Models\UsersPhone;
+// use App\Services\PlanLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 
 class UserProfileController extends Controller
 {
+
+    // protected $planService;
+
+    // public function __construct(PlanLimitService $planService)
+    // {
+    //     $this->planService = $planService;
+    // }
     public function index()
     {
         $user = User::with('profile', 'phones', 'links')->findOrFail(Auth::id());
+        // $result = $this->planService->checkFeatureAccess($user->company_id, 'api_calls');
+
+        // if (!$result['allowed']) {
+        //     return response()->json(['error' => $result['message']], 403);
+        // }
         return response()->json([
             'message' => 'user retreived successfully',
             'data' => new UserResource($user)
@@ -120,5 +134,73 @@ class UserProfileController extends Controller
                 throw $e;
             }
         }
+    }
+
+    public function uploadProfilePicture(Request $request)
+    {
+        $userAuth = Auth::user();
+        $user = User::find($userAuth->id);
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $request->validate([
+            'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', 
+        ]);
+
+        $pic = $request->file('profile_picture');
+        $company = $user->company; 
+
+        $firebaseConfig = [
+            'apiKey' => "AIzaSyC8p6mRMJEuv0y4AFA6GP0fVPlQyyRAWhQ",
+            'authDomain' => "brooklyn-chat.firebaseapp.com",
+            'databaseURL' => "https://brooklyn-chat-default-rtdb.europe-west1.firebasedatabase.app",
+            'projectId' => "brooklyn-chat",
+            'storageBucket' => "brooklyn-chat.appspot.com",
+            'messagingSenderId' => "450185737947",
+            'appId' => "1:450185737947:web:a7dce19db9e0b37478fefe"
+        ];
+
+        $storageBucket = $firebaseConfig['storageBucket'];
+        $filePath = "1Task/{$company->name}/profile-pictures/{$pic->hashName()}";
+
+        $firebaseStorageUrl = "https://firebasestorage.googleapis.com/v0/b/{$storageBucket}/o/" . urlencode($filePath) . "?uploadType=media";
+        $uploadToken = "YOUR_UPLOAD_TOKEN";
+        $fileContent = fopen($pic->getPathname(), 'r');
+        $response = Http::timeout(300)
+            ->withHeaders([
+                'Authorization' => "Bearer {$uploadToken}",
+                'Content-Type' => $pic->getMimeType(),
+            ])
+            ->withBody($fileContent, $pic->getMimeType())
+            ->post($firebaseStorageUrl);
+
+        fclose($fileContent);
+
+        if ($response->successful()) {
+            $fileMetadata = $response->json();
+            $fileName = basename($fileMetadata['name']);
+            $fileSizeKB = $fileMetadata['size'] / 1024;
+            $downloadToken = $fileMetadata['downloadTokens'];
+            $downloadUrl = "https://firebasestorage.googleapis.com/v0/b/{$storageBucket}/o/" .
+                urlencode($filePath) . "?alt=media&token={$downloadToken}";
+            $user->profile()->updateOrCreate(
+                ['user_id' => $user->id],
+                ['ppUrl' => $downloadUrl]
+            );
+
+            return response()->json([
+                'message' => 'Profile picture uploaded successfully.',
+                'url' => $downloadUrl,
+                'file_size_kb' => round($fileSizeKB, 2),
+                'total_usage_kb' => round($company->total_storage_used, 2)
+            ], 200);
+        }
+
+        return response()->json([
+            'error' => 'File upload failed',
+            'details' => $response->body()
+        ], 500);
     }
 }
