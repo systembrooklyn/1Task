@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Models\UsersPhone;
-// use App\Services\PlanLimitService;
+use App\Services\PlanLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,12 +15,12 @@ use Illuminate\Validation\ValidationException;
 class UserProfileController extends Controller
 {
 
-    // protected $planService;
+    protected $planService;
 
-    // public function __construct(PlanLimitService $planService)
-    // {
-    //     $this->planService = $planService;
-    // }
+    public function __construct(PlanLimitService $planService)
+    {
+        $this->planService = $planService;
+    }
     public function index()
     {
         $user = User::with('profile', 'phones', 'links')->findOrFail(Auth::id());
@@ -136,38 +136,50 @@ class UserProfileController extends Controller
         }
     }
 
+
     public function uploadProfilePicture(Request $request)
     {
         $userAuth = Auth::user();
         $user = User::find($userAuth->id);
-
         if (!$user) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-
         $request->validate([
-            'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', 
+            'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-
         $pic = $request->file('profile_picture');
-        $company = $user->company; 
+        $company = $user->company;
 
         $firebaseConfig = [
             'apiKey' => "AIzaSyC8p6mRMJEuv0y4AFA6GP0fVPlQyyRAWhQ",
             'authDomain' => "brooklyn-chat.firebaseapp.com",
-            'databaseURL' => "https://brooklyn-chat-default-rtdb.europe-west1.firebasedatabase.app",
+            'databaseURL' => "https://brooklyn-chat-default-rtdb.europe-west1.firebasedatabase.app ",
             'projectId' => "brooklyn-chat",
             'storageBucket' => "brooklyn-chat.appspot.com",
             'messagingSenderId' => "450185737947",
             'appId' => "1:450185737947:web:a7dce19db9e0b37478fefe"
         ];
-
         $storageBucket = $firebaseConfig['storageBucket'];
-        $filePath = "1Task/{$company->name}/profile-pictures/{$pic->hashName()}";
-
+        $filePath = "1Task/{$company->name}/profile-pictures/" . $pic->hashName();
         $firebaseStorageUrl = "https://firebasestorage.googleapis.com/v0/b/{$storageBucket}/o/" . urlencode($filePath) . "?uploadType=media";
-        $uploadToken = "YOUR_UPLOAD_TOKEN";
+        $uploadToken = $request->bearerToken() ?: "YOUR_UPLOAD_TOKEN";
+        $profile = $user->profile;
+        if ($profile && $profile->ppPath) {
+            $oldFilePath = urlencode($profile->ppPath);
+            $deleteUrl = "https://firebasestorage.googleapis.com/v0/b/brooklyn-chat.appspot.com/o/$oldFilePath";
+            $deleteResponse = Http::withHeaders([
+                'Authorization' => "Bearer {$uploadToken}",
+            ])->delete($deleteUrl);
+
+            if (!$deleteResponse->successful() && $deleteResponse->status() !== 404) {
+                return response()->json([
+                    'warning' => 'Failed to delete old profile picture.',
+                    'details' => $deleteResponse->json()
+                ], 200);
+            }
+        }
         $fileContent = fopen($pic->getPathname(), 'r');
+
         $response = Http::timeout(300)
             ->withHeaders([
                 'Authorization' => "Bearer {$uploadToken}",
@@ -185,16 +197,20 @@ class UserProfileController extends Controller
             $downloadToken = $fileMetadata['downloadTokens'];
             $downloadUrl = "https://firebasestorage.googleapis.com/v0/b/{$storageBucket}/o/" .
                 urlencode($filePath) . "?alt=media&token={$downloadToken}";
+            $profileData = [
+                'ppUrl' => $downloadUrl,
+                'ppPath' => $filePath,
+            ];
+
             $user->profile()->updateOrCreate(
                 ['user_id' => $user->id],
-                ['ppUrl' => $downloadUrl]
+                $profileData
             );
 
             return response()->json([
                 'message' => 'Profile picture uploaded successfully.',
                 'url' => $downloadUrl,
                 'file_size_kb' => round($fileSizeKB, 2),
-                'total_usage_kb' => round($company->total_storage_used, 2)
             ], 200);
         }
 
