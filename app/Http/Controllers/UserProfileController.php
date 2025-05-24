@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Models\UsersPhone;
-use App\Services\PlanLimitService;
+// use App\Services\PlanLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,12 +15,12 @@ use Illuminate\Validation\ValidationException;
 class UserProfileController extends Controller
 {
 
-    protected $planService;
+    // protected $planService;
 
-    public function __construct(PlanLimitService $planService)
-    {
-        $this->planService = $planService;
-    }
+    // public function __construct(PlanLimitService $planService)
+    // {
+    //     $this->planService = $planService;
+    // }
     public function index()
     {
         $user = User::with('profile', 'phones', 'links')->findOrFail(Auth::id());
