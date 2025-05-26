@@ -27,7 +27,12 @@ class UserProfileController extends Controller
         // $result = $this->planService->checkFeatureAccess($user->company_id, 'api_calls');
 
         // if (!$result['allowed']) {
-        //     return response()->json(['error' => $result['message']], 403);
+        //     return response()->json([
+        //         'message' => $result['message'],
+        //         'feature' => $result['feature'],
+        //         'limit'   => $result['limit'],
+        //         'used'    => $result['used']
+        //     ], 403);
         // }
         return response()->json([
             'message' => 'user retreived successfully',
@@ -117,6 +122,7 @@ class UserProfileController extends Controller
             if ($request->has('links')) {
                 $user->links()->delete();
                 foreach ($request->input('links') as $linkData) {
+                    $linkData['link_name'] = $linkData['link_name'] ?? $linkData['icon'];
                     $user->links()->create($linkData);
                 }
             }
@@ -147,6 +153,19 @@ class UserProfileController extends Controller
         $request->validate([
             'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+        // $fileSizeKB = $request->file('profile_picture')->getSize() / 1024;
+        // $oldSizeKB = $user->profile->ppSize ?? 0;
+        // $finalSize = (round($fileSizeKB, 2) - round($oldSizeKB, 2));
+        // $result = $this->planService->checkFeatureAccess($user->company_id, 'limit_storage', $finalSize);
+
+        // if (!$result['allowed']) {
+        //     return response()->json([
+        //         'message' => $result['message'],
+        //         'feature' => $result['feature'],
+        //         'used' => round($result['used'] / 1024, 2) . ' MB',
+        //         'limit' => round($result['limit'] / 1024, 2) . ' MB'
+        //     ], 403);
+        // }
         $pic = $request->file('profile_picture');
         $company = $user->company;
 
@@ -200,6 +219,7 @@ class UserProfileController extends Controller
             $profileData = [
                 'ppUrl' => $downloadUrl,
                 'ppPath' => $filePath,
+                // 'ppSize' => $fileSizeKB
             ];
 
             $user->profile()->updateOrCreate(
