@@ -8,7 +8,7 @@ use Spatie\Permission\Models\Role;
 
 class Company extends Model
 {
-    protected $fillable = ['name'];
+    protected $fillable = ['name','plan_id','plan_expires_at'];
 
     public function owners()
     {
@@ -33,5 +33,15 @@ class Company extends Model
     public function tasks()
     {
         return $this->hasMany(DailyTask::class, 'company_id');  // Assuming 'dept_id' in 'tasks' table
+    }
+
+    public function plan()
+    {
+        return $this->belongsTo(Plan::class);
+    }
+
+    public function usages()
+    {
+        return $this->hasMany(CompanyUsage::class);
     }
 }

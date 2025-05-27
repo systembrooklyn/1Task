@@ -162,8 +162,8 @@ class UserProfileController extends Controller
         //     return response()->json([
         //         'message' => $result['message'],
         //         'feature' => $result['feature'],
-        //         'used' => round($result['used'] / 1024, 2) . ' MB',
-        //         'limit' => round($result['limit'] / 1024, 2) . ' MB'
+        //         'used' => round($result['used'], 2) . ' MB',
+        //         'limit' => round($result['limit'], 2) . ' MB'
         //     ], 403);
         // }
         $pic = $request->file('profile_picture');
@@ -219,7 +219,7 @@ class UserProfileController extends Controller
             $profileData = [
                 'ppUrl' => $downloadUrl,
                 'ppPath' => $filePath,
-                // 'ppSize' => $fileSizeKB
+                'ppSize' => $fileSizeKB
             ];
 
             $user->profile()->updateOrCreate(

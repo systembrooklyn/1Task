@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('position')->nullable();
             $table->string('country')->nullable();
             $table->string('city')->nullable();
-            $table->string('state');
+            $table->string('state')->nullable();
             $table->timestamps();
         });
     }

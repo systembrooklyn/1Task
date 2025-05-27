@@ -18,6 +18,7 @@ use App\Policies\InvitationPolicy;
 use App\Policies\ProjectPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\TaskPolicy;
+use App\Services\PlanLimitService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -27,7 +28,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(PlanLimitService::class, function ($app) {
+            return new PlanLimitService();
+        });
     }
 
     /**
