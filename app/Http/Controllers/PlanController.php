@@ -11,6 +11,36 @@ use Illuminate\Support\Facades\Auth;
 
 class PlanController extends Controller
 {
+    public function AdminPlans()
+    {
+        $user = Auth::user();
+        if($user->id != 1) return response()->json([
+            'message' => 'you cannot access these features'
+        ], 403);
+        $plans = Plan::with(['features' => function ($query) {
+                $query->withPivot('value');
+            }])
+            ->get()
+            ->map(function ($plan) {
+                return [
+                    'id' => $plan->id,
+                    'name' => $plan->name,
+                    'price' => $plan->price,
+                    'currency' => $plan->currency,
+                    'features' => $plan->features->map(function ($feature) {
+                        return [
+                            'name' => optional($feature)->name,
+                            'value' => optional($feature->pivot)->value,
+                        ];
+                    }),
+                ];
+            });
+
+        return response()->json([
+            'message' => 'Plans retreived successfully',
+            'data' => $plans
+        ], 200);
+    }
 
     public function allPlans()
     {
@@ -75,6 +105,10 @@ class PlanController extends Controller
     // Create a new plan
     public function store(Request $request)
     {
+        $user = Auth::user();
+        if($user->id != 1) return response()->json([
+            'message' => 'you cannot access these features'
+        ], 403);
         $request->validate([
             'name' => 'required|string',
             'price' => 'required|numeric',
@@ -93,6 +127,10 @@ class PlanController extends Controller
 
     public function attachFeatures(Request $request, Plan $plan)
     {
+        $user = Auth::user();
+        if($user->id != 1) return response()->json([
+            'message' => 'you cannot access these features'
+        ], 403);
         $request->validate([
             'features' => 'required|array',
             'features.*.id' => 'exists:features,id',

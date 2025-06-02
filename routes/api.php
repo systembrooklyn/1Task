@@ -208,8 +208,9 @@ Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallb
 Route::get('plans/all', [PlanController::class, 'allPlans']);
 Route::prefix('plans')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [PlanController::class, 'index']);
-    // Route::post('/', [PlanController::class, 'store']);
-    // Route::post('/{plan}/features', [PlanController::class, 'attachFeatures']);
+    Route::get('adminPlans', [PlanController::class, 'AdminPlans']);
+    Route::post('adminPlans', [PlanController::class, 'store']);
+    Route::post('/{plan}/features', [PlanController::class, 'attachFeatures']);
 });
 
 Route::prefix('features')->group(function () {
