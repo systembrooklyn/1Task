@@ -110,7 +110,8 @@ class InvitationController extends Controller
         if (!auth('sanctum')->user()) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
-        $user = auth('sanctum')->user();
+        $authUser = Auth::user();
+        $user = User::find($authUser->id);
         $haveAccess = false;
         $permissions = $user->getAllPermissions();
 

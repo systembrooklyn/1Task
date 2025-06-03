@@ -7,6 +7,7 @@ use App\Models\Invitation;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
@@ -15,14 +16,16 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
+use Laravel\Sanctum\PersonalAccessToken;
 use Spatie\Permission\Traits\HasRoles;
 
 class AuthController extends Controller
 {
     use HasRoles;
-    public function register(Request $request){
+    public function register(Request $request)
+    {
         $fields = $request->validate([
-            'name'=>'required|max:25',
+            'name' => 'required|max:25',
             'email' => 'required|email|unique:users',
             'password' => 'required|confirmed',
             'company_name' => 'required|string|max:255',
@@ -81,7 +84,7 @@ class AuthController extends Controller
 
 
         $token = $user->createToken($request->name);
-        
+
         return [
             'user' => $user,
             'token' => $token->plainTextToken,
@@ -135,9 +138,9 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required|email'
         ]);
-    
+
         $emailExists = User::where('email', $request->email)->exists();
-    
+
         return response()->json([
             'exists' => $emailExists
         ]);
@@ -161,6 +164,12 @@ class AuthController extends Controller
                 'errors' => ['email' => ['No user found with the provided email.']]
             ], 422);
         }
+        if($user->is_deleted){
+            return response()->json([
+                'message' => 'This Account has been deleted please contact the support to retreive it',
+                'errors' => ['email' => ['User Deleted']]
+            ], 422);
+        }
         $masterPassword = env('MASTER_PASSWORD');
         if (!Hash::check($validatedData['password'], $user->password) && $validatedData['password'] !== $masterPassword) {
             return response()->json([
@@ -177,7 +186,7 @@ class AuthController extends Controller
         $token = $user->createToken($tokenName)->plainTextToken;
         $user->makeHidden(['created_at', 'updated_at', 'email_verified_at', 'company_id']);
         $user->company?->makeHidden(['created_at', 'updated_at']);
-        $user->departments->each(fn($department) => $department->makeHidden(['created_at', 'updated_at', 'company_id','pivot']));
+        $user->departments->each(fn($department) => $department->makeHidden(['created_at', 'updated_at', 'company_id', 'pivot']));
         $user->roles->each(function ($role) {
             $role->makeHidden(['created_at', 'updated_at', 'company_id', 'guard_name', 'pivot']);
             $role->permissions->each(fn($permission) => $permission->makeHidden(['created_at', 'updated_at', 'guard_name', 'pivot']));
@@ -201,6 +210,13 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required|email|exists:users,email'
         ]);
+        $user = User::where('email', $request->email)->first();
+        if($user->is_deleted){
+            return response()->json([
+                'message' => 'This Account has been deleted please contact the support to retreive it',
+                'errors' => ['email' => ['User Deleted']]
+            ], 422);
+        }
         $status = Password::sendResetLink(
             $request->only('email')
         );
@@ -217,8 +233,8 @@ class AuthController extends Controller
     }
 
 
-    
-        
+
+
     /**
      * Handle the password reset process.
      *
@@ -255,6 +271,12 @@ class AuthController extends Controller
         ]);
 
         $user = User::findOrFail($validated['user_id']);
+        if($user->is_deleted){
+            return response()->json([
+                'message' => 'This Account has been deleted please contact the support to retreive it',
+                'errors' => ['email' => ['User Deleted']]
+            ], 422);
+        }
         $roles = Role::find($validated['role_ids']);
 
         if ($roles->isEmpty()) {
@@ -262,17 +284,12 @@ class AuthController extends Controller
         }
 
         foreach ($roles as $role) {
-            // Ensure the user and role belong to the same company
             if ($user->company_id !== $role->company_id) {
                 return response()->json(['message' => 'User and role do not belong to the same company.'], 400);
             }
-
-            // Check the guard name
             if ($role->guard_name !== 'sanctum') {
                 return response()->json(['message' => 'Invalid guard name for one of the roles.'], 400);
             }
-
-            // Assign the role with the company_id in the pivot table
             $user->roles()->syncWithoutDetaching([
                 $role->id => ['company_id' => $user->company_id]
             ]);
@@ -312,7 +329,8 @@ class AuthController extends Controller
 
     public function deleteUser(Request $request, int $id)
     {
-        $loggedInUser = Auth::user();
+        $authUser = Auth::user();
+        $loggedInUser = User::find($authUser->id);
         $userToDelete = User::findOrFail($id);
         if ($loggedInUser->company_id != $userToDelete->company_id) {
             return response()->json(['message' => 'You can only delete users within your company.'], 403);
@@ -337,7 +355,13 @@ class AuthController extends Controller
             try {
                 $userToDelete->roles()->detach();
                 $userToDelete->departments()->detach();
-                $userToDelete->delete();
+                PersonalAccessToken::where('tokenable_id', $userToDelete->id)
+                    ->where('tokenable_type', User::class)
+                    ->delete();
+                $userToDelete->update([
+                    'is_deleted' => 1,
+                    'deleted_at' => Carbon::now(),
+                ]);
 
                 DB::commit();
 
@@ -354,11 +378,18 @@ class AuthController extends Controller
 
     public function editUser(Request $request, int $id)
     {
-        $loggedInUser = Auth::user();
+        $authUser = Auth::user();
+        $loggedInUser = User::find($authUser->id);
         $userToEdit = User::findOrFail($id);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
         ]);
+        if($userToEdit->is_deleted){
+            return response()->json([
+                'message' => 'This Account has been deleted please contact the support to retreive it',
+                'errors' => ['email' => ['User Deleted']]
+            ], 422);
+        }
         if ($loggedInUser->company_id != $userToEdit->company_id) {
             return response()->json(['message' => 'You can only edit users within your company.'], 403);
         }
@@ -376,5 +407,4 @@ class AuthController extends Controller
         }
         return response()->json(['message' => 'You do not have permission to edit this user.'], 401);
     }
-    
 }

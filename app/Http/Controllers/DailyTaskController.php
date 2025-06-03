@@ -12,6 +12,7 @@ use App\Http\Resources\DailyTaskResource;
 use App\Models\DailyTaskRevision;
 use App\Models\Department;
 use App\Models\Project;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -292,7 +293,8 @@ class DailyTaskController extends Controller
 
     public function index(Request $request)
     {
-        $user = Auth::user();
+        $authUser = Auth::user();
+        $user = User::find($authUser->id);
         $company_id = $user->company_id;
         $this->authorize('viewAny', DailyTask::class);
 
@@ -540,7 +542,8 @@ class DailyTaskController extends Controller
     }
     public function todaysReports()
     {
-        $user = Auth::user();
+        $authUser = Auth::user();
+        $user = User::find($authUser->id);
         $today = now()->toDateString();
         $dailyTasks = DailyTask::with(['todayReport', 'department', 'creator', 'assignee', 'submittedBy', 'updatedBy', 'project:id,name,status'])
             ->where('company_id', $user->company_id)

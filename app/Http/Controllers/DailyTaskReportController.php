@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Resources\DailyTaskReportResource;
 use App\Models\DailyTask;
 use App\Models\DailyTaskReport;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -255,7 +256,8 @@ class DailyTaskReportController extends Controller
 
     public function index($date = null)
     {
-        $user = Auth::user();
+        $authUser = Auth::user();
+        $user = User::find($authUser->id);
         $hasPermission = $user->hasAssignedPermission('view-dailyTaskReports');
         $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
         $date = $date ? Carbon::parse($date)->toDateString() : Carbon::today()->toDateString();
@@ -421,7 +423,8 @@ class DailyTaskReportController extends Controller
      */
     public function todaysReports()
     {
-        $user = Auth::user();
+        $authUser = Auth::user();
+        $user = User::find($authUser->id);
         $hasPermission = $user->hasAssignedPermission('view-dailyTaskReports');
         $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
         $today = now()->toDateString();
