@@ -105,7 +105,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('roles', [RolePermissionController::class, 'getRoles']);
     Route::get('roles/{id}', [RolePermissionController::class, 'getRole']);
     Route::put('roles/{id}', [RolePermissionController::class, 'updateRole']);
-    Route::delete('roles/{id}', [RolePermissionController::class, 'deleteRole']);
+    // Route::delete('roles/{id}', [RolePermissionController::class, 'deleteRole']);
     Route::post('/roles/assign-permissions', [RolePermissionController::class, 'assignPermissions']);
     Route::get('/roles/get-permissions/{id}', [RolePermissionController::class, 'getRolePermissions']);
     Route::post('/users/assign-role', [AuthController::class, 'assignRoleToUser']);
@@ -121,7 +121,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('company-users', [CompanyController::class, 'getCompanyUsers']);
     Route::post('/unassign-role', [AuthController::class, 'unassignRoleFromUser']);
-    Route::delete('/delete-user/{id}', [AuthController::class, 'deleteUser']);
+    // Route::delete('/delete-user/{id}', [AuthController::class, 'deleteUser']);
 
 
     Route::apiResource('projects', ProjectController::class);
@@ -144,7 +144,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('evaluation/{id}', [DailyTaskEvaluationController::class, 'show']);
     Route::post('evaluations/{taskId}', [DailyTaskEvaluationController::class, 'store']);
     Route::put('evaluations/{id}', [DailyTaskEvaluationController::class, 'update']);
-    Route::delete('evaluations/{id}', [DailyTaskEvaluationController::class, 'destroy']);
+    // Route::delete('evaluations/{id}', [DailyTaskEvaluationController::class, 'destroy']);
     Route::get('daily-tasks-evaluations/{date?}', [DailyTaskEvaluationController::class, 'tasksOfTheDay']);
     Route::post('deptPerformance', [DailyTaskEvaluationController::class, 'getDeptPerformance']);
     Route::post('userPerformance', [DailyTaskEvaluationController::class, 'getUserPerformance']);
@@ -159,20 +159,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tasks', [TaskController::class, 'store']);
     Route::get('/tasks/{id}', [TaskController::class, 'show']);
     Route::put('/tasks/{id}', [TaskController::class, 'update']);
-    Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
+    // Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
     Route::put('tasks/{taskId}/status', [TaskController::class, 'updateStatus']);
     Route::post('/tasks/{id}/comments', [TaskCommentController::class, 'store']);
     Route::post('/tasks/{id}/attachments', [TaskAttachmentController::class, 'store']);
     Route::post('/tasks/{id}/star', [TaskUserStatusController::class, 'toggleStar']);
     Route::post('/tasks/{id}/archive', [TaskUserStatusController::class, 'toggleArchive']);
     Route::get('/tasks/{id}/revisions', [TaskRevisionController::class, 'index']);
-    Route::delete('/attachments/{id}', [TaskAttachmentController::class, 'destroy'])->name('attachments.delete');
+    // Route::delete('/attachments/{id}', [TaskAttachmentController::class, 'destroy'])->name('attachments.delete');
     Route::get('/tasks/{id}/attachments/{attachmentId}/download', [TaskAttachmentController::class, 'download'])->name('attachments.download');
 
     Route::post('taskComments/{commentId}/replies', [TaskCommentRepliesController::class, 'addReply']);
     Route::get('taskComments/{commentId}/replies', [TaskCommentRepliesController::class, 'getReplies']);
     Route::put('taskCommentReplies/{replyId}', [TaskCommentRepliesController::class, 'updateReply']);
-    Route::delete('taskCommentReplies/{replyId}', [TaskCommentRepliesController::class, 'deleteReply']);
+    // Route::delete('taskCommentReplies/{replyId}', [TaskCommentRepliesController::class, 'deleteReply']);
 
     Route::post('taskComments/read', [TaskCommentController::class, 'markCommentAsRead']);
     Route::post('taskReplies/read', [TaskCommentRepliesController::class, 'markReplyAsRead']);
@@ -191,7 +191,7 @@ Route::post('/digital-card/login', [DigitalCardController::class, 'login']);
 Route::middleware('auth:digital_card_users')->group(function () {
     Route::get('/digital-card/user', [DigitalCardController::class, 'getDigitalCard']);
     Route::put('/digital-card/update', [DigitalCardController::class, 'updateDigitalCard']);
-    Route::post('/digital-card/delete', [DigitalCardController::class, 'deleteAccount']);
+    // Route::post('/digital-card/delete', [DigitalCardController::class, 'deleteAccount']);
 });
 
 
