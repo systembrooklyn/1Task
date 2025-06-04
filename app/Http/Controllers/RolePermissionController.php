@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ResourceDeletedException;
 use App\Models\Company;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class RolePermissionController extends Controller
 {
@@ -36,8 +39,8 @@ class RolePermissionController extends Controller
         ]);
 
         $existingRole = Role::where('company_id', $company_id)
-        ->where('name', $request->name)
-        ->first();
+            ->where('name', $request->name)
+            ->first();
 
         if ($existingRole) {
             return response()->json([
@@ -58,9 +61,9 @@ class RolePermissionController extends Controller
     {
         $user = Auth::user();
         $companyId = $user->company_id;
-        $roles = Role::where('company_id', $companyId)->get();
+        $roles = Role::where('company_id', $companyId)->where('is_deleted',0)->get();
         $rolesWithPermissions = $roles->map(function ($role) {
-        $permissions = $role->permissions;
+            $permissions = $role->permissions;
             return [
                 'role_id' => $role->id,
                 'role_name' => $role->name,
@@ -81,24 +84,30 @@ class RolePermissionController extends Controller
     public function getRole($id)
     {
         $user = Auth::user();
-    $companyId = $user->company_id;
-    $role = Role::where('company_id', $companyId)->find($id);
-    if (!$role) {
-        return response()->json(['error' => 'Role not found or does not belong to your company.'], 404);
-    }
-    $permissions = $role->permissions;
-    $roleWithPermissions = [
-        'role_id' => $role->id,
-        'role_name' => $role->name,
-        'permissions' => $permissions->map(function ($permission) {
-            return [
-                'permission_id' => $permission->id,
-                'permission_name' => $permission->name 
-            ];
-        })
-    ];
+        $companyId = $user->company_id;
+        $role = Role::where('company_id', $companyId)->find($id);
+        if ($role->is_deleted) {
+            throw new ResourceDeletedException(
+                'This Role has been deleted. Please contact support.',
+                'Role Deleted'
+            );
+        }
+        if (!$role) {
+            return response()->json(['error' => 'Role not found or does not belong to your company.'], 404);
+        }
+        $permissions = $role->permissions;
+        $roleWithPermissions = [
+            'role_id' => $role->id,
+            'role_name' => $role->name,
+            'permissions' => $permissions->map(function ($permission) {
+                return [
+                    'permission_id' => $permission->id,
+                    'permission_name' => $permission->name
+                ];
+            })
+        ];
 
-    return response()->json($roleWithPermissions);
+        return response()->json($roleWithPermissions);
     }
 
     /**
@@ -115,13 +124,19 @@ class RolePermissionController extends Controller
             'permissions' => 'required|array',
             'permissions.*' => 'exists:permissions,id',
         ]);
+        if ($role->is_deleted) {
+            throw new ResourceDeletedException(
+                'This Role has been deleted. Please contact support.',
+                'Role Deleted'
+            );
+        }
         $role->name = $request->name;
         $role->save();
         $role->permissions()->sync($request->permissions);
         return response()->json([
             'message' => 'Role updated successfully',
         ]);
-    }  
+    }
 
     /**
      * Delete a role for the authenticated user's company.
@@ -132,7 +147,11 @@ class RolePermissionController extends Controller
         $company_id = $user->company_id;
         $role = Role::where('company_id', $company_id)->findOrFail($id);
         $this->authorize('delete', $role);
-        $role->delete();
+        $role->update([
+            'is_deleted' => 1,
+            'deleted_at' => Carbon::now(),
+        ]);
+        DB::table('role_user')->where('role_id', $id)->delete();
         return response()->json(['message' => 'Role deleted successfully']);
     }
 
@@ -145,7 +164,12 @@ class RolePermissionController extends Controller
         ]);
 
         $role = Role::findOrFail($request->role_id);
-
+        if ($role->is_deleted) {
+            throw new ResourceDeletedException(
+                'This Role has been deleted. Please contact support.',
+                'Role Deleted'
+            );
+        }
         $role->permissions()->sync($request->permissions);
 
         return response()->json(['message' => 'Permissions assigned successfully'], 200);
@@ -154,6 +178,12 @@ class RolePermissionController extends Controller
     {
         $role = Role::findOrFail($roleId);
 
+        if ($role->is_deleted) {
+            throw new ResourceDeletedException(
+                'This Role has been deleted. Please contact support.',
+                'Role Deleted'
+            );
+        }
         $permissions = $role->permissions;
 
         return response()->json([
@@ -165,7 +195,7 @@ class RolePermissionController extends Controller
     {
         $request->validate([
             'role_id' => 'required|exists:roles,id',
-            'permission_ids' => 'required|array', 
+            'permission_ids' => 'required|array',
             'permission_ids.*' => 'exists:permissions,id',
         ]);
 
@@ -181,7 +211,7 @@ class RolePermissionController extends Controller
             $permission = Permission::findOrFail($permission_id);
 
             if ($role->hasPermissionTo($permission)) {
-                $role->revokePermissionTo($permission); 
+                $role->revokePermissionTo($permission);
             }
         }
 

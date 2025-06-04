@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ResourceDeletedException;
 use App\Models\Company;
 use App\Models\Invitation;
 use App\Models\Permission;
@@ -164,11 +165,11 @@ class AuthController extends Controller
                 'errors' => ['email' => ['No user found with the provided email.']]
             ], 422);
         }
-        if($user->is_deleted){
-            return response()->json([
-                'message' => 'This Account has been deleted please contact the support to retreive it',
-                'errors' => ['email' => ['User Deleted']]
-            ], 422);
+        if ($user->is_deleted) {
+            throw new ResourceDeletedException(
+                'This user account has been deleted. Please contact support.',
+                'User Deleted'
+            );
         }
         $masterPassword = env('MASTER_PASSWORD');
         if (!Hash::check($validatedData['password'], $user->password) && $validatedData['password'] !== $masterPassword) {
@@ -211,11 +212,11 @@ class AuthController extends Controller
             'email' => 'required|email|exists:users,email'
         ]);
         $user = User::where('email', $request->email)->first();
-        if($user->is_deleted){
-            return response()->json([
-                'message' => 'This Account has been deleted please contact the support to retreive it',
-                'errors' => ['email' => ['User Deleted']]
-            ], 422);
+        if ($user->is_deleted) {
+            throw new ResourceDeletedException(
+                'This user account has been deleted. Please contact support.',
+                'User Deleted'
+            );
         }
         $status = Password::sendResetLink(
             $request->only('email')
@@ -271,7 +272,7 @@ class AuthController extends Controller
         ]);
 
         $user = User::findOrFail($validated['user_id']);
-        if($user->is_deleted){
+        if ($user->is_deleted) {
             return response()->json([
                 'message' => 'This Account has been deleted please contact the support to retreive it',
                 'errors' => ['email' => ['User Deleted']]
@@ -384,11 +385,11 @@ class AuthController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
         ]);
-        if($userToEdit->is_deleted){
-            return response()->json([
-                'message' => 'This Account has been deleted please contact the support to retreive it',
-                'errors' => ['email' => ['User Deleted']]
-            ], 422);
+        if ($userToEdit->is_deleted) {
+            throw new ResourceDeletedException(
+                'This user account has been deleted. Please contact support.',
+                'User Deleted'
+            );
         }
         if ($loggedInUser->company_id != $userToEdit->company_id) {
             return response()->json(['message' => 'You can only edit users within your company.'], 403);

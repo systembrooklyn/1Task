@@ -105,7 +105,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('roles', [RolePermissionController::class, 'getRoles']);
     Route::get('roles/{id}', [RolePermissionController::class, 'getRole']);
     Route::put('roles/{id}', [RolePermissionController::class, 'updateRole']);
-    // Route::delete('roles/{id}', [RolePermissionController::class, 'deleteRole']);
+    Route::delete('roles/{id}', [RolePermissionController::class, 'deleteRole']);
     Route::post('/roles/assign-permissions', [RolePermissionController::class, 'assignPermissions']);
     Route::get('/roles/get-permissions/{id}', [RolePermissionController::class, 'getRolePermissions']);
     Route::post('/users/assign-role', [AuthController::class, 'assignRoleToUser']);
