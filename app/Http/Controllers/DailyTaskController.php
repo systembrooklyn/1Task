@@ -349,7 +349,7 @@ class DailyTaskController extends Controller
                 'creator:id,name',
                 'assignee:id,name',
                 'updatedBy:id,name',
-                'todayReport:id,daily_task_id,notes,status,submitted_by,created_at',
+                'todayReport:id,daily_task_id,notes,task_found,status,submitted_by,created_at',
                 'todayReport.submittedBy:id,name',
                 'project:id,name,status'
             ]);
@@ -386,7 +386,7 @@ class DailyTaskController extends Controller
                 'creator:id,name',
                 'assignee:id,name',
                 'updatedBy:id,name',
-                'todayReport:id,daily_task_id,notes,status,submitted_by,created_at',
+                'todayReport:id,daily_task_id,notes,task_found,status,submitted_by,created_at',
                 'todayReport.submittedBy:id,name',
                 'project:id,name,status'
             ]);
