@@ -57,7 +57,7 @@ class DailyTaskResource extends JsonResource
                 'id' => $this->todayReport->id,
                 'notes' => $this->todayReport->notes,
                 'status' => $this->todayReport->status,
-                'task_found' => $this->task_found,
+                'task_found' => $this->todayReport->task_found,
                 'submitted_by' => [
                     'id' => $this->todayReport->submittedBy->id ?? null,
                     'name' => $this->todayReport->submittedBy->name ?? null,
