@@ -64,28 +64,28 @@ class PaymobController extends Controller
         $planName = $additionalInfo['plan_name'] ?? null;
         $promoCode = $additionalInfo['promo_code'] ?? null;
         $company = Company::find($companyId);
+        $transactionData = [
+            'company_id' => $companyId,
+            'user_id' => $userId,
+            'plan_id' => $planId,
+            'plan_name' => $planName,
+            'transaction_id' => $data['id'] ?? null,
+            'amount_cents' => ($data['amount_cents'] ?? 0),
+            'currency' => $data['currency'] ?? 'EGP',
+            'payment_method' => $data['payment_method'] ?? null,
+            'additional_info' => json_encode($additionalInfo),
+            'success' => (bool)($data['success'] ?? false),
+            'error_message' => $data['error_message'] ?? null,
+            'paid_at' => now(),
+        ];
+        $transaction = Transaction::create($transactionData);
         if ($data['success']) {
             $company->update([
                 'plan_id' => $planId,
                 'plan_expires_at' => today()->addMonth(),
             ]);
+            return redirect('https://1task.net/signin');
         }
         return redirect('https://1task.net/signin');
-        // return response()->json([
-        //     'message' => 'Payment received successfully',
-        //     'company' => [
-        //         'id' => $companyId,
-        //         'name' => $companyName,
-        //     ],
-        //     'user' => [
-        //         'id' => $userId,
-        //         'name' => $userName,
-        //     ],
-        //     'plan' => [
-        //         'id' => $planId,
-        //         'name' => $planName,
-        //     ],
-        //     'promo_code' => $promoCode,
-        // ]);
     }
 }

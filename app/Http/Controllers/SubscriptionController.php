@@ -95,15 +95,5 @@ class SubscriptionController extends Controller
         ];
 
         return $this->paymobController->initiatePayment($paymobRequest);
-        // $company->update([
-        //     'plan_id' => $planId,
-        //     'plan_expires_at' => now()->addMonth(),
-        // ]);
-
-        // return response()->json([
-        //     'plan' => $plan->name,
-        //     'price' => $finalPrice,
-        //     'expires_at' => now()->addMonth(),
-        // ]);
     }
 }
