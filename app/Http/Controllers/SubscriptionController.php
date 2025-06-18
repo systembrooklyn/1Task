@@ -11,10 +11,11 @@ use Illuminate\Support\Facades\Auth;
 class SubscriptionController extends Controller
 {
     protected $promoCodeService;
-
-    public function __construct(PromoCodeService $promoCodeService)
+    protected $paymobController;
+    public function __construct(PromoCodeService $promoCodeService, PaymobController $paymobController)
     {
         $this->promoCodeService = $promoCodeService;
+        $this->paymobController = $paymobController;
     }
 
     /**
@@ -28,13 +29,21 @@ class SubscriptionController extends Controller
             'plan_id' => 'required|exists:plans,id',
             'promo_code' => 'nullable|string',
         ]);
+        $currentPlan = $company->plan;
         $planId = $request->input('plan_id');
         $promoCode = $request->input('promo_code');
 
         $plan = Plan::find($planId);
         if (!$plan || !$plan->is_active) {
             return response()->json([
-                'message' => 'Plans is not Available now',
+                'message' => 'Plan is not Available now',
+                'iframe_url' => null,
+            ], 404);
+        }
+        if ($plan->price < $currentPlan->price) {
+            return response()->json([
+                'message' => 'You cannot downgrade your plan, please contact the support',
+                'iframe_url' => null,
             ], 404);
         }
 
@@ -54,15 +63,47 @@ class SubscriptionController extends Controller
             }
             $this->promoCodeService->applyPromo($promo, $company->id);
         }
-        $company->update([
-            'plan_id' => $planId,
-            'plan_expires_at' => now()->addMonth(),
-        ]);
+        $amount = $finalPrice;
+        $billingData = [
+            'apartment' => 'NA',
+            'email' => $user->email,
+            'floor' => 'NA',
+            'first_name' => $user->name ?? 'User',
+            'street' => 'NA',
+            'building' => 'NA',
+            'phone_number' => $user->phone ?? '+201000000000',
+            'shipping_method' => 'NA',
+            'postal_code' => 'NA',
+            'city' => 'NA',
+            'country' => 'EG',
+            'last_name' => $user->name ?? 'User',
+            'state' => 'NA'
+        ];
+        $companyDetails = [
+            'company_id' => $company->id,
+            'company_name' => $company->name,
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'plan_id' => $plan->id,
+            'plan_name' => $plan->name,
+            'promo_code' => $promoCode
+        ];
+        $paymobRequest = [
+            'amount' => $amount,
+            'billing_data' => $billingData,
+            'companyDetails' => $companyDetails
+        ];
 
-        return response()->json([
-            'plan' => $plan->name,
-            'price' => $finalPrice,
-            'expires_at' => now()->addMonth(),
-        ]);
+        return $this->paymobController->initiatePayment($paymobRequest);
+        // $company->update([
+        //     'plan_id' => $planId,
+        //     'plan_expires_at' => now()->addMonth(),
+        // ]);
+
+        // return response()->json([
+        //     'plan' => $plan->name,
+        //     'price' => $finalPrice,
+        //     'expires_at' => now()->addMonth(),
+        // ]);
     }
 }

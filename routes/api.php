@@ -12,6 +12,7 @@ use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\DigitalCardController;
 use App\Http\Controllers\FeatureController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\PaymobController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RoleController;
@@ -221,3 +222,7 @@ Route::prefix('features')->group(function () {
 Route::middleware('auth:sanctum')->prefix('companies')->group(function () {
     Route::post('subscribe', [SubscriptionController::class, 'subscribe']);
 });
+
+
+// Route::post('initiate-payment', [PaymobController::class, 'initiatePayment']);
+Route::match(['get', 'post'], '/payment-callback', [PaymobController::class, 'handleCallback']);
