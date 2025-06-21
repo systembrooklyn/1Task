@@ -31,16 +31,15 @@ class ProjectController extends Controller
         try {
             // 1) Try to authorize viewAllProjects
             $this->authorize('viewAllProjects', Project::class);
-    
+
             // If it passes, get *all* projects in this company
             $query = Project::where('company_id', $companyId);
-    
         } catch (AuthorizationException $e) {
-    
+
             // 2) If we *don't* have viewAllProjects permission,
             //    check if user has the "viewAny" permission
             $this->authorize('viewAny', Project::class);
-    
+
             // If user is authorized only for viewAny,
             // show only projects in that user's departments
             $query = Project::where('company_id', $companyId)
@@ -63,6 +62,7 @@ class ProjectController extends Controller
                 'edited_by_name',
                 'leader_name',
             ]);
+            $project->departments->each->makeHidden('pivot');
             if ($project->departments->isEmpty()) {
                 $project->department_name = 'No Department Assigned';
             }
@@ -74,7 +74,6 @@ class ProjectController extends Controller
                 'editedBy',
                 'createdBy',
                 'company',
-                'departments',
                 'leader',
             ]);
         });
@@ -155,18 +154,18 @@ class ProjectController extends Controller
     {
         // Find the project by ID
         $project = Project::find($id);
-    
+
         // Check if the project exists
         if (!$project) {
             return response()->json(['message' => 'Project not found'], 404);
         }
-    
+
         // Authorize the user to update the project
         $this->authorize('update', $project);
-    
+
         // Store the original values of the project for revision tracking
         $original = $project->getOriginal();
-    
+
         // Validate the incoming request data
         $request->validate([
             'name' => 'required|string',
@@ -178,11 +177,11 @@ class ProjectController extends Controller
             'department_ids.*' => 'exists:departments,id',
             'start_date' => 'nullable|date',
         ]);
-    
+
         // Fetch the original department IDs and names before syncing
         $originalDepartmentIds = $project->departments()->pluck('departments.id')->toArray();
         $originalDepartmentNames = Department::whereIn('id', $originalDepartmentIds)->pluck('name', 'id');
-    
+
         // Update the project fields
         $project->name = $request->name;
         $project->desc = $request->desc;
@@ -190,21 +189,21 @@ class ProjectController extends Controller
         $project->deadline = $request->deadline;
         $project->start_date = $request->start_date;
         $project->leader_id = $request->leader_id;
-    
+
         // Sync departments if department_ids are provided
         if ($request->has('department_ids') && is_array($request->department_ids)) {
             $project->departments()->sync($request->department_ids);
         }
-    
+
         // Save the updated project
         $project->save();
-    
+
         // Track changes for revision history
         $changes = $project->getChanges(); // Get only changed attributes
         foreach ($changes as $field => $newValue) {
             if (in_array($field, ['name', 'status', 'desc', 'deadline', 'start_date'])) {
                 $oldValue = $original[$field] ?? null;
-    
+
                 // Only create a revision entry if the value has actually changed
                 if ($oldValue !== $newValue) {
                     ProjectRevision::create([
@@ -218,13 +217,13 @@ class ProjectController extends Controller
                 }
             }
         }
-    
+
         // Track changes to department associations
         if ($request->has('department_ids')) {
             // Fetch the new department IDs and names
             $newDepartmentIds = $request->department_ids;
             $newDepartmentNames = Department::whereIn('id', $newDepartmentIds)->pluck('name', 'id');
-    
+
             // Find added departments
             $addedDepartments = array_diff($newDepartmentIds, $originalDepartmentIds);
             foreach ($addedDepartments as $departmentId) {
@@ -237,7 +236,7 @@ class ProjectController extends Controller
                     'created_at' => now(),
                 ]);
             }
-    
+
             // Find removed departments
             $removedDepartments = array_diff($originalDepartmentIds, $newDepartmentIds);
             foreach ($removedDepartments as $departmentId) {
@@ -251,7 +250,7 @@ class ProjectController extends Controller
                 ]);
             }
         }
-    
+
         // Return a success response
         return response()->json([
             'message' => 'Project updated successfully'
@@ -274,18 +273,18 @@ class ProjectController extends Controller
     {
         Auth::user();
         $project = Project::find($id);
-    if (!$project) {
-        return response()->json(['message' => 'Project not found'], 404);
-    }
-    $this->authorize('update', $project);
-    $project->status = !$project->status;
-    $project->save();
-    if ($request->has('department_id')) {
-        $project->departments()->sync([$request->department_id]);
-    }
-    return response()->json([
-        'message' => 'Project status toggled'
-    ]);
+        if (!$project) {
+            return response()->json(['message' => 'Project not found'], 404);
+        }
+        $this->authorize('update', $project);
+        $project->status = !$project->status;
+        $project->save();
+        if ($request->has('department_id')) {
+            $project->departments()->sync([$request->department_id]);
+        }
+        return response()->json([
+            'message' => 'Project status toggled'
+        ]);
     }
     public function getRevisions($id)
     {
@@ -294,7 +293,7 @@ class ProjectController extends Controller
             return response()->json(['message' => 'Project not found'], 404);
         }
         $revisions = $project->revisions()->with('user')->get();
-        $formatted = $revisions->map(function($revision) {
+        $formatted = $revisions->map(function ($revision) {
             return [
                 'id'         => $revision->id,
                 'field'      => $revision->field,
