@@ -36,6 +36,8 @@ class RolePermissionController extends Controller
         $this->authorize('create', Role::class);
         $request->validate([
             'name' => 'required|string|max:255',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'exists:permissions,id',
         ]);
 
         $existingRole = Role::where('company_id', $company_id)
@@ -51,6 +53,13 @@ class RolePermissionController extends Controller
             'name' => $request->name,
             'company_id' => $company_id,
         ]);
+        if(!empty($request->permissions)){
+            $role->permissions()->sync($request->permissions);
+        }
+        $role->permissions;
+        $role->permissions->makeHidden('pivot');
+        $role->permissions->each->makeHidden('guard_name');
+        $role->makeHidden('guard_name');
         return response()->json(['message' => 'Role created successfully', 'role' => $role], 201);
     }
 
