@@ -16,12 +16,12 @@ class CompanyController extends Controller
         }
         $company_id = $user->company_id;
         $companyUsers = User::where('company_id', $company_id)
-                            ->where('is_deleted',0)
-                            // ->whereDoesntHave('companies', function ($query) use ($company_id) {
-                            //     $query->where('company_id', $company_id);
-                            // })
-                            ->with(['departments', 'roles'])
-                            ->get();
+            ->where('is_deleted', 0)
+            // ->whereDoesntHave('companies', function ($query) use ($company_id) {
+            //     $query->where('company_id', $company_id);
+            // })
+            ->with(['departments', 'roles'])
+            ->get();
         if ($companyUsers->isEmpty()) {
             return response()->json(['message' => 'No users found for this company'], 404);
         }
@@ -32,6 +32,18 @@ class CompanyController extends Controller
                 'email' => $user->email,
                 'departments' => $user->departments->pluck('name'),
                 'roles' => $user->roles->pluck('name'),
+                'departments_ids' => $user->departments->map(function ($department) {
+                    return [
+                        'id' => $department->id,
+                        'name' => $department->name,
+                    ];
+                }),
+                'roles_ids' => $user->roles->map(function ($role) {
+                    return [
+                        'id' => $role->id,
+                        'name' => $role->name,
+                    ];
+                }),
             ];
         });
         return response()->json(['users' => $companyUsersData], 200);
