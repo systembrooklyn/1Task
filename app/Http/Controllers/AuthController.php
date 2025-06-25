@@ -291,9 +291,23 @@ class AuthController extends Controller
             if ($role->guard_name !== 'sanctum') {
                 return response()->json(['message' => 'Invalid guard name for one of the roles.'], 400);
             }
-            $user->roles()->sync([
-                $role->id => ['company_id' => $user->company_id]
-            ]);
+
+            $roleData = [];
+
+            foreach ($roles as $role) {
+                if ($user->company_id !== $role->company_id) {
+                    return response()->json(['message' => 'User and role do not belong to the same company.'], 400);
+                }
+                if ($role->guard_name !== 'sanctum') {
+                    return response()->json(['message' => 'Invalid guard name for one of the roles.'], 400);
+                }
+
+                $roleData[$role->id] = ['company_id' => $user->company_id];
+            }
+            $user->roles()->sync($roleData);
+            // $user->roles()->sync([
+            //     $role->id => ['company_id' => $user->company_id]
+            // ]);
         }
 
         return response()->json(['message' => 'Roles assigned successfully.'], 200);
