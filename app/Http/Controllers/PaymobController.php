@@ -84,8 +84,8 @@ class PaymobController extends Controller
                 'plan_id' => $planId,
                 'plan_expires_at' => today()->addMonth(),
             ]);
-            return redirect('https://1task.net/signin');
+            return redirect('http://192.168.1.40:8080/signin');
         }
-        return redirect('https://1task.net/signin');
+        return redirect('http://192.168.1.40:8080/signin');
     }
 }
