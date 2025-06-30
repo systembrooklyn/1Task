@@ -223,6 +223,7 @@ Route::middleware('auth:sanctum')->prefix('companies')->group(function () {
     Route::post('subscribe', [SubscriptionController::class, 'subscribe']);
 });
 
+Route::middleware('auth:sanctum')->get('getCompanyPlanDetails', [CompanyController::class, 'getCompanyPlanDetails']);
 
 // Route::post('initiate-payment', [PaymobController::class, 'initiatePayment']);
 Route::match(['get', 'post'], '/payment-callback', [PaymobController::class, 'handleCallback']);
