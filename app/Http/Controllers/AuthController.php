@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\ResourceDeletedException;
+use App\Http\Resources\UserResource;
 use App\Models\Company;
 use App\Models\Invitation;
 use App\Models\Permission;
@@ -421,5 +422,21 @@ class AuthController extends Controller
             return response()->json(['message' => 'User name changed successfully.'], 200);
         }
         return response()->json(['message' => 'You do not have permission to edit this user.'], 401);
+    }
+
+    public function updateFireToken(Request $request)
+    {
+        $userId = Auth::user();
+        $validated = $request->validate([
+            'fireToken' => 'required|string|max:255',
+        ]);
+        $user = User::find($userId->id);
+        $user->update([
+            'fireToken' => $validated['fireToken']
+        ]);
+        return response()->json([
+            'message' => 'User Token updated successfully',
+            'data' => new UserResource($user)
+        ], 200);
     }
 }

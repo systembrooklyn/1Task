@@ -101,6 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('permissions/{id}', [RolePermissionController::class, 'getPermission']);
 
     Route::post('edit-user/{id}', [AuthController::class, 'editUser']);
+    Route::post('fireToken', [AuthController::class, 'updateFireToken']);
 
     Route::post('roles', [RolePermissionController::class, 'createRole']);
     Route::get('roles', [RolePermissionController::class, 'getRoles']);

@@ -29,6 +29,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'fireToken',
         'company_id',
         'google_id',
         'is_deleted',

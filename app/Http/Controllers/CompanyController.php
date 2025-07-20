@@ -35,6 +35,7 @@ class CompanyController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'fireToken' => $user->fireToken,
                 'departments' => $user->departments->pluck('name'),
                 'roles' => $user->roles->pluck('name'),
                 'departments_ids' => $user->departments->map(function ($department) {
