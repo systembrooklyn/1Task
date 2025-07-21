@@ -119,7 +119,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/department/assign-manager', [UserDepartmentController::class, 'assignManagerToDepartment']);
     Route::get('company-owner', [CompanyOwnerController::class, 'getCompanyOwner']);
     Route::get('isOwner', [CompanyOwnerController::class, 'checkOwner']);
-
+    
+    Route::get('/deptUsersFireToken/{id}', [UserDepartmentController::class, 'getUsersFireTokensInAnyDepartment']);
 
     Route::get('company-users', [CompanyController::class, 'getCompanyUsers']);
     Route::post('/unassign-role', [AuthController::class, 'unassignRoleFromUser']);

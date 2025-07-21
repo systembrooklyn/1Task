@@ -183,4 +183,36 @@ class UserDepartmentController extends Controller
             'message' => 'User successfully unassigned from the department.',
         ]);
     }
+    public function getUsersFireTokensInAnyDepartment($deptId)
+    {
+        $userId = Auth::user();
+
+        $department = Department::find($deptId);
+        if (!$department) {
+            return response()->json([
+                'message' => 'Department not found.'
+            ], 404);
+        }
+        $department->load('company');
+        $user = User::find($userId)->first();
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found.'
+            ], 404);
+        }
+        if ($user->company_id != $department->company->id) {
+            return response()->json([
+                'message' => 'Department not found'
+            ], 404);
+        }
+        $fireTokens = $department->users()
+            ->whereNotNull('fireToken')
+            ->pluck('fireToken')
+            ->toArray();
+
+        return response()->json([
+            'message' => 'Department FireTokens Retrieved Successfully',
+            'data' => $fireTokens
+        ]);
+    }
 }
