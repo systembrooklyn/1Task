@@ -21,7 +21,7 @@ class DailyTaskEvaluationController extends Controller
     {
         $dailyTask = DailyTask::with(
             'evaluations',
-            'evaluations.evaluator:id,name'
+            'evaluations.evaluator:id,name,last_name'
         )->findOrFail($taskId);
 
         $this->authorize('viewAny', DailyTaskEvaluation::class);
@@ -190,11 +190,11 @@ class DailyTaskEvaluationController extends Controller
                 'department:id,name',
                 'reports' => function ($q) use ($selectedDate) {
                     $q->whereDate('created_at', '=', $selectedDate)
-                        ->with('submittedBy:id,name');
+                        ->with('submittedBy:id,name,last_name');
                 },
                 'evaluations' => function ($q) use ($selectedDate) {
                     $q->whereDate('task_for', $selectedDate)
-                        ->with('evaluator:id,name');
+                        ->with('evaluator:id,name,last_name');
                 },
             ])
             ->select([
@@ -242,7 +242,8 @@ class DailyTaskEvaluationController extends Controller
                     "task_found" => $report->task_found,
                     'user' => (object) [
                         'id' => $report->submittedBy->id,
-                        'name' => $report->submittedBy->name
+                        'name' => $report->submittedBy->name,
+                        'last_name' => $report->submittedBy->last_name ?? null
                     ]
                 ] : null,
                 'department' => $task->department
@@ -264,6 +265,7 @@ class DailyTaskEvaluationController extends Controller
                             ? [
                                 'id'   => $evaluation->evaluator->id,
                                 'name' => $evaluation->evaluator->name,
+                                'last_name' => $evaluation->evaluator->last_name ?? null,
                             ]
                             : null,
                     ]

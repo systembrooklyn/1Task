@@ -110,7 +110,7 @@ class DailyTaskReportController extends Controller
             ->with([
                 'department:id,name',
                 // Even if you eager load reports, they will be empty because of the whereDoesntHave clause.
-                'reports.submittedBy:id,name'
+                'reports.submittedBy:id,name,last_name'
             ])
             ->select('id', 'task_name', 'task_no', 'start_date', 'task_type', 'recurrent_days', 'day_of_month', 'active', 'from', 'to', 'description', 'dept_id', 'priority')
             ->get();

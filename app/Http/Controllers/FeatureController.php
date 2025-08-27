@@ -28,7 +28,7 @@ class FeatureController extends Controller
         $feature = Feature::create($request->only(['name', 'slug', 'unit', 'reset_frequency']));
 
         return response()->json([
-            'message' => 'Plans retreived successfully',
+            'message' => 'Feature Created Successfully',
             'data' => $feature
         ], 201);
     }

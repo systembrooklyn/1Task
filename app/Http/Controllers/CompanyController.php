@@ -34,6 +34,7 @@ class CompanyController extends Controller
             return [
                 'id' => $user->id,
                 'name' => $user->name,
+                'last_name' => $user->last_name ?? null,
                 'email' => $user->email,
                 'fireToken' => $user->fireToken,
                 'departments' => $user->departments->pluck('name'),

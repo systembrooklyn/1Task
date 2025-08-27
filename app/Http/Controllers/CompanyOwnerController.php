@@ -20,6 +20,7 @@ class CompanyOwnerController extends Controller
         $owners = $company->owners->map(function ($owner) {
             return [
                 'name'  => $owner->name,
+                'last_name'  => $owner->last_name ?? null,
                 'email' => $owner->email,
             ];
         });

@@ -34,15 +34,18 @@ class DailyTaskResource extends JsonResource
             'created_by' => [
                 'id' => $this->creator->id ?? null,
                 'name' => $this->creator->name ?? null,
+                'last_name' => $this->creator->last_name ?? null,
             ],
             'assigned_to' => [
                 'id' => $this->assignee->id ?? null,
                 'name' => $this->assignee->name ?? null,
+                'last_name' => $this->assignee->last_name ?? null,
             ],
             'active' => $this->active,
             'updated_by' => [
                 'id' => $this->updatedBy->id ?? null,
                 'name' => $this->updatedBy->name ?? null,
+                'last_name' => $this->updatedBy->last_name ?? null,
             ],
             'project'             => $this->project ? [
                 'id'   => $this->project->id,
@@ -61,6 +64,7 @@ class DailyTaskResource extends JsonResource
                 'submitted_by' => [
                     'id' => $this->todayReport->submittedBy->id ?? null,
                     'name' => $this->todayReport->submittedBy->name ?? null,
+                    'last_name' => $this->todayReport->submittedBy->last_name ?? null,
                 ],
                 'created_at' => $this->todayReport->created_at,
                 'updated_at' => $this->todayReport->updated_at,

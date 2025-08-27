@@ -107,11 +107,11 @@ class TaskController extends Controller
             ->orWhere('supervisor_user_id', $userId)
             ->withCount('comments')
             ->with([
-                'creator:id,name',
-                'assignedUsers:id,name',
-                'supervisor:id,name',
-                'consultUsers:id,name',
-                'informerUsers:id,name',
+                'creator:id,name,last_name',
+                'assignedUsers:id,name,last_name',
+                'supervisor:id,name,last_name',
+                'consultUsers:id,name,last_name',
+                'informerUsers:id,name,last_name',
                 'project:id,name',
                 'department:id,name',
                 'userStatuses' => function ($query) use ($userId) {
@@ -399,11 +399,11 @@ class TaskController extends Controller
             ])
         );
         return response()->json($task->load([
-            'creator:id,name',
-            'supervisor:id,name',
-            'assignedUsers:id,name',
-            'consultUsers:id,name',
-            'informerUsers:id,name',
+            'creator:id,name,last_name',
+            'supervisor:id,name,last_name',
+            'assignedUsers:id,name,last_name',
+            'consultUsers:id,name,last_name',
+            'informerUsers:id,name,last_name',
         ]), 201);
     }
 
@@ -446,6 +446,7 @@ class TaskController extends Controller
                 return [
                     'user_id' => $user->id,
                     'name' => $user->name,
+                    'last_name' => $user->last_name ?? null,
                     'read_at' => $user->pivot->read_at,
                 ];
             })->values();
@@ -460,6 +461,7 @@ class TaskController extends Controller
                     return [
                         'user_id' => $user->id,
                         'name' => $user->name,
+                        'last_name' => $user->last_name ?? null,
                         'read_at' => $user->pivot->read_at,
                     ];
                 })->values();
@@ -639,11 +641,11 @@ class TaskController extends Controller
         }
 
         return response()->json($task->load([
-            'creator:id,name',
-            'supervisor:id,name',
-            'assignedUsers:id,name',
-            'consultUsers:id,name',
-            'informerUsers:id,name',
+            'creator:id,name,last_name',
+            'supervisor:id,name,last_name',
+            'assignedUsers:id,name,last_name',
+            'consultUsers:id,name,last_name',
+            'informerUsers:id,name,last_name',
         ]), 200);
     }
 
@@ -679,11 +681,11 @@ class TaskController extends Controller
             'status' => 'required|string|in:pending,rework,done,review,inProgress',
         ]);
         $task = Task::with([
-            'creator:id,name',
-            'supervisor:id,name',
-            'assignedUsers:id,name',
-            'consultUsers:id,name',
-            'informerUsers:id,name'
+            'creator:id,name,last_name',
+            'supervisor:id,name,last_name',
+            'assignedUsers:id,name,last_name',
+            'consultUsers:id,name,last_name',
+            'informerUsers:id,name,last_name',
         ])->findOrFail($taskId);
 
         $user = Auth::user();

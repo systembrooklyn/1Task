@@ -383,11 +383,11 @@ class DailyTaskController extends Controller
             ->orderBy('task_no', 'desc')
             ->with([
                 'department:id,name',
-                'creator:id,name',
-                'assignee:id,name',
-                'updatedBy:id,name',
+                'creator:id,name,last_name',
+                'assignee:id,name,last_name',
+                'updatedBy:id,name,last_name',
                 'todayReport:id,daily_task_id,notes,task_found,status,submitted_by,created_at',
-                'todayReport.submittedBy:id,name',
+                'todayReport.submittedBy:id,name,last_name',
                 'project:id,name,status'
             ]);
         $tasks = $tasksQuery->get();
@@ -528,6 +528,7 @@ class DailyTaskController extends Controller
                 'user'        => [
                     'id'    => $revision->user->id,
                     'name'  => $revision->user->name,
+                    'last_name'  => $revision->user->last_name ?? null,
                     'email' => $revision->user->email,
                 ],
                 'created_at'  => $revision->created_at,

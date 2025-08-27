@@ -82,6 +82,7 @@ class InvitationController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
             'password' => 'required|string|min:8|confirmed',
         ]);
         $invitation = Invitation::where('token', $token)->first();
@@ -96,6 +97,7 @@ class InvitationController extends Controller
 
         $user = User::create([
             'name' => $request->name,
+            'last_name' => $request->last_name,
             'email' => $invitation->email,
             'password' => Hash::make($request->password),
         ]);

@@ -46,7 +46,7 @@ class TaskCommentRepliesController extends Controller
 
         return response()->json([
             'message' => 'Reply created successfully',
-            'data' => new TaskCommentReplyResource($reply->load('user:id,name')),
+            'data' => new TaskCommentReplyResource($reply->load('user:id,name,last_name')),
         ], 201);
     }
     public function getReplies($commentId)

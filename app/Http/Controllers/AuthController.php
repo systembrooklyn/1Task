@@ -28,6 +28,7 @@ class AuthController extends Controller
     {
         $fields = $request->validate([
             'name' => 'required|max:25',
+            'last_name' => 'required|max:25',
             'email' => 'required|email|unique:users',
             'password' => 'required|confirmed',
             'company_name' => 'required|string|max:255',
@@ -35,6 +36,7 @@ class AuthController extends Controller
         $company = Company::create(['name' => $fields['company_name']]);
         $user = User::create([
             'name' => $fields['name'],
+            'last_name' => $fields['last_name'],
             'email' => $fields['email'],
             'password' => bcrypt($fields['password']),
             'company_id' => $company->id,
@@ -98,6 +100,7 @@ class AuthController extends Controller
         $request->validate([
             'token' => 'required',
             'name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
@@ -108,6 +111,7 @@ class AuthController extends Controller
         }
         $user = User::create([
             'name' => $request->name,
+            'last_name' => $request->last_name,
             'email' => $invitation->email,
             'password' => Hash::make($request->password),
             'company_id' => $invitation->company_id,
@@ -399,6 +403,7 @@ class AuthController extends Controller
         $userToEdit = User::findOrFail($id);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
         ]);
         if ($userToEdit->is_deleted) {
             throw new ResourceDeletedException(
@@ -417,6 +422,7 @@ class AuthController extends Controller
         }
         if ($haveAccess || $isOwner || ($loggedInUser->id == $userToEdit->id)) {
             $userToEdit->name = $validated['name'];
+            $userToEdit->last_name = $validated['last_name'];
             $userToEdit->save();
 
             return response()->json(['message' => 'User name changed successfully.'], 200);

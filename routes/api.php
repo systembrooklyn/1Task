@@ -41,6 +41,7 @@ Route::get('/user', function (Request $request) {
         'user' => [
             'id' => $user->id,
             'name' => $user->name,
+            'last_name' => $user->last_name,
             'email' => $user->email,
             'google_id' => $user->google_id,
             'company' => [

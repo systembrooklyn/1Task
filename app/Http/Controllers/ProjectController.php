@@ -50,9 +50,9 @@ class ProjectController extends Controller
         $projects = $query->with([
             'company:id,name',
             'departments:id,name',
-            'createdBy:id,name',
-            'editedBy:id,name',
-            'leader:id,name',
+            'createdBy:id,name,last_name',
+            'editedBy:id,name,last_name',
+            'leader:id,name,last_name',
         ])->get();
         $projects->each(function ($project) {
             $project->setAppends([
@@ -85,9 +85,9 @@ class ProjectController extends Controller
         $project = Project::with([
             'company:id,name',
             'departments:id,name',
-            'createdBy:id,name',
-            'editedBy:id,name',
-            'leader:id,name',
+            'createdBy:id,name,last_name',
+            'editedBy:id,name,last_name',
+            'leader:id,name,last_name',
         ])->find($id);
         if (!$project) {
             return response()->json(['message' => 'Project not found'], 404);

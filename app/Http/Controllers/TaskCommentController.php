@@ -63,7 +63,7 @@ class TaskCommentController extends Controller
             }
         }
 
-        return response()->json($comment->load('user:id,name'), 201);
+        return response()->json($comment->load('user:id,name,last_name'), 201);
     }
 
 
