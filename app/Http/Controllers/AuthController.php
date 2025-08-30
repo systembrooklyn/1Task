@@ -33,7 +33,11 @@ class AuthController extends Controller
             'password' => 'required|confirmed',
             'company_name' => 'required|string|max:255',
         ]);
-        $company = Company::create(['name' => $fields['company_name']]);
+        $company = Company::create([
+            'name' => $fields['company_name'],
+            'plan_id' => DB::table('plans')->where('name', 'Free')->value('id'),
+            'plan_expires_at' => Carbon::now()->addDays(14)
+        ]);
         $user = User::create([
             'name' => $fields['name'],
             'last_name' => $fields['last_name'],
