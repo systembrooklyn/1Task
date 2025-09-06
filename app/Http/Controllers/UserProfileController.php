@@ -69,6 +69,7 @@ class UserProfileController extends Controller
         try {
             $validatedUser = $request->validate([
                 'name' => 'sometimes|string|max:255',
+                'last_name' => 'sometimes|string|max:255',
                 'email' => [
                     'sometimes',
                     'string',
