@@ -90,7 +90,7 @@ class TaskAttachmentController extends Controller
         $storageBucket = $firebaseConfig['storageBucket'];
         $filePath = "1Task/{$company->name}/task_attachments/{$file->hashName()}";
         $firebaseStorageUrl = "https://firebasestorage.googleapis.com/v0/b/{$storageBucket}/o/" . urlencode($filePath) . "?uploadType=media";
-        $uploadToken = "YOUR_UPLOAD_TOKEN";
+        $uploadToken = request()->bearerToken();
         $fileContent = fopen($file->getPathname(), 'r');
         $response = Http::timeout(300)
             ->withHeaders([
