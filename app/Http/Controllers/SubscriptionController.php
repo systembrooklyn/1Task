@@ -52,18 +52,16 @@ class SubscriptionController extends Controller
             $result = $this->promoCodeService->isValid($promoCode, $company->id, $planId);
 
             if (!$result['valid']) {
-                return response()->json(['error' => $result['message']], 400);
+                return response()->json(['message' => $result['message']], 400);
             }
-
             $promo = $result['promo'];
             if ($promo->type === 'fixed') {
                 $finalPrice = max(0, $plan->price - $promo->value);
             } else {
                 $finalPrice = $plan->price * (1 - ($promo->value / 100));
             }
-            $this->promoCodeService->applyPromo($promo, $company->id);
         }
-        $amount = $finalPrice;
+        $amount = $finalPrice * 50;
         $billingData = [
             'apartment' => 'NA',
             'email' => $user->email,

@@ -35,8 +35,8 @@ class AuthController extends Controller
         ]);
         $company = Company::create([
             'name' => $fields['company_name'],
-            'plan_id' => DB::table('plans')->where('name', 'Free')->value('id'),
-            'plan_expires_at' => Carbon::now()->addDays(14)
+            'plan_id' => DB::table('plans')->where('name', 'Bronze')->value('id'),
+            'plan_expires_at' => Carbon::now()->addMonths(3)
         ]);
         $user = User::create([
             'name' => $fields['name'],

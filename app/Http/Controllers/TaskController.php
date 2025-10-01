@@ -8,6 +8,7 @@ use App\Models\Task;
 use App\Models\TaskComment;
 use App\Models\TaskRevision;
 use App\Models\User;
+use App\Services\PlanLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,12 @@ use Illuminate\Support\Facades\Http;
 
 class TaskController extends Controller
 {
+    protected $planService;
+
+    public function __construct(PlanLimitService $planService)
+    {
+        $this->planService = $planService;
+    }
     private function attachUsersWithRole($task, $userIds, $role)
     {
         collect($userIds)->each(function ($userId) use ($task, $role) {
@@ -361,6 +368,8 @@ class TaskController extends Controller
             'department_id' => 'nullable|exists:departments,id',
         ]);
         $this->authorize('create', Task::class);
+        $user = Auth::user();
+        $this->planService->checkFeatureAccess($user->company_id, 'limit_task');
         $data = $request->only([
             'title',
             'description',

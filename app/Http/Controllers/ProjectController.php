@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Department;
 use App\Models\Project;
 use App\Models\ProjectRevision;
+use App\Services\PlanLimitService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -15,6 +16,12 @@ use Spatie\Permission\Models\Permission;
 class ProjectController extends Controller
 {
     use HasRoles;
+    protected $planService;
+
+    public function __construct(PlanLimitService $planService)
+    {
+        $this->planService = $planService;
+    }
     public function index()
     {
         $user = Auth::user();
@@ -130,6 +137,8 @@ class ProjectController extends Controller
             'start_date' => 'nullable|date',
         ]);
         $user = Auth::user();
+
+        $this->planService->checkFeatureAccess($user->company_id, 'limit_projects');
         $companyId = $user->company_id;
         $this->authorize('create', Project::class);
         $project = new Project();

@@ -7,6 +7,9 @@ use App\Models\CompanyUsage;
 use App\Models\Feature;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Exceptions\FeatureUsageExceededException;
+use App\Exceptions\NoActivePlanException;
+use App\Exceptions\NoFeatureException;
 use Carbon\Carbon;
 
 class PlanLimitService
@@ -24,66 +27,54 @@ class PlanLimitService
         $company = Company::find($companyId);
 
         if (!$company || !$company->plan) {
-            return [
-                'allowed' => false,
-                'message' => 'No active plan found.',
-            ];
+            throw new NoActivePlanException();
         }
 
         $feature = Feature::where('slug', $featureSlug)->first();
 
         if (!$feature) {
-            return [
-                'allowed' => false,
-                'message' => 'Feature not found.',
-            ];
+            throw new NoFeatureException();
         }
 
-        
+
         $planFeature = $company->plan->features()
             ->where('feature_id', $feature->id)
             ->first();
 
         if (!$planFeature) {
-            return [
-                'allowed' => false,
-                'message' => 'Feature not available in your plan.',
-            ];
+            throw new NoFeatureException();
         }
-        $isResettable = $planFeature->resettable;
-        $resetFrequency = $planFeature->reset_frequency;
+        $isResettable = $planFeature->pivot->resettable;
+        $resetFrequency = $planFeature->pivot->reset_frequency;
         $unit = $feature->unit;
-
         $resetDate = $this->getResetDate($resetFrequency, $isResettable);
 
         return DB::transaction(function () use ($company, $isResettable, $resetFrequency, $feature, $planFeature, $resetDate, $unit, $fileSizeKB) {
-            
+
             $usage = CompanyUsage::firstOrCreate(
                 [
                     'company_id' => $company->id,
                     'feature_id' => $feature->id,
                     'reset_date' => $resetDate
                 ],
-                ['used' => 0]
+                [
+                    'used' => 0,
+                ]
             );
 
-            
+
             $increment = $this->getIncrementValue($unit, $fileSizeKB);
 
             if ($usage->used + $increment > $planFeature->pivot->value) {
-                return [
-                    'allowed' => false,
-                    'message' => "Usage limit exceeded for {$feature->name}.",
-                    'feature' => $feature->name,
-                    'limit' => $planFeature->pivot->value,
-                    'used' => $usage->used,
-                    'unit' => $unit,
-                    'resettable' => $isResettable,
-                    'reset_frequency' => $resetFrequency,
-                ];
+                throw new FeatureUsageExceededException(
+                    featureName: $feature->name,
+                    limit: $planFeature->pivot->value,
+                    used: $usage->used + $increment,
+                    unit: $unit
+                );
             }
 
-            
+
             $usage->increment('used', $increment);
 
             return [
@@ -106,25 +97,22 @@ class PlanLimitService
      * @param bool $resettable
      * @return \Carbon\Carbon|null
      */
-    protected function getResetDate(?string $frequency, ?bool $resettable): ?string
+    protected function getResetDate(?string $frequency, ?bool $resettable): ?Carbon
     {
-        
         $resettable = $resettable ?? false;
 
-        if (!$resettable) return null;
+        if (!$resettable) {
+            return null;
+        }
 
         $now = now();
 
-        switch ($frequency) {
-            case 'daily':
-                return $now->startOfDay()->toDateString();
-            case 'weekly':
-                return $now->startOfWeek()->toDateString();
-            case 'monthly':
-                return $now->startOfMonth()->toDateString();
-            default:
-                return $now->startOfDay()->toDateString(); // fallback
-        }
+        return match ($frequency) {
+            'daily' => $now->startOfDay(),
+            'weekly' => $now->startOfWeek(),
+            'monthly' => $now->startOfMonth(),
+            default => $now->startOfDay(),
+        };
     }
 
     /**
@@ -136,9 +124,13 @@ class PlanLimitService
      */
     protected function getIncrementValue(string $unit, ?float $fileSizeKB): float
     {
-        
-        if ($unit == 'kb') {return $fileSizeKB;}
-        if ($unit == 'mb') {return $fileSizeKB / 1024;}
+
+        if ($unit == 'kb') {
+            return $fileSizeKB;
+        }
+        if ($unit == 'mb') {
+            return $fileSizeKB / 1024;
+        }
         return 1;
     }
 }

@@ -9,6 +9,7 @@ use App\Models\DailyTaskEvaluationRevision;
 use App\Models\DailyTaskReport;
 use App\Models\Department;
 use App\Models\User;
+use App\Services\PlanLimitService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +18,12 @@ use Illuminate\Support\Facades\Validator;
 
 class DailyTaskEvaluationController extends Controller
 {
+    protected $planService;
+
+    public function __construct(PlanLimitService $planService)
+    {
+        $this->planService = $planService;
+    }
     public function index($taskId)
     {
         $dailyTask = DailyTask::with(
@@ -39,7 +46,8 @@ class DailyTaskEvaluationController extends Controller
             'message' => 'Task not found',
         ], 404);
         $this->authorize('create', DailyTaskEvaluation::class);
-
+        $user = Auth::user();
+        $this->planService->checkFeatureAccess($user->company_id, 'limit_evaluation');
         $today = now()->toDateString();
 
 
@@ -371,10 +379,10 @@ class DailyTaskEvaluationController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        $userId = $request->input('user_id')? $request->input('user_id') : Auth::user()->id;
+        $userId = $request->input('user_id') ? $request->input('user_id') : Auth::user()->id;
         $from = $request->input('from');
         $to = $request->input('to');
-        $targetUser = User::where('id',$userId)->first(['name','email']);
+        $targetUser = User::where('id', $userId)->first(['name', 'email']);
         if (!$from && !$to) {
             $from = Carbon::now()->startOfMonth()->toDateString();
             $to = Carbon::now()->toDateString();
@@ -394,7 +402,7 @@ class DailyTaskEvaluationController extends Controller
             ->select('daily_task_id', DB::raw('DATE(created_at) as report_date'))
             ->get()
             ->groupBy('daily_task_id');
-    
+
         if ($reports->isEmpty()) {
             return response()->json([
                 'message' => 'No reports found for the selected period.',
@@ -402,7 +410,7 @@ class DailyTaskEvaluationController extends Controller
             ]);
         }
         $taskDateMap = [];
-    
+
         foreach ($reports as $taskId => $reportGroup) {
             $taskDateMap[$taskId] = $reportGroup->pluck('report_date')->unique()->toArray();
         }
@@ -433,10 +441,10 @@ class DailyTaskEvaluationController extends Controller
             ]);
         }
         $deptStats = [];
-    
+
         foreach ($evaluations as $evaluation) {
             $deptId = $evaluation->dept_id;
-    
+
             if (!isset($deptStats[$deptId])) {
                 $department = Department::find($deptId);
                 $deptStats[$deptId] = [
@@ -446,7 +454,7 @@ class DailyTaskEvaluationController extends Controller
                 ];
             }
             $rating = data_get($evaluation, 'rating');
-    
+
             if ($rating !== null) {
                 $deptStats[$deptId]['sum_rating'] += $rating;
                 $deptStats[$deptId]['count'] += 1;
@@ -457,7 +465,7 @@ class DailyTaskEvaluationController extends Controller
             $totalRate = $stats['count'] > 0
                 ? round(($stats['sum_rating'] / ($stats['count'] * 10)) * 100, 2)
                 : 0;
-    
+
             $result[] = [
                 'department_name' => $stats['department_name'],
                 'total_rate' => $totalRate,
@@ -466,7 +474,7 @@ class DailyTaskEvaluationController extends Controller
         }
         $overallPerformance = collect($result)->avg('total_rate');
         $overallPerformance = round($overallPerformance, 2);
-    
+
         return response()->json([
             'message' => "Performance Retrieved Successfully between $from to $to",
             'data' => [

@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\PlanLimitService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +15,12 @@ use Illuminate\Support\Facades\DB;
 
 class RolePermissionController extends Controller
 {
+    protected $planService;
+
+    public function __construct(PlanLimitService $planService)
+    {
+        $this->planService = $planService;
+    }
     public function getPermissions()
     {
         $permissions = Permission::get();
@@ -32,6 +39,7 @@ class RolePermissionController extends Controller
     public function createRole(Request $request)
     {
         $user = Auth::user();
+        $this->planService->checkFeatureAccess($user->company_id, 'limit_role');
         $company_id = $user->company_id;
         $this->authorize('create', Role::class);
         $request->validate([

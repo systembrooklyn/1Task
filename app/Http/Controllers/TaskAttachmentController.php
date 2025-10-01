@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use App\Models\TaskAttachment;
 use App\Models\TaskComment;
+use App\Services\PlanLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -12,6 +13,12 @@ use Illuminate\Support\Facades\Storage;
 
 class TaskAttachmentController extends Controller
 {
+    protected $planService;
+
+    public function __construct(PlanLimitService $planService)
+    {
+        $this->planService = $planService;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -75,6 +82,8 @@ class TaskAttachmentController extends Controller
             'informerUsers'
         ])->findOrFail($id);
         $user = Auth::user();
+        $fileSizeKB = $request->file('file')->getSize() / 1024;
+        $this->planService->checkFeatureAccess($user->company_id, 'limit_storage', $fileSizeKB);
         $company = $user->company;
         $this->authorizeUserForTask($task);
         $file = $request->file('file');

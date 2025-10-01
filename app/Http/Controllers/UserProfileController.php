@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Models\UsersPhone;
-// use App\Services\PlanLimitService;
+use App\Services\PlanLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,12 +15,12 @@ use Illuminate\Validation\ValidationException;
 class UserProfileController extends Controller
 {
 
-    // protected $planService;
+    protected $planService;
 
-    // public function __construct(PlanLimitService $planService)
-    // {
-    //     $this->planService = $planService;
-    // }
+    public function __construct(PlanLimitService $planService)
+    {
+        $this->planService = $planService;
+    }
     public function index()
     {
         $user = User::with('profile', 'phones', 'links')->findOrFail(Auth::id());
@@ -154,19 +154,10 @@ class UserProfileController extends Controller
         $request->validate([
             'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-        // $fileSizeKB = $request->file('profile_picture')->getSize() / 1024;
-        // $oldSizeKB = $user->profile->ppSize ?? 0;
-        // $finalSize = (round($fileSizeKB, 2) - round($oldSizeKB, 2));
-        // $result = $this->planService->checkFeatureAccess($user->company_id, 'limit_storage', $finalSize);
-
-        // if (!$result['allowed']) {
-        //     return response()->json([
-        //         'message' => $result['message'],
-        //         'feature' => $result['feature'],
-        //         'used' => round($result['used'], 2) . ' MB',
-        //         'limit' => round($result['limit'], 2) . ' MB'
-        //     ], 403);
-        // }
+        $fileSizeKB = $request->file('profile_picture')->getSize() / 1024;
+        $oldSizeKB = $user->profile->ppSize ?? 0;
+        $finalSize = (round($fileSizeKB, 2) - round($oldSizeKB, 2));
+        $this->planService->checkFeatureAccess($user->company_id, 'limit_storage', $finalSize);
         $pic = $request->file('profile_picture');
         $company = $user->company;
 
@@ -237,6 +228,7 @@ class UserProfileController extends Controller
 
         return response()->json([
             'error' => 'File upload failed',
+            'message' => 'File upload failed',
             'details' => $response->body()
         ], 500);
     }

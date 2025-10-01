@@ -4,21 +4,29 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use App\Models\Invitation; 
-use Illuminate\Support\Facades\Mail; 
+use App\Models\Invitation;
+use Illuminate\Support\Facades\Mail;
 use App\Mail\InvitationMail;
 use App\Models\User;
+use App\Services\PlanLimitService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class InvitationController extends Controller
 {
+    protected $planService;
+
+    public function __construct(PlanLimitService $planService)
+    {
+        $this->planService = $planService;
+    }
     public function invite(Request $request)
     {
         if (!Auth::check()) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
         $user = Auth::user();
+        $this->planService->checkFeatureAccess($user->company_id, 'limit_emp');
         $this->authorize('invite', Invitation::class);
         $request->validate([
             'email' => 'required|email',
@@ -63,7 +71,6 @@ class InvitationController extends Controller
     public function registerUsingInvitation($token)
     {
         $invitation = Invitation::where('token', $token)->first();
-
         if (!$invitation) {
             return response()->json(['message' => 'Invalid or expired invitation token.'], 400);
         }
@@ -108,7 +115,8 @@ class InvitationController extends Controller
     }
 
 
-    protected function getInvitations(){
+    protected function getInvitations()
+    {
         if (!auth('sanctum')->user()) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
@@ -126,16 +134,15 @@ class InvitationController extends Controller
         $isOwner = $user->companies()->wherePivot('company_id', $user->company_id)->exists();
 
         if ($haveAccess || $isOwner) {
-        $invitations = Invitation::where('company_id', $user->company_id)
-                         ->where('is_accepted', 0)
-                         ->get();
-        
-                         return response()->json([
-                            'invitations'=>$invitations,
-                        ]);
-        }else return response()->json([
-            'message'=>'you dont have permission to invite user',
+            $invitations = Invitation::where('company_id', $user->company_id)
+                ->where('is_accepted', 0)
+                ->get();
+
+            return response()->json([
+                'invitations' => $invitations,
+            ]);
+        } else return response()->json([
+            'message' => 'you dont have permission to invite user',
         ]);
     }
-
 }

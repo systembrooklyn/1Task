@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Department;
 use App\Models\User;
+use App\Services\PlanLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -15,6 +16,12 @@ class DepartmentsController extends Controller
     /**
      * Display a listing of the resource.
      */
+    protected $planService;
+
+    public function __construct(PlanLimitService $planService)
+    {
+        $this->planService = $planService;
+    }
     public function index()
     {
         $user = Auth::user();
@@ -47,6 +54,7 @@ class DepartmentsController extends Controller
 
         $user = Auth::user();
         $company_id = $user->company_id;
+        $this->planService->checkFeatureAccess($user->company_id, 'limit_department');
         $this->authorize('create', Department::class);
         if (!$company_id) {
             return response()->json(['message' => 'You must be associated with a company to create a department.'], 403);

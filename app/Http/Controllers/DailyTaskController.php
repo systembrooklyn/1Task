@@ -13,6 +13,7 @@ use App\Models\DailyTaskRevision;
 use App\Models\Department;
 use App\Models\Project;
 use App\Models\User;
+use App\Services\PlanLimitService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -21,6 +22,12 @@ use Illuminate\Support\Facades\Log;
 class DailyTaskController extends Controller
 {
 
+    protected $planService;
+
+    public function __construct(PlanLimitService $planService)
+    {
+        $this->planService = $planService;
+    }
     public function store(Request $request)
     {
         $user = Auth::user();
@@ -57,6 +64,7 @@ class DailyTaskController extends Controller
         } elseif ($validated['task_type'] === 'monthly') {
             $validated['recurrent_days'] = null;
         }
+        $this->planService->checkFeatureAccess($user->company_id, 'limit_dailyTask');
         try {
             $task = DB::transaction(function () use ($validated, $companyId, $user) {
                 return DailyTask::create([
