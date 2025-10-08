@@ -8,6 +8,7 @@ use App\Models\DailyTaskReport;
 use App\Models\Department;
 use App\Models\Invitation;
 use App\Models\Project;
+use App\Models\Task;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -67,6 +68,7 @@ class DashboardController extends Controller
             $countDailyTasks = $this->countOwnerDeptDailyTasks($selectedDate);
             $countAllDailyTasks = $this->countOwnerAllDailyTasks($selectedDate);
             $countEvaluations = $this->countOwnerEvaluations($selectedDate);
+            $taskStats = $this->getUserTaskStats();
         } elseif ($this->permissionDashboard) {
             $countEmps = $this->countDeptEmps($selectedDate);
             $countProjects = $this->countProjects($selectedDate);
@@ -74,6 +76,7 @@ class DashboardController extends Controller
             $countDailyTasks = $this->countDeptDailyTasks($selectedDate);
             $countAllDailyTasks = null;
             $countEvaluations = $this->countDeptEvaluations($selectedDate);
+            $taskStats = $this->getUserTaskStats();
         } else {
             return response()->json(['message' => 'You Dont have permission to view Dashboard'], 403);
         }
@@ -85,6 +88,7 @@ class DashboardController extends Controller
             'DailyTasks' => $countDailyTasks,
             'Departments' => $countDepartments,
             'Evaluations' => $countEvaluations,
+            'Tasks' => $taskStats,
         ]);
     }
     protected function countOwnerEmps($date = null)
@@ -397,6 +401,60 @@ class DashboardController extends Controller
         return [
             'total' => $total,
             'Departments' => $departmentsWithUserCount
+        ];
+    }
+
+    protected function getUserTaskStats()
+    {
+        $userId = $this->user->id;
+        $today = now()->startOfDay();
+        $start = now()->addDay()->startOfDay();
+        $end = now()->addDays(2)->endOfDay();
+        $tasksQuery = Task::where(function ($query) use ($userId) {
+            $query->where('creator_user_id', $userId)
+                ->orWhere('supervisor_user_id', $userId)
+                ->orWhereHas('users', function ($subQuery) use ($userId) {
+                    $subQuery->where('user_id', $userId)
+                        ->whereIn('role', ['assigned', 'consult', 'informer']);
+                });
+        })->where('company_id', $this->companyId);
+        $pending = $tasksQuery->clone()->where('status', 'pending')->count();
+        $inProgress = $tasksQuery->clone()->where('status', 'inProgress')->count();
+        $done = $tasksQuery->clone()->where('status', 'done')->count();
+        $review = $tasksQuery->clone()->where('status', 'review')->count();
+
+        $urgent = $tasksQuery->clone()->where(function ($q) {
+            $q->where('priority', 'urgent')
+                ->whereNotIn('status', ['done', 'review']);
+        })->count();
+
+        $overdue = $tasksQuery->clone()
+            ->where('deadline', '<', $today)
+            ->whereNotIn('status', ['done', 'review'])
+            ->count();
+
+        $overdue = $tasksQuery->clone()
+            ->where('deadline', '<', $today)
+            ->whereNotIn('status', ['done', 'review'])
+            ->count();
+
+        $dueSoon = $tasksQuery->clone()
+            ->whereBetween('deadline', [$start, $end])
+            ->whereNotIn('status', ['done', 'review'])
+            ->count();
+        $dueToday = $tasksQuery->clone()
+            ->where('deadline', '=', $today)
+            ->whereNotIn('status', ['done', 'review'])
+            ->count();
+        return [
+            'pending' => $pending,
+            'inProgress' => $inProgress,
+            'urgent' => $urgent,
+            'done' => $done,
+            'review' => $review,
+            'overdue' => $overdue,
+            'dueSoon' => $dueSoon,
+            'dueToday' => $dueToday,
         ];
     }
 }
