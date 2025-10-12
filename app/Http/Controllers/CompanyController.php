@@ -36,6 +36,7 @@ class CompanyController extends Controller
                 'name' => $user->name,
                 'last_name' => $user->last_name ?? null,
                 'email' => $user->email,
+                'ppUrl' => $user->profile ? $user->profile->ppUrl : null,
                 'fireToken' => $user->fireToken,
                 'departments' => $user->departments->pluck('name'),
                 'roles' => $user->roles->pluck('name'),
