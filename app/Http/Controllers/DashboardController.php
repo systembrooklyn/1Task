@@ -95,13 +95,16 @@ class DashboardController extends Controller
     {
         $total = User::where('company_id', $this->companyId)
             ->WhereDate('created_at', '<=', $date)
+            ->Where('is_deleted', "=", 0)
             ->count();
         $Invited = Invitation::where('company_id', $this->companyId)
             ->WhereDate('created_at', '<=', $date)
+            ->where('is_accepted', 1)
             ->count();
         $pending = Invitation::where('company_id', $this->companyId)
             ->WhereDate('created_at', '<=', $date)
             ->where('is_accepted', 0)
+            ->Where('expires_at',">=",now())
             ->count();
         return ['total' => $total - 1, 'invited' => $Invited, 'pending' => $pending];
     }
@@ -111,6 +114,7 @@ class DashboardController extends Controller
         $userDepartmentIds = $this->user->departments()->pluck('departments.id');
         $total = User::where('company_id', $this->companyId)
             ->whereDate('created_at', '<=', $date)
+            ->Where('is_deleted', "=", 0)
             ->whereHas('departments', function ($query) use ($userDepartmentIds) {
                 $query->whereIn('departments.id', $userDepartmentIds);
             })
