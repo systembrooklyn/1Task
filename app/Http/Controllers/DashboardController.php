@@ -104,7 +104,7 @@ class DashboardController extends Controller
         $pending = Invitation::where('company_id', $this->companyId)
             ->WhereDate('created_at', '<=', $date)
             ->where('is_accepted', 0)
-            ->Where('expires_at',">=",now())
+            ->Where('expires_at', ">=", now())
             ->count();
         return ['total' => $total - 1, 'invited' => $Invited, 'pending' => $pending];
     }
@@ -124,13 +124,15 @@ class DashboardController extends Controller
 
     protected function countProjects($date = null)
     {
-        $total = Project::where('company_id', $this->companyId)
-            ->WhereDate('created_at', '<=', $date)
-            ->count();
-        $active = project::where('status', 1)
-            ->where('company_id', $this->companyId)
-            ->WhereDate('created_at', '<=', $date)
-            ->count();
+        $user = $this->user;
+        $query = Project::where('company_id', $this->companyId)
+            ->whereDate('created_at', '<=', $date ?? now())
+            ->whereHas('departments', function ($q) use ($user) {
+                $q->whereIn('departments.id', $user->departments->pluck('id'));
+            });
+
+        $total = $query->count();
+        $active = $query->clone()->where('status', 1)->count();
         $inActive = $total - $active;
 
         return ['total' => $total, 'active' => $active, 'inActive' => $inActive];
