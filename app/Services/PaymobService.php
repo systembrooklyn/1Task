@@ -78,6 +78,7 @@ class PaymobService
                 'billing_data' => $billingData,
                 'currency' => 'EGP',
                 'integration_id' => $this->integrationId,
+                'return_url' => 'https://www.1task.net',
             ],
         ]);
 
