@@ -63,7 +63,7 @@ class DashboardController extends Controller
             : now();
         if ($this->isOwner || $this->permissionOwner) {
             $countEmps = $this->countOwnerEmps($selectedDate);
-            $countProjects = $this->countProjects($selectedDate);
+            $countProjects = $this->countOwnerProjects($selectedDate);
             $countDepartments = $this->countOwnerDepts($selectedDate);
             $countDailyTasks = $this->countOwnerDeptDailyTasks($selectedDate);
             $countAllDailyTasks = $this->countOwnerAllDailyTasks($selectedDate);
@@ -71,7 +71,7 @@ class DashboardController extends Controller
             $taskStats = $this->getUserTaskStats();
         } elseif ($this->permissionDashboard) {
             $countEmps = $this->countDeptEmps($selectedDate);
-            $countProjects = $this->countProjects($selectedDate);
+            $countProjects = $this->countProjectsEmps($selectedDate);
             $countDepartments = $this->counDept($selectedDate);
             $countDailyTasks = $this->countDeptDailyTasks($selectedDate);
             $countAllDailyTasks = null;
@@ -122,7 +122,7 @@ class DashboardController extends Controller
         return ['total' => $total, 'invited' => null, 'pending' => null];
     }
 
-    protected function countProjects($date = null)
+    protected function countProjectsEmps($date = null)
     {
         $user = $this->user;
         $query = Project::where('company_id', $this->companyId)
@@ -131,6 +131,17 @@ class DashboardController extends Controller
                 $q->whereIn('departments.id', $user->departments->pluck('id'));
             });
 
+        $total = $query->count();
+        $active = $query->clone()->where('status', 1)->count();
+        $inActive = $total - $active;
+
+        return ['total' => $total, 'active' => $active, 'inActive' => $inActive];
+    }
+    protected function countOwnerProjects($date = null)
+    {
+        $user = $this->user;
+        $query = Project::where('company_id', $this->companyId)
+            ->whereDate('created_at', '<=', $date ?? now());
         $total = $query->count();
         $active = $query->clone()->where('status', 1)->count();
         $inActive = $total - $active;
