@@ -26,6 +26,8 @@ use App\Http\Controllers\TaskCommentRepliesController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskRevisionController;
 use App\Http\Controllers\TaskUserStatusController;
+use App\Http\Controllers\TicketActionController;
+use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserDepartmentController;
 use App\Http\Controllers\UserProfileController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -120,7 +122,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/department/assign-manager', [UserDepartmentController::class, 'assignManagerToDepartment']);
     Route::get('company-owner', [CompanyOwnerController::class, 'getCompanyOwner']);
     Route::get('isOwner', [CompanyOwnerController::class, 'checkOwner']);
-    
+
     Route::get('/deptUsersFireToken/{id}', [UserDepartmentController::class, 'getUsersFireTokensInAnyDepartment']);
 
     Route::get('company-users', [CompanyController::class, 'getCompanyUsers']);
@@ -230,3 +232,13 @@ Route::middleware('auth:sanctum')->get('getCompanyPlanDetails', [CompanyControll
 
 // Route::post('initiate-payment', [PaymobController::class, 'initiatePayment']);
 Route::match(['get', 'post'], '/payment-callback', [PaymobController::class, 'handleCallback']);
+
+
+
+
+Route::middleware('auth:sanctum')->prefix('tickets')->group(function () {
+    Route::post('/', [TicketController::class, 'store']);
+    Route::get('/categories', [TicketController::class, 'ticketCategories']);
+    // Route::get('/', [TicketController::class, 'index']);
+    Route::post('/{ticket}/actions', [TicketActionController::class, 'store']);
+});

@@ -10,7 +10,9 @@ use App\Models\Invitation;
 use App\Models\Project;
 use App\Models\Role;
 use App\Models\Task;
+use App\Models\Ticket;
 use App\Observers\DailyTaskReportObserver;
+use App\Observers\TicketObserver;
 use App\Policies\DailyTaskEvaluationPolicy;
 use App\Policies\DailyTaskPolicy;
 use App\Policies\DepartmentPolicy;
@@ -40,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
     {
         //
         DailyTaskReport::observe(DailyTaskReportObserver::class);
+        Ticket::observe(TicketObserver::class);
     }
 
     protected $policies = [

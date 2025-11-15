@@ -456,6 +456,7 @@ class TaskController extends Controller
                     'user_id' => $user->id,
                     'name' => $user->name,
                     'last_name' => $user->last_name ?? null,
+                    'ppUrl' => $user->profile?->ppUrl ?? null,
                     'read_at' => $user->pivot->read_at,
                 ];
             })->values();
@@ -471,6 +472,7 @@ class TaskController extends Controller
                         'user_id' => $user->id,
                         'name' => $user->name,
                         'last_name' => $user->last_name ?? null,
+                        'ppUrl' => $user->profile?->ppUrl ?? null,
                         'read_at' => $user->pivot->read_at,
                     ];
                 })->values();
