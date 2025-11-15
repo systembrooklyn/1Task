@@ -430,55 +430,81 @@ class TaskController extends Controller
 
     public function show($id)
     {
+        $currentUserId = Auth::id();
+        $ppUrlSub = DB::table('users_profiles')
+            ->select('ppUrl')
+            ->whereColumn('users_profiles.user_id', 'users.id');
+
         $task = Task::with([
-            'comments.user',
-            'comments.users',
-            'comments.replies.user',
-            'comments.replies.users',
-            'attachments.uploadedBy',
-            'revisions.user',
             'company',
             'project',
             'department',
-            'creator',
-            'assignedUser',
-            'supervisor',
-            'consult',
-            'informer'
+            'attachments.uploadedBy' => fn($q) => $q->addSelect(['ppUrl' => $ppUrlSub]),
+            'revisions.user' => fn($q) => $q->addSelect(['ppUrl' => $ppUrlSub]),
+            'creator' => fn($q) => $q->addSelect(['ppUrl' => $ppUrlSub]),
+            'supervisor' => fn($q) => $q->addSelect(['ppUrl' => $ppUrlSub]),
+            'assignedUsers' => fn($q) => $q->addSelect(['ppUrl' => $ppUrlSub]),
+            'consultUsers' => fn($q) => $q->addSelect(['ppUrl' => $ppUrlSub]),
+            'informerUsers' => fn($q) => $q->addSelect(['ppUrl' => $ppUrlSub]),
+            'comments' => function ($q) use ($ppUrlSub) {
+                $q->with([
+                    'user' => fn($uq) => $uq->addSelect(['ppUrl' => $ppUrlSub]),
+                    'users' => fn($uq) => $uq->addSelect(['ppUrl' => $ppUrlSub])
+                        ->withPivot('read_at')
+                        ->withTimestamps(),
+                    'replies' => function ($rq) use ($ppUrlSub) {
+                        $rq->with([
+                            'user' => fn($uq) => $uq->addSelect(['ppUrl' => $ppUrlSub]),
+                            'users' => fn($uq) => $uq->addSelect(['ppUrl' => $ppUrlSub])
+                                ->withPivot('read_at')
+                                ->withTimestamps(),
+                        ]);
+                    },
+                ]);
+            },
         ])->findOrFail($id);
-        $currentUserId = Auth::id();
+        DB::table('task_comment_user')
+            ->where('user_id', $currentUserId)
+            ->whereIn('task_comment_id', $task->comments->pluck('id'))
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
         $task->comments->each(function ($comment) use ($currentUserId) {
             $comment->replies_count = $comment->replies->count();
+
             $comment->seen_by = $comment->users->filter(function ($user) use ($comment) {
-                return !is_null($user->pivot->read_at) && $user->id !== $comment->user_id;
+                return $user->id !== $comment->user_id && !is_null($user->pivot->read_at);
             })->map(function ($user) {
                 return [
                     'user_id' => $user->id,
                     'name' => $user->name,
                     'last_name' => $user->last_name ?? null,
-                    'ppUrl' => $user->profile?->ppUrl ?? null,
+                    'ppUrl' => $user->ppUrl ?? null,
                     'read_at' => $user->pivot->read_at,
                 ];
             })->values();
-            $comment->is_seen = $comment->users->contains(function ($user) use ($currentUserId) {
-                return $user->id === $currentUserId && !is_null($user->pivot->read_at);
-            });
+
+            $comment->is_seen = $comment->users->contains(
+                fn($user) =>
+                $user->id === $currentUserId && !is_null($user->pivot->read_at)
+            );
             unset($comment->users);
             $comment->replies->each(function ($reply) use ($currentUserId) {
                 $reply->seen_by = $reply->users->filter(function ($user) use ($reply) {
-                    return !is_null($user->pivot->read_at) && $user->id !== $reply->user_id;
+                    return $user->id !== $reply->user_id && !is_null($user->pivot->read_at);
                 })->map(function ($user) {
                     return [
                         'user_id' => $user->id,
                         'name' => $user->name,
                         'last_name' => $user->last_name ?? null,
-                        'ppUrl' => $user->profile?->ppUrl ?? null,
+                        'ppUrl' => $user->ppUrl ?? null,
                         'read_at' => $user->pivot->read_at,
                     ];
                 })->values();
-                $reply->is_seen = $reply->users->contains(function ($user) use ($currentUserId) {
-                    return $user->id === $currentUserId && !is_null($user->pivot->read_at);
-                });
+
+                $reply->is_seen = $reply->users->contains(
+                    fn($user) =>
+                    $user->id === $currentUserId && !is_null($user->pivot->read_at)
+                );
                 unset($reply->users);
             });
         });
@@ -492,11 +518,6 @@ class TaskController extends Controller
             'consult_user_id',
             'inform_user_id'
         ]);
-        $task->comments->each(function ($comment) use ($currentUserId) {
-            $comment->users()->updateExistingPivot($currentUserId, [
-                'read_at' => now(),
-            ]);
-        });
         $this->authorizeUserForTask($task);
         return response()->json($task, 200);
     }

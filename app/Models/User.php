@@ -36,7 +36,7 @@ class User extends Authenticatable
         'is_deleted',
         'deleted_at'
     ];
-    
+
     public function company()
     {
         return $this->belongsTo(Company::class);
@@ -101,14 +101,14 @@ class User extends Authenticatable
     public function taskComments()
     {
         return $this->belongsToMany(TaskComment::class, 'task_comment_user')
-                    ->withPivot('read_at')
-                    ->withTimestamps();
+            ->withPivot('read_at')
+            ->withTimestamps();
     }
     public function taskCommentReplies()
     {
         return $this->belongsToMany(TaskCommentReply::class, 'task_comment_reply_user')
-                    ->withPivot('read_at')
-                    ->withTimestamps();
+            ->withPivot('read_at')
+            ->withTimestamps();
     }
 
     public function profile()
@@ -134,7 +134,11 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
-        'pivot'
+        'pivot',
+        'google_id',
+        'deleted_at',
+        'is_deleted',
+        'email_verified_at'
     ];
 
     /**
@@ -148,5 +152,14 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+    public function getCreatedAtAttribute($value)
+    {
+        return $this->attributes['created_at'] ? \Carbon\Carbon::parse($value)->format('Y-m-d H:i:s') : null;
+    }
+
+    public function getUpdatedAtAttribute($value)
+    {
+        return $this->attributes['updated_at'] ? \Carbon\Carbon::parse($value)->format('Y-m-d H:i:s') : null;
     }
 }
