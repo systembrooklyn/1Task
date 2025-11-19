@@ -45,7 +45,7 @@ class PaymobController extends Controller
         ]);
     }
 
-    public function handleCallback(Request $request)
+    public function handleCallback2(Request $request)
     {
         $data = $request->all();
         $customDataJson = $data['merchant_order_id'] ?? null;
@@ -129,5 +129,10 @@ class PaymobController extends Controller
             ]);
         }
         return response()->json(['status' => 'ok'], 200);
+    }
+    public function handleCallback(Request $request)
+    {
+        $this->handleCallback2($request);
+        return redirect('https://www.1task.net')->with('payment_status');
     }
 }
