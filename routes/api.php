@@ -45,7 +45,7 @@ Route::get('/user', function (Request $request) {
             'name' => $user->name,
             'last_name' => $user->last_name,
             'email' => $user->email,
-            'google_id' => $user->google_id,
+            'ppUrl' => $user->profile?->ppUrl ?? null,
             'company' => [
                 'id' => $user->company->id,
                 'name' => $user->company->name,
