@@ -115,6 +115,7 @@ class TaskController extends Controller
             ->withCount('comments')
             ->with([
                 'creator:id,name,last_name',
+                'creator.profile',
                 'assignedUsers:id,name,last_name',
                 'supervisor:id,name,last_name',
                 'consultUsers:id,name,last_name',
@@ -148,6 +149,7 @@ class TaskController extends Controller
             ->toArray();
 
         $tasks->each(function ($task) use ($tasksWithUnreadComments, $tasksWithUnreadReplies, $userId) {
+            $task->creator->ppUrl = $task->creator->profile?->ppUrl ?? null;
             $hasUnreadComment = in_array($task->id, $tasksWithUnreadComments);
             $hasUnreadReply = in_array($task->id, $tasksWithUnreadReplies);
             $task->read_comments = !($hasUnreadComment || $hasUnreadReply);
@@ -170,6 +172,9 @@ class TaskController extends Controller
                 'userStatuses',
             ]);
 
+            $task->creator->makeHidden([
+                'profile'
+            ]);
             if ($task->project) {
                 $task->project->setAppends([]);
             }
