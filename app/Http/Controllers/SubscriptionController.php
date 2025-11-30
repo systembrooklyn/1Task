@@ -7,6 +7,7 @@ use App\Models\Plan;
 use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 
 class SubscriptionController extends Controller
 {
@@ -18,6 +19,24 @@ class SubscriptionController extends Controller
         $this->paymobController = $paymobController;
     }
 
+    public function getValueFromSheetViaCsv()
+    {
+        $sheetId = env('GOOGLE_SHEETS_CURRENCY_ID');
+        $range   = env('GOOGLE_SHEETS_CURRENCY_RANGE');
+        $apiKey   = env('GOOGLE_SHEETS_CURRENCY_API_KEY');
+        $url = "https://sheets.googleapis.com/v4/spreadsheets/{$sheetId}/values/{$range}?key={$apiKey}&valueRenderOption=FORMATTED_VALUE";
+        try {
+            $response = Http::timeout(5)->get($url);
+            if ($response->successful() && isset($response['values'][0][0])) {
+                $value = $response['values'][0][0];
+            } else {
+                $value = null;
+            }
+        } catch (\Exception $e) {
+            $value = null;
+        }
+        return $value;
+    }
     /**
      * Handle subscription with optional promo code.
      */
@@ -61,7 +80,8 @@ class SubscriptionController extends Controller
                 $finalPrice = $plan->price * (1 - ($promo->value / 100));
             }
         }
-        $amount = $finalPrice * 50;
+        $CurEGP = $this->getValueFromSheetViaCsv() ?? 50;
+        $amount = $finalPrice * $CurEGP;
         $billingData = [
             'apartment' => 'NA',
             'email' => $user->email,
