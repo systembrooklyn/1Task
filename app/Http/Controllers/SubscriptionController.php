@@ -107,7 +107,7 @@ class SubscriptionController extends Controller
             'promo_code' => $promoCode
         ];
         $paymobRequest = [
-            'amount' => $amount,
+            'amount' => ceil((int)$amount),
             'billing_data' => $billingData,
             'companyDetails' => $companyDetails
         ];
