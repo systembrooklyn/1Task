@@ -107,11 +107,44 @@ class SubscriptionController extends Controller
             'promo_code' => $promoCode
         ];
         $paymobRequest = [
-            'amount' => ceil((int)$amount),
+            'amount' => (int)ceil($amount),
             'billing_data' => $billingData,
             'companyDetails' => $companyDetails
         ];
 
         return $this->paymobController->initiatePayment($paymobRequest);
+    }
+    public function promoDiscount(Request $request)
+    {
+        $user = Auth::user();
+        $company = Company::find($user->company_id);
+        $request->validate([
+            'plan_id' => 'required|exists:plans,id',
+            'promo_code' => 'required|string',
+        ]);
+        $planId = $request->input('plan_id');
+        $promoCode = $request->input('promo_code');
+        $plan = Plan::find($planId);
+        $finalPrice = $plan->price;
+        if ($promoCode) {
+            $result = $this->promoCodeService->isValid($promoCode, $company->id, $planId);
+
+            if (!$result['valid']) {
+                return response()->json(['message' => $result['message']], 400);
+            }
+            $promo = $result['promo'];
+            if ($promo->type === 'fixed') {
+                $finalPrice = max(0, $plan->price - $promo->value);
+            } else {
+                $finalPrice = $plan->price * (1 - ($promo->value / 100));
+            }
+        }
+        return response()->json([
+            'message' => 'plan price after discount',
+            'data' => [
+                'promo' => $promoCode,
+                'finalPrice' => $finalPrice
+            ]
+        ], 200);
     }
 }

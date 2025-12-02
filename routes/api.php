@@ -226,6 +226,7 @@ Route::prefix('features')->group(function () {
 
 Route::middleware('auth:sanctum')->prefix('companies')->group(function () {
     Route::post('subscribe', [SubscriptionController::class, 'subscribe']);
+    Route::post('promoDiscount', [SubscriptionController::class, 'promoDiscount']);
 });
 
 Route::middleware('auth:sanctum')->get('getCompanyPlanDetails', [CompanyController::class, 'getCompanyPlanDetails']);
