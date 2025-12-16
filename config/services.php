@@ -39,6 +39,9 @@ return [
         'integration_id' => env('PAYMOB_INTEGRATION_ID'),
         'iframe_id' => env('PAYMOB_IFRAME_ID'),
         'hmac_secret' => env('PAYMOB_HMAC_SECRET'),
+        'secret_key' => env('PAYMOB_SECRET_KEY'),
+        'public_key' => env('PAYMOB_PUBLIC_KEY'),
+        'redirect_url' => env('PAYMOB_REDIRECT_URL'),
     ],
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),

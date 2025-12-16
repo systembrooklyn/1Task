@@ -83,25 +83,17 @@ class SubscriptionController extends Controller
         $CurEGP = $this->getValueFromSheetViaCsv() ?? 50;
         $amount = $finalPrice * $CurEGP;
         $billingData = [
-            'apartment' => 'NA',
             'email' => $user->email,
-            'floor' => 'NA',
             'first_name' => $user->name ?? 'User',
-            'street' => 'NA',
-            'building' => 'NA',
+            'last_name' => $user->last_name ?? 'User',
             'phone_number' => $user->phone ?? '+201000000000',
-            'shipping_method' => 'NA',
-            'postal_code' => 'NA',
-            'city' => 'NA',
-            'country' => 'EG',
-            'last_name' => $user->name ?? 'User',
-            'state' => 'NA'
         ];
         $companyDetails = [
             'company_id' => $company->id,
             'company_name' => $company->name,
             'user_id' => $user->id,
             'user_name' => $user->name,
+            'user_phone' => $user->phones[0]['phone'],
             'plan_id' => $plan->id,
             'plan_name' => $plan->name,
             'promo_code' => $promoCode

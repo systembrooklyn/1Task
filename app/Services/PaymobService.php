@@ -2,86 +2,54 @@
 
 namespace App\Services;
 
-use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
 
 class PaymobService
 {
-    protected $client;
-    protected $apiKey;
     protected $integrationId;
-    protected $iframeId;
-    protected $hmacSecret;
+    protected $paymobSecretKey;
+    protected $paymobPublicKey;
+    protected $paymobRedirectURL;
+    protected $paymobURL = "https://accept.paymob.com/v1/intention/";
+    protected $paymobCheckoutURL = "https://accept.paymob.com/unifiedcheckout/?";
 
     public function __construct()
     {
-        $this->client = new Client();
-        $this->apiKey = Config::get('services.paymob.api_key');
         $this->integrationId = Config::get('services.paymob.integration_id');
-        $this->iframeId = Config::get('services.paymob.iframe_id');
-        $this->hmacSecret = Config::get('services.paymob.hmac_secret');
+        $this->paymobSecretKey = Config::get('services.paymob.secret_key');
+        $this->paymobPublicKey = Config::get('services.paymob.public_key');
+        $this->paymobRedirectURL = Config::get('services.paymob.redirect_url');
     }
 
-    // Getter for iframeId
-    public function getIframeId()
+    public function createIntention($amount, $items, $billingData, $extras = [])
     {
-        return $this->iframeId;
-    }
+        $payload = [
+            'amount' => $amount,
+            'currency' => 'EGP',
+            'payment_methods' => [(int) $this->integrationId],
+            'items' => $items,
+            'billing_data' => $billingData,
+            'metadata' => $extras,
+            'extras' => $extras,
+        ];
 
-    // Authenticate with Paymob
-    public function authenticate()
-    {
-        $response = $this->client->post('https://accept.paymob.com/api/auth/tokens', [
-            'json' => [
-                'api_key' => $this->apiKey,
-            ],
-        ]);
+        if ($this->paymobRedirectURL) {
+            $payload['redirect_url'] = $this->paymobRedirectURL;
+        }
 
-        return json_decode($response->getBody(), true)['token'];
-    }
+        $response = Http::withHeaders([
+            'Authorization' => 'Token ' . $this->paymobSecretKey,
+            'Content-Type'  => 'application/json',
+        ])->post($this->paymobURL, $payload);
 
-    // Create an order
-    public function createOrder($amount, $items, $customMetadata = [])
-    {
-        $token = $this->authenticate();
-        $merchantOrderId = json_encode([
-            'id' => uniqid('order_'),
-            'serial' => $customMetadata['serial'] ?? null,
-            'additional_info' => $customMetadata['additional_info'] ?? null,
-        ]);
+        $data = $response->json();
 
-        $response = $this->client->post('https://accept.paymob.com/api/ecommerce/orders',  [
-            'json' => [
-                'auth_token' => $token,
-                'delivery_needed' => false,
-                'amount_cents' => $amount * 100, // Convert to cents
-                'currency' => 'EGP',
-                'items' => $items,
-                'merchant_order_id' => $merchantOrderId, // Include custom data here
-            ],
-        ]);
+        if (!isset($data['client_secret'])) {
+            throw new \Exception('Failed to create payment intention');
+        }
 
-        return json_decode($response->getBody(), true);
-    }
-
-    // Generate payment key
-    public function getPaymentKey($order, $billingData)
-    {
-        $token = $this->authenticate();
-
-        $response = $this->client->post('https://accept.paymob.com/api/acceptance/payment_keys', [
-            'json' => [
-                'auth_token' => $token,
-                'amount_cents' => $order['amount_cents'],
-                'expiration' => 3600,
-                'order_id' => $order['id'],
-                'billing_data' => $billingData,
-                'currency' => 'EGP',
-                'integration_id' => $this->integrationId,
-                'return_url' => 'https://www.1task.net',
-            ],
-        ]);
-
-        return json_decode($response->getBody(), true)['token'];
+        $clientSecret = $data['client_secret'];
+        return $this->paymobCheckoutURL . "publicKey={$this->paymobPublicKey}&clientSecret={$clientSecret}";
     }
 }

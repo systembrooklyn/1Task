@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Services\PaymobService;
 use App\Services\PromoCodeService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class PaymobController extends Controller
 {
@@ -22,69 +23,74 @@ class PaymobController extends Controller
 
     public function initiatePayment(array $request)
     {
-        $amount = $request['amount'];
+        $amount = (int) ($request['amount'] * 100);
         $billingData = $request['billing_data'];
         $companyDetails = $request['companyDetails'];
         $items = [
             [
-                'name' => 'Check Payment',
-                'amount_cents' => $amount * 100,
+                'name' => $companyDetails['plan_name'],
+                'amount' => $amount,
                 'quantity' => 1,
             ],
         ];
-        $customMetadata = [
-            'additional_info' => $companyDetails,
+        $extras = [
+            'company_info' => $companyDetails,
         ];
-        $order = $this->paymobService->createOrder($amount, $items, $customMetadata);
-        $paymentKey = $this->paymobService->getPaymentKey($order, $billingData);
-        $iframeId = $this->paymobService->getIframeId();
+        $url = $this->paymobService->createIntention($amount, $items, $billingData, $extras);
 
         return response()->json([
             'message' => "Payment link retreived successfully",
-            'iframe_url' => "https://accept.paymob.com/api/acceptance/iframes/{$iframeId}?payment_token={$paymentKey}",
+            'iframe_url' => $url,
         ]);
     }
 
-    public function handleCallback2(Request $request)
+    public function handleCallback(Request $request)
     {
-        $data = $request->all();
-        $customDataJson = $data['merchant_order_id'] ?? null;
-        if (!$customDataJson) {
-            return response()->json(['error' => 'Missing merchant_order_id'], 400);
+        $rawContent = $request->getContent();
+        $payload = json_decode($rawContent, true);
+
+        Log::info('Paymob webhook received', [
+            'transaction_id' => $payload['obj']['id'] ?? 'unknown',
+            'status' => $payload['obj']['success'] ?? 'unknown',
+        ]);
+
+        $transactionId = $payload['obj']['id'] ?? null;
+        if (!$transactionId) {
+            Log::warning('Paymob callback missing transaction ID', compact('payload'));
+            return response()->json(['status' => 'ok'], 200);
         }
 
-        $customData = json_decode($customDataJson, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return response()->json(['error' => 'Invalid JSON in merchant_order_id'], 400);
+        $companyInfo = $payload['obj']['payment_key_claims']['extra']['company_info'] ?? null;
+        $companyId = $companyInfo['company_id'] ?? null;
+        $planId = $companyInfo['plan_id'] ?? null;
+        $userId = $companyInfo['user_id'] ?? null;
+        $planName = $companyInfo['plan_name'] ?? null;
+        $promoCode = $companyInfo['promo_code'] ?? null;
+
+        $metadataValid = $companyId && $planId;
+
+        if ($metadataValid) {
+            $company = Company::find($companyId);
+            if (!$company) {
+                Log::error("Company not found for ID: $companyId", compact('transactionId'));
+                $metadataValid = false;
+            }
+        } else {
+            Log::warning('Missing company_info in Paymob callback', [
+                'transaction_id' => $transactionId,
+                'provided_data' => $companyInfo,
+            ]);
         }
 
-        $additionalInfo = $customData['additional_info'] ?? null;
-        if (!$additionalInfo) {
-            return response()->json(['error' => 'Missing additional_info'], 400);
-        }
-        $companyId = $additionalInfo['company_id'] ?? null;
-        $companyName = $additionalInfo['company_name'] ?? null;
-        $userId = $additionalInfo['user_id'] ?? null;
-        $userName = $additionalInfo['user_name'] ?? null;
-        $planId = $additionalInfo['plan_id'] ?? null;
-        $planName = $additionalInfo['plan_name'] ?? null;
-        $promoCode = $additionalInfo['promo_code'] ?? null;
+        $obj = $payload['obj'] ?? [];
 
-        if (!$companyId || !$planId) {
-            return response()->json(['error' => 'Missing company or plan ID'], 400);
-        }
+        $success = ($obj['success'] ?? false) === true;
+        $pending = ($obj['pending'] ?? false) === true;
+        $isRefunded = ($obj['is_refunded'] ?? false) === true;
+        $isVoided = ($obj['is_voided'] ?? false) === true;
+        $errorOccurred = ($obj['error_occured'] ?? false) === true;
 
-        $company = Company::find($companyId);
-        if (!$company) {
-            return response()->json(['error' => 'Company not found'], 404);
-        }
-        $success = filter_var($data['success'], FILTER_VALIDATE_BOOLEAN);
-        $pending = filter_var($data['pending'], FILTER_VALIDATE_BOOLEAN);
-        $isRefunded = filter_var($data['is_refunded'], FILTER_VALIDATE_BOOLEAN);
-        $isVoided = filter_var($data['is_voided'], FILTER_VALIDATE_BOOLEAN);
-        $errorOccurred = filter_var($data['error_occured'], FILTER_VALIDATE_BOOLEAN);
         $status = 'unknown';
-
         if ($isVoided) {
             $status = 'voided';
         } elseif ($isRefunded) {
@@ -97,42 +103,48 @@ class PaymobController extends Controller
             $status = 'failed';
         }
         $transaction = Transaction::updateOrCreate(
-            ['transaction_id' => $data['id']],
+            ['transaction_id' => (string) $transactionId],
             [
                 'company_id' => $companyId,
                 'user_id' => $userId,
                 'plan_id' => $planId,
                 'plan_name' => $planName,
-                'amount_cents' => (int)($data['amount_cents'] ?? 0),
-                'currency' => $data['currency'] ?? 'EGP',
-                'payment_method' => $data['source_data_type'] ?? null,
-                'additional_info' => $additionalInfo,
-                'success' => filter_var($data['success'], FILTER_VALIDATE_BOOLEAN),
-                'pending' => filter_var($data['pending'], FILTER_VALIDATE_BOOLEAN),
-                'is_refunded' => filter_var($data['is_refunded'], FILTER_VALIDATE_BOOLEAN),
-                'is_voided' => filter_var($data['is_voided'], FILTER_VALIDATE_BOOLEAN),
-                'refunded_amount_cents' => (int)($data['refunded_amount_cents'] ?? 0),
-                'error_message' => $data['data_message'] ?? null,
+                'amount_cents' => (int)($obj['amount_cents'] ?? 0),
+                'currency' => $obj['currency'] ?? 'EGP',
+                'payment_method' => $obj['source_data']['type'] ?? null,
+                'additional_info' => $companyInfo,
+                'success' => $success,
+                'pending' => $pending,
+                'is_refunded' => $isRefunded,
+                'is_voided' => $isVoided,
+                'refunded_amount_cents' => (int)($obj['refunded_amount_cents'] ?? 0),
+                'error_message' => $obj['data']['message'] ?? ($obj['data_message'] ?? null),
                 'status' => $status,
                 'paid_at' => $status === 'success' ? now() : null,
-                'raw_response' => json_encode($data),
+                'raw_response' => $payload,
             ]
         );
-        if ($status === 'success') {
+
+        if ($status === 'success' && $metadataValid) {
             if ($promoCode) {
                 $result = $this->promoCodeService->isValid($promoCode, $company->id, $planId);
-                $this->promoCodeService->applyPromo($result['promo'], $company->id);
+                if ($result['valid']) {
+                    $this->promoCodeService->applyPromo($result['promo'], $company->id);
+                }
             }
+
             $company->update([
                 'plan_id' => $planId,
                 'plan_expires_at' => today()->addMonth(),
             ]);
+
+            Log::info('Subscription updated successfully', [
+                'company_id' => $company->id,
+                'plan_id' => $planId,
+                'transaction_id' => $transactionId,
+            ]);
         }
+
         return response()->json(['status' => 'ok'], 200);
-    }
-    public function handleCallback(Request $request)
-    {
-        $this->handleCallback2($request);
-        return redirect('https://www.1task.net')->with('payment_status');
     }
 }

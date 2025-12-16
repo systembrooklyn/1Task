@@ -28,7 +28,9 @@ class Transaction extends Model
     ];
 
     protected $casts = [
-        'additional_info' => 'array',
+        'raw_response' => 'json',
+        'additional_info' => 'json',
+        'paid_at' => 'datetime',
         'success' => 'boolean',
         'pending' => 'boolean',
         'is_refunded' => 'boolean',
@@ -36,6 +38,5 @@ class Transaction extends Model
         'paid_at' => 'datetime',
         'amount_cents' => 'integer',
         'refunded_amount_cents' => 'integer',
-        'raw_response' => 'array',
     ];
 }
