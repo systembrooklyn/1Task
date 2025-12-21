@@ -50,7 +50,7 @@ class SubscriptionController extends Controller
         ]);
         $currentPlan = $company->plan;
         $planId = $request->input('plan_id');
-        $promoCode = $request->input('promo_code');
+        $promoCode = $request->input('promo_code') ?? null;
 
         $plan = Plan::find($planId);
         if (!$plan || !$plan->is_active) {
@@ -86,14 +86,14 @@ class SubscriptionController extends Controller
             'email' => $user->email,
             'first_name' => $user->name ?? 'User',
             'last_name' => $user->last_name ?? 'User',
-            'phone_number' => $user->phone ?? '+201000000000',
+            'phone_number' => $user->phones[0]['phone'] ?? '+201000000000',
         ];
         $companyDetails = [
             'company_id' => $company->id,
             'company_name' => $company->name,
             'user_id' => $user->id,
             'user_name' => $user->name,
-            'user_phone' => $user->phones[0]['phone'],
+            'user_phone' => $user->phones[0]['phone'] ?? '+201000000000',
             'plan_id' => $plan->id,
             'plan_name' => $plan->name,
             'promo_code' => $promoCode
@@ -103,7 +103,6 @@ class SubscriptionController extends Controller
             'billing_data' => $billingData,
             'companyDetails' => $companyDetails
         ];
-
         return $this->paymobController->initiatePayment($paymobRequest);
     }
     public function promoDiscount(Request $request)
