@@ -41,28 +41,69 @@ class Task extends Model
         'department_id',
         'creator_user_id',
         'supervisor_user_id',
-        'title', 'description', 'start_date', 'deadline', 'priority', 'status'
+        'title',
+        'description',
+        'start_date',
+        'deadline',
+        'priority',
+        'status'
     ];
 
-    public function creator() { return $this->belongsTo(User::class, 'creator_user_id'); }
-    public function supervisor() { return $this->belongsTo(User::class, 'supervisor_user_id'); }
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'creator_user_id');
+    }
+    public function supervisor()
+    {
+        return $this->belongsTo(User::class, 'supervisor_user_id');
+    }
 
-    public function company() { return $this->belongsTo(Company::class); }
-    public function project() { return $this->belongsTo(Project::class); }
-    public function department() { return $this->belongsTo(Department::class); }
-    public function assignedUser() { return $this->belongsTo(User::class, 'assigned_user_id'); }
-    public function consult() { return $this->belongsTo(User::class, 'consult_user_id'); }
-    public function informer() { return $this->belongsTo(User::class, 'inform_user_id'); }
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+    public function assignedUser()
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id');
+    }
+    public function consult()
+    {
+        return $this->belongsTo(User::class, 'consult_user_id');
+    }
+    public function informer()
+    {
+        return $this->belongsTo(User::class, 'inform_user_id');
+    }
 
-    public function comments() { return $this->hasMany(TaskComment::class); }
-    public function attachments() { return $this->hasMany(TaskAttachment::class); }
-    public function userStatuses() { return $this->hasMany(TaskUserStatus::class); }
-    public function revisions() { return $this->hasMany(TaskRevision::class); }
+    public function comments()
+    {
+        return $this->hasMany(TaskComment::class);
+    }
+    public function attachments()
+    {
+        return $this->hasMany(TaskAttachment::class);
+    }
+    public function userStatuses()
+    {
+        return $this->hasMany(TaskUserStatus::class);
+    }
+    public function revisions()
+    {
+        return $this->hasMany(TaskRevision::class);
+    }
     public function users()
     {
         return $this->belongsToMany(User::class, 'task_user')
-                    ->withPivot('role')
-                    ->withTimestamps();
+            ->withPivot('role')
+            ->withTimestamps();
     }
 
     public function assignedUsers()
@@ -78,6 +119,11 @@ class Task extends Model
     public function informerUsers()
     {
         return $this->users()->wherePivot('role', 'informer');
+    }
+    public function scopeUrgent($query)
+    {
+        return $query->where('priority', 'urgent')
+            ->whereNotIn('status', ['done', 'review']);
     }
 
     const ROLE_ASSIGNED = 'assigned';

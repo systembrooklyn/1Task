@@ -31,7 +31,7 @@ use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserDepartmentController;
 use App\Http\Controllers\UserProfileController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
-
+use Illuminate\Support\Facades\Artisan;
 
 Route::get('/user', function (Request $request) {
     $user = $request->user()->load([
@@ -242,4 +242,26 @@ Route::middleware('auth:sanctum')->prefix('tickets')->group(function () {
     Route::get('/categories', [TicketController::class, 'ticketCategories']);
     // Route::get('/', [TicketController::class, 'index']);
     Route::post('/{ticket}/actions', [TicketActionController::class, 'store']);
+});
+
+
+Route::get('/schedule/dailyUrgentQueue', function () {
+    $token = request()->header('X-SCHEDULE-TOKEN');
+
+    if ($token !== env('SCHEDULE_TOKEN')) {
+        return response()->json(['error' => 'Unauthorized'], 403);
+    }
+
+    Artisan::call('urgent:dispatch-daily');
+    return response()->json(['message' => 'Daily urgent emails dispatched successfully.'],200);
+});
+Route::get('/schedule/sendDailyUrgent', function () {
+    $token = request()->header('X-SCHEDULE-TOKEN');
+
+    if ($token !== env('SCHEDULE_TOKEN')) {
+        return response()->json(['error' => 'Unauthorized'], 403);
+    }
+
+    Artisan::call('queue:work --stop-when-empty');
+    return response()->json(['message' => 'Daily urgent emails sent successfully.'],200);
 });
