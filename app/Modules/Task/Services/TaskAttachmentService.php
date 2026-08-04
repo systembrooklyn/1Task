@@ -14,17 +14,15 @@ class TaskAttachmentService
 {
     protected array $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'jfif'];
 
-    public function __construct(protected TaskAttachmentRepositoryInterface $attachments)
-    {
-    }
+    public function __construct(protected TaskAttachmentRepositoryInterface $attachments) {}
 
     public function uploadAndAttach(Task $task, UploadedFile $file, ?string $commentText): array
     {
         $company = Auth::user()->company;
 
         // 1) Upload to DigitalOcean Spaces
-        $path        = $file->store("1Task/{$company->name}/task_attachments", 'spaces');
-        $downloadUrl = Storage::disk('spaces')->url($path); 
+        $path        = $file->store("1Task/{$company->name}/tasks/{$task->id}/task_attachments", 'spaces');
+        $downloadUrl = Storage::disk('spaces')->url($path);
         $fileSizeKB  = $file->getSize() / 1024;
 
         // 2) Persist attachment record via Contract
