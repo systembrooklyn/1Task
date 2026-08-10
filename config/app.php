@@ -146,7 +146,8 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
-        App\Modules\Task\Providers\TaskServiceProvider::class
+        App\Modules\Task\Providers\TaskServiceProvider::class,
+        App\Modules\User\Providers\UserServiceProvider::class,
     ]
 
 ];

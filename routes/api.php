@@ -33,78 +33,78 @@ use App\Http\Controllers\UserProfileController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Artisan;
 
-Route::get('/user', function (Request $request) {
-    $user = $request->user()->load([
-        'company',
-        'departments',
-        'roles.permissions'
-    ]);
-    $response = [
-        'user' => [
-            'id' => $user->id,
-            'name' => $user->name,
-            'last_name' => $user->last_name,
-            'email' => $user->email,
-            'ppUrl' => $user->profile?->ppUrl ?? null,
-            'company' => [
-                'id' => $user->company->id,
-                'name' => $user->company->name,
-            ],
-            'departments' => $user->departments->map(function ($department) {
-                return [
-                    'id' => $department->id,
-                    'name' => $department->name,
-                ];
-            }),
-        ],
-        'roles' => $user->roles->map(function ($role) {
-            return [
-                'id' => $role->id,
-                'name' => $role->name,
-            ];
-        }),
-        'permissions' => $user->roles->flatMap(function ($role) {
-            return $role->permissions->map(function ($permission) {
-                return [
-                    'id' => $permission->id,
-                    'name' => $permission->name,
-                ];
-            });
-        })->unique('id'),
-        'token' => $request->bearerToken(),
-    ];
-    return response()->json($response);
-})->middleware('auth:sanctum');
+// Route::get('/user', function (Request $request) {
+//     $user = $request->user()->load([
+//         'company',
+//         'departments',
+//         'roles.permissions'
+//     ]);
+//     $response = [
+//         'user' => [
+//             'id' => $user->id,
+//             'name' => $user->name,
+//             'last_name' => $user->last_name,
+//             'email' => $user->email,
+//             'ppUrl' => $user->profile?->ppUrl ?? null,
+//             'company' => [
+//                 'id' => $user->company->id,
+//                 'name' => $user->company->name,
+//             ],
+//             'departments' => $user->departments->map(function ($department) {
+//                 return [
+//                     'id' => $department->id,
+//                     'name' => $department->name,
+//                 ];
+//             }),
+//         ],
+//         'roles' => $user->roles->map(function ($role) {
+//             return [
+//                 'id' => $role->id,
+//                 'name' => $role->name,
+//             ];
+//         }),
+//         'permissions' => $user->roles->flatMap(function ($role) {
+//             return $role->permissions->map(function ($permission) {
+//                 return [
+//                     'id' => $permission->id,
+//                     'name' => $permission->name,
+//                 ];
+//             });
+//         })->unique('id'),
+//         'token' => $request->bearerToken(),
+//     ];
+//     return response()->json($response);
+// })->middleware('auth:sanctum');
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
 // })->middleware('auth:sanctum');
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout'])
-    ->middleware('auth:sanctum');
-Route::post('forgot-password', [AuthController::class, 'sendPasswordResetLink']);
+// Route::post('/register', [AuthController::class, 'register']);
+// Route::post('/login', [AuthController::class, 'login']);
+// Route::post('/logout', [AuthController::class, 'logout'])
+//     ->middleware('auth:sanctum');
+// Route::post('forgot-password', [AuthController::class, 'sendPasswordResetLink']);
 
 
-Route::post('reset-password', [AuthController::class, 'resetPassword']);
-Route::post('/check-email', [AuthController::class, 'checkEmailExists']);
+// Route::post('reset-password', [AuthController::class, 'resetPassword']);
+// Route::post('/check-email', [AuthController::class, 'checkEmailExists']);
 
 Route::middleware('auth:sanctum')->post('/invite', [InvitationController::class, 'invite']);
 Route::post('/registerViaInvitation', [AuthController::class, 'registerViaInvitation']);
 Route::get('invitation/{token}', [InvitationController::class, 'registerUsingInvitation']);
 Route::post('invitation/{token}/register', [InvitationController::class, 'completeRegistration']);
 Route::apiResource('departments', DepartmentsController::class)->middleware('auth:sanctum');
-Route::apiResource('userProfile', UserProfileController::class)->middleware('auth:sanctum');
-Route::put('userProfile', [UserProfileController::class, 'update'])->middleware('auth:sanctum');
-Route::post('user/upload-profile-picture', [UserProfileController::class, 'uploadProfilePicture'])->middleware('auth:sanctum');
+// Route::apiResource('userProfile', UserProfileController::class)->middleware('auth:sanctum');
+// Route::put('userProfile', [UserProfileController::class, 'update'])->middleware('auth:sanctum');
+// Route::post('user/upload-profile-picture', [UserProfileController::class, 'uploadProfilePicture'])->middleware('auth:sanctum');
 
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('permissions', [RolePermissionController::class, 'getPermissions']);
     Route::get('permissions/{id}', [RolePermissionController::class, 'getPermission']);
 
-    Route::post('edit-user/{id}', [AuthController::class, 'editUser']);
-    Route::post('fireToken', [AuthController::class, 'updateFireToken']);
+    // Route::post('edit-user/{id}', [AuthController::class, 'editUser']);
+    // Route::post('fireToken', [AuthController::class, 'updateFireToken']);
 
     Route::post('roles', [RolePermissionController::class, 'createRole']);
     Route::get('roles', [RolePermissionController::class, 'getRoles']);
@@ -113,21 +113,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('roles/{id}', [RolePermissionController::class, 'deleteRole']);
     Route::post('/roles/assign-permissions', [RolePermissionController::class, 'assignPermissions']);
     Route::get('/roles/get-permissions/{id}', [RolePermissionController::class, 'getRolePermissions']);
-    Route::post('/users/assign-role', [AuthController::class, 'assignRoleToUser']);
+    // Route::post('/users/assign-role', [AuthController::class, 'assignRoleToUser']);
     Route::post('/roles/remove-permissions', [RolePermissionController::class, 'removePermissionsFromRole']);
 
-    Route::post('/users/{userId}/assign-departments', [UserDepartmentController::class, 'assignDepartments']);
+    // Route::post('/users/{userId}/assign-departments', [UserDepartmentController::class, 'assignDepartments']);
     Route::get('/departments-users', [UserDepartmentController::class, 'getUsersInDepartment']);
-    Route::post('/unassign-department/{userId}', [UserDepartmentController::class, 'unassignDepartment']);
-    Route::put('/department/assign-manager', [UserDepartmentController::class, 'assignManagerToDepartment']);
-    Route::get('company-owner', [CompanyOwnerController::class, 'getCompanyOwner']);
-    Route::get('isOwner', [CompanyOwnerController::class, 'checkOwner']);
+    // Route::post('/unassign-department/{userId}', [UserDepartmentController::class, 'unassignDepartment']);
+    // Route::put('/department/assign-manager', [UserDepartmentController::class, 'assignManagerToDepartment']);
+    // Route::get('company-owner', [CompanyOwnerController::class, 'getCompanyOwner']);
+    // Route::get('isOwner', [CompanyOwnerController::class, 'checkOwner']);
 
-    Route::get('/deptUsersFireToken/{id}', [UserDepartmentController::class, 'getUsersFireTokensInAnyDepartment']);
+    // Route::get('/deptUsersFireToken/{id}', [UserDepartmentController::class, 'getUsersFireTokensInAnyDepartment']);
 
-    Route::get('company-users', [CompanyController::class, 'getCompanyUsers']);
-    Route::post('/unassign-role', [AuthController::class, 'unassignRoleFromUser']);
-    Route::delete('/delete-user/{id}', [AuthController::class, 'deleteUser']);
+    // Route::get('company-users', [CompanyController::class, 'getCompanyUsers']);
+    // Route::post('/unassign-role', [AuthController::class, 'unassignRoleFromUser']);
+    // Route::delete('/delete-user/{id}', [AuthController::class, 'deleteUser']);
 
 
     Route::apiResource('projects', ProjectController::class);
