@@ -149,6 +149,7 @@ return [
         App\Modules\Task\Providers\TaskServiceProvider::class,
         App\Modules\User\Providers\UserServiceProvider::class,
         App\Modules\DailyTask\Providers\DailyTaskServiceProvider::class,
+        App\Modules\Department\Providers\DepartmentServiceProvider::class,
     ]
 
 ];

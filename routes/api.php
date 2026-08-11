@@ -93,7 +93,7 @@ use Illuminate\Support\Facades\Artisan;
 // Route::post('/registerViaInvitation', [AuthController::class, 'registerViaInvitation']);
 // Route::get('invitation/{token}', [InvitationController::class, 'registerUsingInvitation']);
 // Route::post('invitation/{token}/register', [InvitationController::class, 'completeRegistration']);
-Route::apiResource('departments', DepartmentsController::class)->middleware('auth:sanctum');
+// Route::apiResource('departments', DepartmentsController::class)->middleware('auth:sanctum');
 // Route::apiResource('userProfile', UserProfileController::class)->middleware('auth:sanctum');
 // Route::put('userProfile', [UserProfileController::class, 'update'])->middleware('auth:sanctum');
 // Route::post('user/upload-profile-picture', [UserProfileController::class, 'uploadProfilePicture'])->middleware('auth:sanctum');
@@ -253,7 +253,7 @@ Route::get('/schedule/dailyUrgentQueue', function () {
     }
 
     Artisan::call('urgent:dispatch-daily');
-    return response()->json(['message' => 'Daily urgent emails dispatched successfully.'],200);
+    return response()->json(['message' => 'Daily urgent emails dispatched successfully.'], 200);
 });
 Route::get('/schedule/sendDailyUrgent', function () {
     $token = request()->header('X-SCHEDULE-TOKEN');
@@ -263,5 +263,5 @@ Route::get('/schedule/sendDailyUrgent', function () {
     }
 
     Artisan::call('queue:work --stop-when-empty');
-    return response()->json(['message' => 'Daily urgent emails sent successfully.'],200);
+    return response()->json(['message' => 'Daily urgent emails sent successfully.'], 200);
 });
