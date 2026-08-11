@@ -6,6 +6,7 @@ use App\Modules\User\Http\Controllers\Auth\RegisterController;
 use App\Modules\User\Http\Controllers\Auth\PasswordResetController;
 use App\Modules\User\Http\Controllers\Auth\LogoutController;
 use App\Modules\User\Http\Controllers\CompanyOwnerController;
+use App\Modules\User\Http\Controllers\DashboardController;
 use App\Modules\User\Http\Controllers\UserController;
 use App\Modules\User\Http\Controllers\UserManagementController;
 use App\Modules\User\Http\Controllers\UserProfileController;
@@ -41,6 +42,9 @@ Route::prefix('api')->group(function () {
         Route::get('/company-users', [UserController::class, 'getCompanyUsers']);
         Route::get('/company-owner', [CompanyOwnerController::class, 'getCompanyOwner']);
         Route::get('/isOwner', [CompanyOwnerController::class, 'checkOwner']);
+
+        // Dashboard
+        Route::get('/dashboard/{date?}', [DashboardController::class, 'getCounts']);
 
         // Department assignments
         Route::post('/users/{userId}/assign-departments', [UserDepartmentController::class, 'assignDepartments']);
