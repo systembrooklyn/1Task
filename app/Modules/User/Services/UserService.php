@@ -18,7 +18,6 @@ class UserService
 
     public function deleteUser(User $user, bool $soft = true): bool
     {
-        // Detach relationships
         $user->roles()->detach();
         $user->departments()->detach();
         $user->tokens()->delete();

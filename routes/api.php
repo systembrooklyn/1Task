@@ -89,10 +89,10 @@ use Illuminate\Support\Facades\Artisan;
 // Route::post('reset-password', [AuthController::class, 'resetPassword']);
 // Route::post('/check-email', [AuthController::class, 'checkEmailExists']);
 
-Route::middleware('auth:sanctum')->post('/invite', [InvitationController::class, 'invite']);
-Route::post('/registerViaInvitation', [AuthController::class, 'registerViaInvitation']);
-Route::get('invitation/{token}', [InvitationController::class, 'registerUsingInvitation']);
-Route::post('invitation/{token}/register', [InvitationController::class, 'completeRegistration']);
+// Route::middleware('auth:sanctum')->post('/invite', [InvitationController::class, 'invite']);
+// Route::post('/registerViaInvitation', [AuthController::class, 'registerViaInvitation']);
+// Route::get('invitation/{token}', [InvitationController::class, 'registerUsingInvitation']);
+// Route::post('invitation/{token}/register', [InvitationController::class, 'completeRegistration']);
 Route::apiResource('departments', DepartmentsController::class)->middleware('auth:sanctum');
 // Route::apiResource('userProfile', UserProfileController::class)->middleware('auth:sanctum');
 // Route::put('userProfile', [UserProfileController::class, 'update'])->middleware('auth:sanctum');
@@ -117,7 +117,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/roles/remove-permissions', [RolePermissionController::class, 'removePermissionsFromRole']);
 
     // Route::post('/users/{userId}/assign-departments', [UserDepartmentController::class, 'assignDepartments']);
-    Route::get('/departments-users', [UserDepartmentController::class, 'getUsersInDepartment']);
+    // Route::get('/departments-users', [UserDepartmentController::class, 'getUsersInDepartment']);
     // Route::post('/unassign-department/{userId}', [UserDepartmentController::class, 'unassignDepartment']);
     // Route::put('/department/assign-manager', [UserDepartmentController::class, 'assignManagerToDepartment']);
     // Route::get('company-owner', [CompanyOwnerController::class, 'getCompanyOwner']);
@@ -202,7 +202,7 @@ Route::middleware('auth:digital_card_users')->group(function () {
 
 
 Route::middleware('auth:sanctum')->get('/dashboard/{date?}', [DashboardController::class, 'getCounts']);
-Route::middleware('auth:sanctum')->get('/getInvitations', [InvitationController::class, 'getInvitations']);
+// Route::middleware('auth:sanctum')->get('/getInvitations', [InvitationController::class, 'getInvitations']);
 /**
  * Google login
  */

@@ -32,10 +32,8 @@ class LoginController extends Controller
             );
         }
 
-        // Load relationships exactly as original login response
         $user->load(['company', 'departments', 'roles.permissions']);
 
-        // Hide attributes exactly as original
         $user->makeHidden(['created_at', 'updated_at', 'email_verified_at', 'company_id']);
         $user->company?->makeHidden(['created_at', 'updated_at']);
         $user->departments->each(fn($d) => $d->makeHidden(['created_at', 'updated_at', 'company_id', 'pivot']));

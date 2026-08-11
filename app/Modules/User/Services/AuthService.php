@@ -21,14 +21,12 @@ class AuthService
 
     public function register(array $data): array
     {
-        // 1. Create company
         $company = Company::create([
             'name' => $data['company_name'],
             'plan_id' => DB::table('plans')->where('name', 'Bronze')->value('id'),
             'plan_expires_at' => Carbon::now()->addMonths(3),
         ]);
 
-        // 2. Create user
         $user = $this->userRepo->create([
             'name'       => $data['name'],
             'last_name'  => $data['last_name'],
@@ -37,13 +35,11 @@ class AuthService
             'company_id' => $company->id,
         ]);
 
-        // 3. Attach owner
         DB::table('owners')->insert([
             'owner_id'   => $user->id,
             'company_id' => $company->id,
         ]);
 
-        // 4. Create agent role and assign permissions (exactly as original)
         $agentRole = Role::create([
             'name'       => 'agent',
             'company_id' => $company->id,
@@ -72,8 +68,7 @@ class AuthService
                 'permission_id' => $perm->id,
             ]);
         }
-
-        // 5. Generate token
+        
         $token = $user->createToken($data['name'])->plainTextToken;
 
         return ['user' => $user, 'token' => $token];

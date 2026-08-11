@@ -11,5 +11,4 @@ abstract class BaseFormRequest extends FormRequest
         return true;
     }
 
-    // You can add common response handling here if needed
 }

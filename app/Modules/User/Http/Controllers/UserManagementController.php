@@ -28,7 +28,6 @@ class UserManagementController extends Controller
             throw new ResourceDeletedException('This user account has been deleted. Please contact support.', 'User Deleted');
         }
 
-        // Authorization checks (same as original)
         if ($user->company_id != $userToEdit->company_id) {
             return response()->json(['message' => 'You can only edit users within your company.'], 403);
         }
@@ -110,7 +109,6 @@ class UserManagementController extends Controller
             return response()->json(['message' => 'No valid roles found.'], 400);
         }
 
-        // Build pivot data with company_id for each role, while validating
         $roleData = [];
         foreach ($roles as $role) {
             if ($user->company_id !== $role->company_id) {
@@ -129,7 +127,6 @@ class UserManagementController extends Controller
 
     public function unassignRole(AssignRoleRequest $request): JsonResponse
     {
-        // Similar to assignRole, use removeRoles
         $user = User::findOrFail($request->input('user_id'));
         $roleIds = $request->input('role_ids');
         $this->userService->removeRoles($user, $roleIds);

@@ -20,12 +20,10 @@ class ProfileService
     {
         DB::beginTransaction();
         try {
-            // Update user main fields
             if (isset($data['name']) || isset($data['last_name']) || isset($data['email'])) {
                 $user->update($data);
             }
 
-            // Update profile
             if (isset($data['profile'])) {
                 $user->profile()->updateOrCreate(
                     ['user_id' => $user->id],
@@ -33,7 +31,6 @@ class ProfileService
                 );
             }
 
-            // Update phones
             if (isset($data['phones'])) {
                 $this->validatePhones($data['phones'], $user->id);
                 $user->phones()->delete();
@@ -42,7 +39,6 @@ class ProfileService
                 }
             }
 
-            // Update links
             if (isset($data['links'])) {
                 $user->links()->delete();
                 foreach ($data['links'] as $linkData) {
@@ -65,7 +61,6 @@ class ProfileService
      */
     public function uploadProfilePicture(User $user, UploadedFile $file): string
     {
-        // Check storage limits via PlanLimitService (as in original code)
         $fileSizeKB = $file->getSize() / 1024;
         $oldSizeKB = $user->profile->ppSize ?? 0;
         $finalSize = round($fileSizeKB - $oldSizeKB, 2);
@@ -74,29 +69,24 @@ class ProfileService
         $company = $user->company;
         $disk = Storage::disk('spaces');
 
-        // Build the directory path: 1Task/{company_name}/profile-pictures/
         $directory = "1Task/{$company->name}/profile-pictures";
-        $newFileName = $file->hashName(); // Unique name
+        $newFileName = $file->hashName();
 
-        // Delete old profile picture if it exists and is stored in Spaces
         $this->deleteOldProfilePicture($user, $disk);
 
-        // Upload the new file to Spaces
         $path = $disk->putFileAs($directory, $file, $newFileName, 'public');
 
         if (!$path) {
             throw new \Exception('Failed to upload profile picture to Spaces.');
         }
 
-        // Get the public URL
         $url = $disk->url($path);
 
-        // Save the new file info in the user's profile
         $user->profile()->updateOrCreate(
             ['user_id' => $user->id],
             [
                 'ppUrl'   => $url,
-                'ppPath'  => $path,        // Store the relative path for future deletion
+                'ppPath'  => $path,
                 'ppSize'  => $fileSizeKB,
             ]
         );
@@ -114,7 +104,6 @@ class ProfileService
             return;
         }
 
-        // Only delete if the file exists in Spaces
         if ($disk->exists($profile->ppPath)) {
             $disk->delete($profile->ppPath);
         }
@@ -137,7 +126,6 @@ class ProfileService
             }
             $seenPhones[] = $phone;
 
-            // Check if the phone is already used by another user (excluding current)
             $exists = UsersPhone::where('CC', $cc)
                 ->where('phone', $phone)
                 ->where('user_id', '!=', $userId)
