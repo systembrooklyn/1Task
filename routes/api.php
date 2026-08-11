@@ -130,9 +130,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::delete('/delete-user/{id}', [AuthController::class, 'deleteUser']);
 
 
-    Route::apiResource('projects', ProjectController::class);
-    Route::post('/projects/{id}/status', [ProjectController::class, 'updatestatus']);
-    Route::get('/projects/{id}/revisions', [ProjectController::class, 'getRevisions']);
+    // Route::apiResource('projects', ProjectController::class);
+    // Route::post('/projects/{id}/status', [ProjectController::class, 'updatestatus']);
+    // Route::get('/projects/{id}/revisions', [ProjectController::class, 'getRevisions']);
 
 
     // Route::get('/alldailytask', [DailyTaskController::class, 'allDailyTasks']);
