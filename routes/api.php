@@ -135,29 +135,29 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/projects/{id}/revisions', [ProjectController::class, 'getRevisions']);
 
 
-    Route::get('/alldailytask', [DailyTaskController::class, 'allDailyTasks']);
-    Route::post('/alldailytaskfilter', [DailyTaskController::class, 'allDailyTasksFiltered']);
+    // Route::get('/alldailytask', [DailyTaskController::class, 'allDailyTasks']);
+    // Route::post('/alldailytaskfilter', [DailyTaskController::class, 'allDailyTasksFiltered']);
     // Route::post('/submitdailytask/{id}',[DailyTaskController::class, 'submitDailyTask']);
-    Route::post('/activedailytask/{id}', [DailyTaskController::class, 'activeDailyTask']);
-    Route::get('dailytask/{id}/revisions', [DailyTaskController::class, 'revisions']);
-    Route::apiResource('dailytask', DailyTaskController::class);
-    Route::post('/daily-tasks/{id}/submit-report', [DailyTaskReportController::class, 'submitReport']);
-    Route::get('/daily-tasks/todays-reports', [DailyTaskReportController::class, 'todaysReports']);
-    Route::get('/daily-tasks-reports/{date?}', [DailyTaskReportController::class, 'index']);
-    Route::get('/daily-task-reports/{date}', [DailyTaskReportController::class, 'notReportedTasks']);
+    // Route::post('/activedailytask/{id}', [DailyTaskController::class, 'activeDailyTask']);
+    // Route::get('dailytask/{id}/revisions', [DailyTaskController::class, 'revisions']);
+    // Route::apiResource('dailytask', DailyTaskController::class);
+    // Route::post('/daily-tasks/{id}/submit-report', [DailyTaskReportController::class, 'submitReport']);
+    // Route::get('/daily-tasks/todays-reports', [DailyTaskReportController::class, 'todaysReports']);
+    // Route::get('/daily-tasks-reports/{date?}', [DailyTaskReportController::class, 'index']);
+    // Route::get('/daily-task-reports/{date}', [DailyTaskReportController::class, 'notReportedTasks']);
 
-    Route::get('evaluations/{taskId}', [DailyTaskEvaluationController::class, 'index']);
-    Route::get('evaluation/{id}', [DailyTaskEvaluationController::class, 'show']);
-    Route::post('evaluations/{taskId}', [DailyTaskEvaluationController::class, 'store']);
-    Route::put('evaluations/{id}', [DailyTaskEvaluationController::class, 'update']);
+    // Route::get('evaluations/{taskId}', [DailyTaskEvaluationController::class, 'index']);
+    // Route::get('evaluation/{id}', [DailyTaskEvaluationController::class, 'show']);
+    // Route::post('evaluations/{taskId}', [DailyTaskEvaluationController::class, 'store']);
+    // Route::put('evaluations/{id}', [DailyTaskEvaluationController::class, 'update']);
     // Route::delete('evaluations/{id}', [DailyTaskEvaluationController::class, 'destroy']);
-    Route::get('daily-tasks-evaluations/{date?}', [DailyTaskEvaluationController::class, 'tasksOfTheDay']);
-    Route::post('deptPerformance', [DailyTaskEvaluationController::class, 'getDeptPerformance']);
-    Route::post('userPerformance', [DailyTaskEvaluationController::class, 'getUserPerformance']);
+    // Route::get('daily-tasks-evaluations/{date?}', [DailyTaskEvaluationController::class, 'tasksOfTheDay']);
+    // Route::post('deptPerformance', [DailyTaskEvaluationController::class, 'getDeptPerformance']);
+    // Route::post('userPerformance', [DailyTaskEvaluationController::class, 'getUserPerformance']);
 
 
-    Route::get('dailyTasks/yesterday', [DailyTaskController::class, 'getYesterdayEvaluationTasks']);
-    Route::post('dailyTasks/setRandomCount', [DailyTaskController::class, 'updateRandomTaskCount']);
+    // Route::get('dailyTasks/yesterday', [DailyTaskController::class, 'getYesterdayEvaluationTasks']);
+    // Route::post('dailyTasks/setRandomCount', [DailyTaskController::class, 'updateRandomTaskCount']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
