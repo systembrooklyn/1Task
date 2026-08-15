@@ -11,6 +11,686 @@
         }
     ],
     "paths": {
+        "/api/evaluations/{taskId}": {
+            "get": {
+                "tags": [
+                    "Daily Task Evaluation"
+                ],
+                "summary": "Get evaluations for a specific task",
+                "operationId": "058aac755aa357c499cd922a8e677c8f",
+                "parameters": [
+                    {
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Daily Task Evaluation"
+                ],
+                "summary": "Store an evaluation for a task",
+                "operationId": "58a02b857f5e552ea8eefa2e77131b6f",
+                "parameters": [
+                    {
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Evaluation created successfully!"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/evaluation/{id}": {
+            "get": {
+                "tags": [
+                    "Daily Task Evaluation"
+                ],
+                "summary": "Show a single evaluation",
+                "operationId": "c073be95d668b91eb72d3aff1b209157",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/evaluations/{id}": {
+            "put": {
+                "tags": [
+                    "Daily Task Evaluation"
+                ],
+                "summary": "Update an evaluation",
+                "operationId": "f2f1e404a012dc8eb57cf1861554d48c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Evaluation updated successfully!"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/daily-tasks-evaluations/{date?}": {
+            "get": {
+                "tags": [
+                    "Daily Task Evaluation"
+                ],
+                "summary": "Get evaluations/tasks of the day",
+                "operationId": "2b9316419a4034599d434d6f580cbf07",
+                "parameters": [
+                    {
+                        "name": "date",
+                        "in": "path",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/deptPerformance": {
+            "post": {
+                "tags": [
+                    "Daily Task Evaluation"
+                ],
+                "summary": "Get department performance stats",
+                "operationId": "5dc1a99e0c3c649a43efbb7a7e227681",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/userPerformance": {
+            "post": {
+                "tags": [
+                    "Daily Task Evaluation"
+                ],
+                "summary": "Get user performance stats",
+                "operationId": "b6d465d78d318619b8d8bc28637fc92c",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/daily-tasks/{id}/submit-report": {
+            "post": {
+                "tags": [
+                    "Daily Task Report"
+                ],
+                "summary": "Submit report for a task",
+                "operationId": "403e96a415ebf454d2c521dba7274f7b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Report submitted successfully"
+                    },
+                    "409": {
+                        "description": "Report already exists"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/daily-tasks/todays-reports": {
+            "get": {
+                "tags": [
+                    "Daily Task Report"
+                ],
+                "summary": "Get today's reports overview",
+                "operationId": "adda4aa9e7d2a9eabc6d2093bc085860",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/daily-tasks-reports/{date?}": {
+            "get": {
+                "tags": [
+                    "Daily Task Report"
+                ],
+                "summary": "Get daily task reports by date",
+                "operationId": "d7973f402a4d1da6a5c869afa86a48cb",
+                "parameters": [
+                    {
+                        "name": "date",
+                        "in": "path",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/daily-task-reports/{date}": {
+            "get": {
+                "tags": [
+                    "Daily Task Report"
+                ],
+                "summary": "Get un-reported tasks list for a date",
+                "operationId": "bf76c346dc79d80ddc13826700a24cb6",
+                "parameters": [
+                    {
+                        "name": "date",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/alldailytask": {
+            "get": {
+                "tags": [
+                    "Daily Task"
+                ],
+                "summary": "Get all tasks for the company",
+                "operationId": "3149aadc82316acc8cb8dfb6b05601ad",
+                "responses": {
+                    "200": {
+                        "description": "Tasks retrieved successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/alldailytaskfilter": {
+            "post": {
+                "tags": [
+                    "Daily Task"
+                ],
+                "summary": "Filter daily tasks with pagination",
+                "operationId": "b687a2e51bad2d9965630228b09c5a2b",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "per_page": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "sort_by": {
+                                        "type": "string",
+                                        "enum": [
+                                            "task_no",
+                                            "created_at",
+                                            "start_date"
+                                        ],
+                                        "example": "created_at"
+                                    },
+                                    "type_of": {
+                                        "type": "string",
+                                        "enum": [
+                                            "asc",
+                                            "desc"
+                                        ],
+                                        "example": "desc"
+                                    },
+                                    "dept_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2
+                                        ]
+                                    },
+                                    "task_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "single",
+                                            "daily",
+                                            "weekly",
+                                            "monthly",
+                                            "last_day_of_month"
+                                        ],
+                                        "example": "daily"
+                                    },
+                                    "active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Filtered tasks retrieved successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/activedailytask/{id}": {
+            "post": {
+                "tags": [
+                    "Daily Task"
+                ],
+                "summary": "Toggle active status of a task",
+                "operationId": "baed5e985f4f96510e40a66f83091971",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task active status toggled successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/dailytask/{id}/revisions": {
+            "get": {
+                "tags": [
+                    "Daily Task"
+                ],
+                "summary": "Get revision history for a task",
+                "operationId": "65adb4e695b4d5ed3f981ffdcac4123a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Revisions retrieved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/dailytask": {
+            "get": {
+                "tags": [
+                    "Daily Task"
+                ],
+                "summary": "List tasks for authenticated user departments",
+                "operationId": "ec80a6d1cc6eef6d22948dffd9b9df0b",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Daily Task"
+                ],
+                "summary": "Create a new daily task",
+                "operationId": "a8fc732d9bd7ed65ca3a7ce2c91d62ce",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Daily Task created successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/dailytask/{id}": {
+            "get": {
+                "tags": [
+                    "Daily Task"
+                ],
+                "summary": "Show a single daily task",
+                "operationId": "aac7be99393f4eb5fad0ed46b1b12cf1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Daily Task"
+                ],
+                "summary": "Update a task",
+                "operationId": "9cf3508f4ce4724b9cf485753d63ca9d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Task updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Daily Task"
+                ],
+                "summary": "Delete a task",
+                "operationId": "bd8f091459bc746e00fed90ce90e89c2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task deleted successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/dailyTasks/yesterday": {
+            "get": {
+                "tags": [
+                    "Daily Task"
+                ],
+                "summary": "Get yesterday's evaluation tasks",
+                "operationId": "5509a477a95c6dc9846c3c9e4b187e8c",
+                "responses": {
+                    "200": {
+                        "description": "Random Daily Tasks Retrieved Successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/dailyTasks/setRandomCount": {
+            "post": {
+                "tags": [
+                    "Daily Task"
+                ],
+                "summary": "Set random task count per department",
+                "operationId": "571ab2aceb80b24b2904529172abe554",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Random task count updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/login": {
             "post": {
                 "tags": [
@@ -1004,6 +1684,18 @@
         }
     },
     "tags": [
+        {
+            "name": "Daily Task Evaluation",
+            "description": "Task evaluations and performance analytics endpoints"
+        },
+        {
+            "name": "Daily Task Report",
+            "description": "Daily task reporting and tracking endpoints"
+        },
+        {
+            "name": "Daily Task",
+            "description": "Daily task management, filtering, and configuration endpoints"
+        },
         {
             "name": "Authentication",
             "description": "Endpoints for user login and password recovery"
