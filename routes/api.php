@@ -237,12 +237,12 @@ Route::post('/payment-callback', [PaymobController::class, 'handleCallback']);
 
 
 
-Route::middleware('auth:sanctum')->prefix('tickets')->group(function () {
-    Route::post('/', [TicketController::class, 'store']);
-    Route::get('/categories', [TicketController::class, 'ticketCategories']);
-    // Route::get('/', [TicketController::class, 'index']);
-    Route::post('/{ticket}/actions', [TicketActionController::class, 'store']);
-});
+// Route::middleware('auth:sanctum')->prefix('tickets')->group(function () {
+//     Route::post('/', [TicketController::class, 'store']);
+//     Route::get('/categories', [TicketController::class, 'ticketCategories']);
+//     // Route::get('/', [TicketController::class, 'index']);
+//     Route::post('/{ticket}/actions', [TicketActionController::class, 'store']);
+// });
 
 
 Route::get('/schedule/dailyUrgentQueue', function () {

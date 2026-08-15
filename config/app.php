@@ -151,6 +151,7 @@ return [
         App\Modules\DailyTask\Providers\DailyTaskServiceProvider::class,
         App\Modules\Department\Providers\DepartmentServiceProvider::class,
         App\Modules\Project\Providers\ProjectServiceProvider::class,
+        App\Modules\Ticket\Providers\TicketServiceProvider::class,
     ]
 
 ];
