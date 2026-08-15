@@ -229,7 +229,7 @@ Route::middleware('auth:sanctum')->prefix('companies')->group(function () {
     Route::post('promoDiscount', [SubscriptionController::class, 'promoDiscount']);
 });
 
-Route::middleware('auth:sanctum')->get('getCompanyPlanDetails', [CompanyController::class, 'getCompanyPlanDetails']);
+// Route::middleware('auth:sanctum')->get('getCompanyPlanDetails', [CompanyController::class, 'getCompanyPlanDetails']);
 
 // Route::post('initiate-payment', [PaymobController::class, 'initiatePayment']);
 Route::post('/payment-callback', [PaymobController::class, 'handleCallback']);

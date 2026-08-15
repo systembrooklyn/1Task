@@ -10,6 +10,7 @@ use App\Modules\User\Repositories\Eloquent\EloquentInvitationRepository;
 use App\Modules\User\Repositories\Eloquent\UserRepository;
 use App\Modules\User\Services\AuthService;
 use App\Modules\User\Services\CompanyOwnerService;
+use App\Modules\User\Services\CompanyPlanService;
 use App\Modules\User\Services\DashboardService;
 use App\Modules\User\Services\InvitationService;
 use App\Modules\User\Services\UserService;
@@ -31,6 +32,7 @@ class UserServiceProvider extends ServiceProvider
         $this->app->singleton(CompanyOwnerService::class);
         $this->app->singleton(UserDepartmentService::class);
         $this->app->singleton(DashboardService::class);
+        $this->app->singleton(CompanyPlanService::class);
     }
 
     public function boot(): void
