@@ -9,8 +9,12 @@ use Illuminate\Routing\Controller as BaseController;
 /**
  * @OA\Info(
  *      version="1.0.0",
- *      title="1Task API Documentation",
- *      description="API endpoints for 1Task application"
+ *      title="1Task API Documentation"
+ * )
+ *
+ * @OA\Server(
+ *      url=L5_SWAGGER_CONST_HOST,
+ *      description="Target Environment Server Path"
  * )
  *
  * @OA\SecurityScheme(

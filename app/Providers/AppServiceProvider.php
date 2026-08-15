@@ -21,6 +21,7 @@ use App\Policies\ProjectPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\TaskPolicy;
 use App\Services\PlanLimitService;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -43,6 +44,9 @@ class AppServiceProvider extends ServiceProvider
         //
         DailyTaskReport::observe(DailyTaskReportObserver::class);
         Ticket::observe(TicketObserver::class);
+        if (config('app.env') === 'production' || env('APP_ENV') === 'production') {
+            URL::forceScheme('https');
+        }
     }
 
     protected $policies = [
