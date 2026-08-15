@@ -2,9 +2,14 @@
     "openapi": "3.0.0",
     "info": {
         "title": "1Task API Documentation",
-        "description": "API endpoints for 1Task application",
         "version": "1.0.0"
     },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000",
+            "description": "Target Environment Server Path"
+        }
+    ],
     "paths": {
         "/api/login": {
             "post": {
@@ -12,7 +17,7 @@
                     "Authentication"
                 ],
                 "summary": "Authenticate user and generate JWT token",
-                "operationId": "62062cd4b326ab2a3df95b24b98a6402",
+                "operationId": "25e53cae3105fd4c1d83e397e99f62b0",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -74,7 +79,7 @@
                     "Authentication"
                 ],
                 "summary": "Send password reset link to user email",
-                "operationId": "378170ce2567d8092b78505d60e68362",
+                "operationId": "bb1bdedc9e671f23fa14e6e53d7388ad",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -127,7 +132,7 @@
                     "Authentication"
                 ],
                 "summary": "Reset user password using token",
-                "operationId": "67153cab7df3a575eb4d9cf8ca8a3815",
+                "operationId": "0926b4605b26ba81583cd2d4f11b4afb",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -191,32 +196,791 @@
                 }
             }
         },
-        "/api/user": {
+        "/api/getCompanyPlanDetails": {
             "get": {
                 "tags": [
-                    "User"
+                    "Company Plan"
                 ],
-                "summary": "Get logged-in user details",
-                "operationId": "5c7a31af8d8c781b1a7a3e3f9f0593f8",
+                "summary": "Get company plan details",
+                "operationId": "8a0d4df973cad816b4e01e06c416f6dc",
                 "responses": {
                     "200": {
-                        "description": "Success",
+                        "description": "Plan details retrieved successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "user": {
-                                            "type": "object"
-                                        },
-                                        "token": {
+                                        "message": {
                                             "type": "string",
-                                            "example": "1|laravel_token_string..."
+                                            "example": "check plan details retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/dashboard": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Get dashboard counts",
+                "operationId": "57f289f9a3877319d441201d725f4caf",
+                "parameters": [
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "description": "Optional date filter (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-08-15"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dashboard retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Dashboard retrieved successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/invite": {
+            "post": {
+                "tags": [
+                    "Invitations"
+                ],
+                "summary": "Send an invitation to a user",
+                "operationId": "241fe3928efb402ebf3efc21eda97dc4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "invitee@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Invitation sent successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/invitation/{token}": {
+            "get": {
+                "tags": [
+                    "Invitations"
+                ],
+                "summary": "Validate invitation token",
+                "operationId": "1ee19819cf60cf3f35b55ed4fa049924",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Invitation is valid"
+                    },
+                    "400": {
+                        "description": "Invalid or expired token"
+                    }
+                }
+            }
+        },
+        "/api/invitation/{token}/register": {
+            "post": {
+                "tags": [
+                    "Invitations"
+                ],
+                "summary": "Complete registration via invitation token",
+                "operationId": "2e9a20ba7e19c52e8ca5d099173a4157",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User registered successfully"
+                    },
+                    "400": {
+                        "description": "Invalid or expired token"
+                    }
+                }
+            }
+        },
+        "/api/registerViaInvitation": {
+            "post": {
+                "tags": [
+                    "Invitations"
+                ],
+                "summary": "Register user via invitation info",
+                "operationId": "9683935b24c8d8f1ec986ecf160cce2d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Registration successful"
+                    },
+                    "400": {
+                        "description": "Invalid or expired invitation"
+                    }
+                }
+            }
+        },
+        "/api/getInvitations": {
+            "get": {
+                "tags": [
+                    "Invitations"
+                ],
+                "summary": "Get pending invitations for the company",
+                "operationId": "966ca5a648cb26f24501bdcde3d0b9f8",
+                "responses": {
+                    "200": {
+                        "description": "Invitations retrieved"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/{userId}/assign-departments": {
+            "post": {
+                "tags": [
+                    "User Department"
+                ],
+                "summary": "Assign departments to a user",
+                "operationId": "c2714742e1f4af0440186df2f3d58426",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "department_ids"
+                                ],
+                                "properties": {
+                                    "department_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Departments assigned successfully"
+                    },
+                    "400": {
+                        "description": "Validation or company error"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/unassign-department/{userId}": {
+            "post": {
+                "tags": [
+                    "User Department"
+                ],
+                "summary": "Unassign user from a department",
+                "operationId": "a82ce87ef4f901c3bfd1e2f536a6deaf",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "department_id"
+                                ],
+                                "properties": {
+                                    "department_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Unassigned successfully"
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/department/assign-manager": {
+            "put": {
+                "tags": [
+                    "User Department"
+                ],
+                "summary": "Assign manager to a department",
+                "operationId": "6e678d2dda38612ca91675a7a3d7aae8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "department_id",
+                                    "user_id"
+                                ],
+                                "properties": {
+                                    "department_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Manager assigned successfully"
+                    },
+                    "400": {
+                        "description": "Assignment failed"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/departments-users": {
+            "get": {
+                "tags": [
+                    "User Department"
+                ],
+                "summary": "Get users in the authenticated user's department",
+                "operationId": "0f2969ca106225f822dcbbef2826a640",
+                "responses": {
+                    "200": {
+                        "description": "Users retrieved"
+                    },
+                    "400": {
+                        "description": "User not in any department"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/deptUsersFireToken/{id}": {
+            "get": {
+                "tags": [
+                    "User Department"
+                ],
+                "summary": "Get Firebase tokens for users in a department",
+                "operationId": "a76fdacec2d9fd42a032f745e7861907",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "FireTokens Retrieved Successfully"
+                    },
+                    "404": {
+                        "description": "Department not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/edit-user/{id}": {
+            "post": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Edit user details",
+                "operationId": "e8120df058b7ffeb919c3e079d86b3e3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User name changed successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/delete-user/{id}": {
+            "delete": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Delete a user",
+                "operationId": "6a0070c6e0735a8eb307ea4227694a96",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/fireToken": {
+            "post": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Update Firebase token for authenticated user",
+                "operationId": "87b918b078b8e939a930e23ec73d4ad5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/assign-role": {
+            "post": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Assign roles to a user",
+                "operationId": "73c6568857ccf75aa60a4f53b6a11c15",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Roles assigned successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/unassign-role": {
+            "post": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Unassign roles from a user",
+                "operationId": "c705859931354aaa3691d61e88e124fa",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Roles unassigned successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/userProfile": {
+            "get": {
+                "tags": [
+                    "User Profile"
+                ],
+                "summary": "Get current user profile data",
+                "operationId": "d6745f7bccb5e9ed6d6f0832adf665b9",
+                "responses": {
+                    "200": {
+                        "description": "User retrieved successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "User Profile"
+                ],
+                "summary": "Update current user profile information",
+                "operationId": "40ea78d2dd8149459a62752dd7fbf0c0",
+                "responses": {
+                    "200": {
+                        "description": "User data updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/userProfile/{id}": {
+            "get": {
+                "tags": [
+                    "User Profile"
+                ],
+                "summary": "Get specific user profile by ID",
+                "operationId": "8eb750edc98106aef3a9ee250838e3bb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User retrieved successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/upload-profile-picture": {
+            "post": {
+                "tags": [
+                    "User Profile"
+                ],
+                "summary": "Upload profile picture",
+                "operationId": "e67b16348e3db2df1050160bf0c416cc",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "profile_picture"
+                                ],
+                                "properties": {
+                                    "profile_picture": {
+                                        "description": "The profile picture file (jpeg, png, jpg, max 2MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile picture uploaded successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Profile picture uploaded successfully."
+                                        },
+                                        "url": {
+                                            "type": "string",
+                                            "example": "https://your-live-domain.com"
+                                        },
+                                        "file_size_kb": {
+                                            "type": "number",
+                                            "example": 142.5
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user": {
+            "get": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get logged-in user details",
+                "operationId": "557dd1a7a874c1dff1167fd798245064",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/company-users": {
+            "get": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get list of company users",
+                "operationId": "09adc0ede63fafd47c19216d7ef569d5",
+                "responses": {
+                    "200": {
+                        "description": "Success"
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -242,11 +1006,35 @@
     "tags": [
         {
             "name": "Authentication",
-            "description": "Authentication"
+            "description": "Endpoints for user login and password recovery"
+        },
+        {
+            "name": "Company Plan",
+            "description": "Manage and inspect company subscriptions and plans"
+        },
+        {
+            "name": "Dashboard",
+            "description": "Dashboard metrics and counts"
+        },
+        {
+            "name": "Invitations",
+            "description": "Operations for inviting users and completing invitations"
+        },
+        {
+            "name": "User Department",
+            "description": "Manage user department assignments, managers, and fire tokens"
+        },
+        {
+            "name": "User Management",
+            "description": "Edit, delete, tokens, and role assignments for users"
+        },
+        {
+            "name": "User Profile",
+            "description": "User profile operations and profile picture handling"
         },
         {
             "name": "User",
-            "description": "User"
+            "description": "Authenticated user operations"
         }
     ]
 }

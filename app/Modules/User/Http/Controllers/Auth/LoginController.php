@@ -11,31 +11,7 @@ use Illuminate\Routing\Controller;
 class LoginController extends Controller
 {
     public function __construct(protected AuthService $authService) {}
-    /**
-     * @OA\Post(
-     *     path="/api/login",
-     *     summary="Authenticate user and generate JWT token",
-     *     tags={"Authentication"},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"email","password"},
-     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
-     *             @OA\Property(property="password", type="string", format="password", example="password123")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Login successful",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="user", type="object"),
-     *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGci...")
-     *         )
-     *     ),
-     *     @OA\Response(response=401, description="Invalid credentials"),
-     *     @OA\Response(response=422, description="Validation error")
-     * )
-     */
+
     public function login(LoginRequest $request): JsonResponse
     {
         $validated = $request->validated();

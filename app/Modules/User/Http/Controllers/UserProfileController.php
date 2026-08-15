@@ -24,7 +24,7 @@ class UserProfileController extends Controller
         ]);
     }
 
-    public function show($id): JsonResponse
+    public function show(int $id): JsonResponse
     {
         $loggedUser = Auth::user();
         $user = User::with('profile', 'phones', 'links')->find($id);
