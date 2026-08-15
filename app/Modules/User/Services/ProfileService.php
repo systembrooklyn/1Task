@@ -56,9 +56,6 @@ class ProfileService
         }
     }
 
-    /**
-     * Upload a profile picture to DigitalOcean Spaces.
-     */
     public function uploadProfilePicture(User $user, UploadedFile $file): string
     {
         $fileSizeKB = $file->getSize() / 1024;
@@ -94,9 +91,6 @@ class ProfileService
         return $url;
     }
 
-    /**
-     * Delete the old profile picture from Spaces if it exists.
-     */
     protected function deleteOldProfilePicture(User $user, $disk): void
     {
         $profile = $user->profile;
@@ -109,9 +103,6 @@ class ProfileService
         }
     }
 
-    /**
-     * Validate phone numbers for duplicates (same as original logic).
-     */
     protected function validatePhones(array $phones, int $userId): void
     {
         $seenPhones = [];

@@ -20,7 +20,6 @@ class TaskAttachmentService
     {
         $company = Auth::user()->company;
 
-        // 1) Upload to DigitalOcean Spaces
         $path        = $file->store("1Task/{$company->name}/tasks/{$task->id}/task_attachments", 'spaces');
         $downloadUrl = Storage::disk('spaces')->url($path);
         $fileSizeKB  = $file->getSize() / 1024;

@@ -16,9 +16,6 @@ use Illuminate\Support\Facades\Mail;
 class DigitalCardController extends Controller
 {   
     use HasApiTokens, Notifiable;
-    /**
-     * digital users register and login
-     */
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -153,9 +150,6 @@ class DigitalCardController extends Controller
             'user' => $user->load('socialLinks', 'phones'),
         ]);
     }
-    /**
-     * Deactivate the user's account.
-     */
     public function deleteAccount()
     {
         $user = auth('digital_card_users')->user();
@@ -165,9 +159,6 @@ class DigitalCardController extends Controller
         return response()->json(['message' => 'Account deactivated successfully.']);
     }
 
-    /**
-     * Get the logged-in user's digital card details.
-     */
     public function getDigitalCard()
     {
         $user = auth('digital_card_users')->user();
@@ -177,9 +168,6 @@ class DigitalCardController extends Controller
         ]);
     }
 
-    /**
-     * Get a digital card by user_code.
-     */
     public function viewDigitalCard($user_code)
     {
         $user = DigitalCardUser::with(['socialLinks', 'phones'])->where('user_code', $user_code)->first();
