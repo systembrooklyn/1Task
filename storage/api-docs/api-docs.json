@@ -8,6 +8,14 @@
         {
             "url": "http://127.0.0.1:8000",
             "description": "Target Environment Server Path"
+        },
+        {
+            "url": "http://127.0.0.1:8000",
+            "description": "Local Development Server"
+        },
+        {
+            "url": "https://starfish-app-gv3mu.ondigitalocean.app",
+            "description": "Live Production Server"
         }
     ],
     "paths": {
@@ -1685,24 +1693,16 @@
     },
     "tags": [
         {
-            "name": "Daily Task Evaluation",
-            "description": "Task evaluations and performance analytics endpoints"
-        },
-        {
-            "name": "Daily Task Report",
-            "description": "Daily task reporting and tracking endpoints"
-        },
-        {
-            "name": "Daily Task",
-            "description": "Daily task management, filtering, and configuration endpoints"
-        },
-        {
             "name": "Authentication",
             "description": "Endpoints for user login and password recovery"
         },
         {
-            "name": "Company Plan",
-            "description": "Manage and inspect company subscriptions and plans"
+            "name": "User Profile",
+            "description": "User profile operations and profile picture handling"
+        },
+        {
+            "name": "User Management",
+            "description": "Edit, delete, tokens, and role assignments for users"
         },
         {
             "name": "Dashboard",
@@ -1713,20 +1713,28 @@
             "description": "Operations for inviting users and completing invitations"
         },
         {
-            "name": "User Department",
-            "description": "Manage user department assignments, managers, and fire tokens"
-        },
-        {
-            "name": "User Management",
-            "description": "Edit, delete, tokens, and role assignments for users"
-        },
-        {
-            "name": "User Profile",
-            "description": "User profile operations and profile picture handling"
+            "name": "Company Plan",
+            "description": "Manage and inspect company subscriptions and plans"
         },
         {
             "name": "User",
             "description": "Authenticated user operations"
+        },
+        {
+            "name": "User Department",
+            "description": "Manage user department assignments, managers, and fire tokens"
+        },
+        {
+            "name": "Daily Task",
+            "description": "Daily task management, filtering, and configuration endpoints"
+        },
+        {
+            "name": "Daily Task Report",
+            "description": "Daily task reporting and tracking endpoints"
+        },
+        {
+            "name": "Daily Task Evaluation",
+            "description": "Task evaluations and performance analytics endpoints"
         }
     ]
 }

@@ -45,7 +45,6 @@ return [
                  */
                 'annotations' => [
                     base_path('app/Modules'),
-                    base_path('app/Http/Controllers'),
                 ],
             ],
         ],
