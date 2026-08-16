@@ -152,6 +152,8 @@ return [
         App\Modules\Department\Providers\DepartmentServiceProvider::class,
         App\Modules\Project\Providers\ProjectServiceProvider::class,
         App\Modules\Ticket\Providers\TicketServiceProvider::class,
-    ]
+        App\Modules\Plan\Providers\PlanServiceProvider::class,
+    ],
+    'admin_api_token' => env('ADMIN_API_TOKEN', null),
 
 ];

@@ -211,18 +211,18 @@ Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallb
 
 
 
-Route::get('plans/all', [PlanController::class, 'allPlans']);
-Route::prefix('plans')->middleware('auth:sanctum')->group(function () {
-    Route::get('/', [PlanController::class, 'index']);
-    Route::get('adminPlans', [PlanController::class, 'AdminPlans']);
-    Route::post('adminPlans', [PlanController::class, 'store']);
-    Route::post('/{plan}/features', [PlanController::class, 'attachFeatures']);
-});
+// Route::get('plans/all', [PlanController::class, 'allPlans']);
+// Route::prefix('plans')->middleware('auth:sanctum')->group(function () {
+//     Route::get('/', [PlanController::class, 'index']);
+//     Route::get('adminPlans', [PlanController::class, 'AdminPlans']);
+//     Route::post('adminPlans', [PlanController::class, 'store']);
+//     Route::post('/{plan}/features', [PlanController::class, 'attachFeatures']);
+// });
 
-Route::prefix('features')->group(function () {
-    Route::get('/', [FeatureController::class, 'index']);
-    // Route::post('/', [FeatureController::class, 'store']);
-});
+// Route::prefix('features')->group(function () {
+//     Route::get('/', [FeatureController::class, 'index']);
+//     // Route::post('/', [FeatureController::class, 'store']);
+// });
 
 Route::middleware('auth:sanctum')->prefix('companies')->group(function () {
     Route::post('subscribe', [SubscriptionController::class, 'subscribe']);

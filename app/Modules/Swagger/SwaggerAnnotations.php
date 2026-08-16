@@ -30,6 +30,9 @@ namespace App\Modules\Swagger;
  *         @OA\Tag(name="User", description="General user operations"),
  *         @OA\Tag(name="User Department", description="Department assignments"),
  *
+ *         @OA\Tag(name="Plans", description="Endpoints for managing and retrieving subscription plans"),
+ *         @OA\Tag(name="Features", description="Endpoints for feature management"),
+ *
  *         @OA\Tag(name="Tasks", description="Operations for managing tasks, status, and metadata"),
  *         @OA\Tag(name="Task Attachments", description="Manage file uploads and downloads for tasks"),
  *         @OA\Tag(name="Task Comments", description="Endpoints for task comments and threaded replies"),
@@ -47,6 +50,14 @@ namespace App\Modules\Swagger;
  *     type="http",
  *     scheme="bearer",
  *     bearerFormat="JWT"
+ * )
+ *
+ * @OA\SecurityScheme(
+ *     securityScheme="AdminToken",
+ *     type="apiKey",
+ *     in="header",
+ *     name="X-Admin-Token",
+ *     description="Enter custom admin token here"
  * )
  */
 class SwaggerAnnotations

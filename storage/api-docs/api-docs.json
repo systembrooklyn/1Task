@@ -699,6 +699,372 @@
                 ]
             }
         },
+        "/api/features": {
+            "get": {
+                "tags": [
+                    "Features"
+                ],
+                "summary": "Get all features",
+                "operationId": "e19c1ab47ac2a763627b7450c4adc3c1",
+                "responses": {
+                    "200": {
+                        "description": "Features retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Features retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "API Requests"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "api-requests"
+                                                    },
+                                                    "unit": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "count",
+                                                            "kb",
+                                                            "mb"
+                                                        ],
+                                                        "example": "count"
+                                                    },
+                                                    "reset_frequency": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "daily",
+                                                            "weekly",
+                                                            "monthly"
+                                                        ],
+                                                        "example": "monthly",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/plans/all": {
+            "get": {
+                "tags": [
+                    "Plans"
+                ],
+                "summary": "Get all public plans",
+                "operationId": "4220a8c0a8450ef906f1bdfaa1bd03ba",
+                "responses": {
+                    "200": {
+                        "description": "Plans retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Plans retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Basic Plan"
+                                                    },
+                                                    "price": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 19.99
+                                                    },
+                                                    "currency": {
+                                                        "type": "string",
+                                                        "example": "USD"
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/plans": {
+            "get": {
+                "tags": [
+                    "Plans"
+                ],
+                "summary": "Get plans for authenticated user",
+                "operationId": "1e1f2245b91531ba3c6ccdc4fa000995",
+                "responses": {
+                    "200": {
+                        "description": "Plans retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Plans retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/plans/adminPlans": {
+            "get": {
+                "tags": [
+                    "Plans"
+                ],
+                "summary": "Get admin plans list",
+                "operationId": "48fbc7db7198c000ea715c1436d58f9d",
+                "responses": {
+                    "200": {
+                        "description": "Plans retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Plans retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized / Invalid Token"
+                    }
+                },
+                "security": [
+                    {
+                        "AdminToken": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Plans"
+                ],
+                "summary": "Create a new plan (Admin)",
+                "operationId": "a562d474f908910e09298a7d77bcdd92",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "price",
+                                    "currency"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Pro Plan"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 49.99
+                                    },
+                                    "currency": {
+                                        "type": "string",
+                                        "example": "USD"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Plan created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Plan created successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "AdminToken": []
+                    }
+                ]
+            }
+        },
+        "/api/plans/{plan}/features": {
+            "post": {
+                "tags": [
+                    "Plans"
+                ],
+                "summary": "Attach features to a plan (Admin)",
+                "operationId": "a4407df5c8725e570ac15569706df681",
+                "parameters": [
+                    {
+                        "name": "plan",
+                        "in": "path",
+                        "description": "ID of the plan",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "features"
+                                ],
+                                "properties": {
+                                    "features": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "id",
+                                                "value"
+                                            ],
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "value": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "resettable": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Features updated successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Features updated successfully."
+                                        },
+                                        "plan": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Plan not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "AdminToken": []
+                    }
+                ]
+            }
+        },
         "/api/tasks/{id}/attachments": {
             "post": {
                 "tags": [
@@ -2448,6 +2814,12 @@
                 "type": "http",
                 "bearerFormat": "JWT",
                 "scheme": "bearer"
+            },
+            "AdminToken": {
+                "type": "apiKey",
+                "description": "Enter custom admin token here",
+                "name": "X-Admin-Token",
+                "in": "header"
             }
         }
     },
@@ -2483,6 +2855,14 @@
         {
             "name": "User Department",
             "description": "Manage user department assignments, managers, and fire tokens"
+        },
+        {
+            "name": "Plans",
+            "description": "Endpoints for managing and retrieving subscription plans"
+        },
+        {
+            "name": "Features",
+            "description": "Endpoints for feature management"
         },
         {
             "name": "Tasks",
