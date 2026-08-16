@@ -160,29 +160,29 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::post('dailyTasks/setRandomCount', [DailyTaskController::class, 'updateRandomTaskCount']);
 });
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/tasks', [TaskController::class, 'index']);
-    Route::post('/tasks', [TaskController::class, 'store']);
-    Route::get('/tasks/{id}', [TaskController::class, 'show']);
-    Route::put('/tasks/{id}', [TaskController::class, 'update']);
+// Route::middleware('auth:sanctum')->group(function () {
+    // Route::get('/tasks', [TaskController::class, 'index']);
+    // Route::post('/tasks', [TaskController::class, 'store']);
+    // Route::get('/tasks/{id}', [TaskController::class, 'show']);
+    // Route::put('/tasks/{id}', [TaskController::class, 'update']);
     // Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
-    Route::put('tasks/{taskId}/status', [TaskController::class, 'updateStatus']);
-    Route::post('/tasks/{id}/comments', [TaskCommentController::class, 'store']);
+    // Route::put('tasks/{taskId}/status', [TaskController::class, 'updateStatus']);
+    // Route::post('/tasks/{id}/comments', [TaskCommentController::class, 'store']);
     // Route::post('/tasks/{id}/attachments', [TaskAttachmentController::class, 'store']);
-    Route::post('/tasks/{id}/star', [TaskUserStatusController::class, 'toggleStar']);
-    Route::post('/tasks/{id}/archive', [TaskUserStatusController::class, 'toggleArchive']);
-    Route::get('/tasks/{id}/revisions', [TaskRevisionController::class, 'index']);
+    // Route::post('/tasks/{id}/star', [TaskUserStatusController::class, 'toggleStar']);
+    // Route::post('/tasks/{id}/archive', [TaskUserStatusController::class, 'toggleArchive']);
+    // Route::get('/tasks/{id}/revisions', [TaskRevisionController::class, 'index']);
     // Route::delete('/attachments/{id}', [TaskAttachmentController::class, 'destroy'])->name('attachments.delete');
     // Route::get('/tasks/{id}/attachments/{attachmentId}/download', [TaskAttachmentController::class, 'download'])->name('attachments.download');
 
-    Route::post('taskComments/{commentId}/replies', [TaskCommentRepliesController::class, 'addReply']);
-    Route::get('taskComments/{commentId}/replies', [TaskCommentRepliesController::class, 'getReplies']);
-    Route::put('taskCommentReplies/{replyId}', [TaskCommentRepliesController::class, 'updateReply']);
+    // Route::post('taskComments/{commentId}/replies', [TaskCommentRepliesController::class, 'addReply']);
+    // Route::get('taskComments/{commentId}/replies', [TaskCommentRepliesController::class, 'getReplies']);
+    // Route::put('taskCommentReplies/{replyId}', [TaskCommentRepliesController::class, 'updateReply']);
     // Route::delete('taskCommentReplies/{replyId}', [TaskCommentRepliesController::class, 'deleteReply']);
 
-    Route::post('taskComments/read', [TaskCommentController::class, 'markCommentAsRead']);
-    Route::post('taskReplies/read', [TaskCommentRepliesController::class, 'markReplyAsRead']);
-});
+    // Route::post('taskComments/read', [TaskCommentController::class, 'markCommentAsRead']);
+    // Route::post('taskReplies/read', [TaskCommentRepliesController::class, 'markReplyAsRead']);
+// });
 
 
 /**

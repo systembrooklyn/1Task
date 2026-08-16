@@ -30,6 +30,11 @@ namespace App\Modules\Swagger;
  *         @OA\Tag(name="User", description="General user operations"),
  *         @OA\Tag(name="User Department", description="Department assignments"),
  *
+ *         @OA\Tag(name="Tasks", description="Operations for managing tasks, status, and metadata"),
+ *         @OA\Tag(name="Task Attachments", description="Manage file uploads and downloads for tasks"),
+ *         @OA\Tag(name="Task Comments", description="Endpoints for task comments and threaded replies"),
+ *         @OA\Tag(name="Task Revisions", description="Tracking edits and history logs for tasks"),
+ *
  *         @OA\Tag(name="Daily Task", description="Daily task operations"),
  *         @OA\Tag(name="Daily Task Report", description="Daily task reporting"),
  *         @OA\Tag(name="Daily Task Evaluation", description="Task evaluations and performance"),
