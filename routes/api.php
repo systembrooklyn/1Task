@@ -99,22 +99,24 @@ use Illuminate\Support\Facades\Artisan;
 // Route::post('user/upload-profile-picture', [UserProfileController::class, 'uploadProfilePicture'])->middleware('auth:sanctum');
 
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('permissions', [RolePermissionController::class, 'getPermissions']);
-    Route::get('permissions/{id}', [RolePermissionController::class, 'getPermission']);
+// Route::middleware('auth:sanctum')->group(function () {
+    // Route::get('permissions', [RolePermissionController::class, 'getPermissions']);
+    // Route::get('permissions/{id}', [RolePermissionController::class, 'getPermission']);
+
+    
+    // Route::post('roles', [RolePermissionController::class, 'createRole']);
+    // Route::get('roles', [RolePermissionController::class, 'getRoles']);
+    // Route::get('roles/{id}', [RolePermissionController::class, 'getRole']);
+    // Route::put('roles/{id}', [RolePermissionController::class, 'updateRole']);
+    // Route::delete('roles/{id}', [RolePermissionController::class, 'deleteRole']);
+    // Route::post('/roles/assign-permissions', [RolePermissionController::class, 'assignPermissions']);
+    // Route::get('/roles/get-permissions/{id}', [RolePermissionController::class, 'getRolePermissions']);
+    // Route::post('/roles/remove-permissions', [RolePermissionController::class, 'removePermissionsFromRole']);
+
 
     // Route::post('edit-user/{id}', [AuthController::class, 'editUser']);
     // Route::post('fireToken', [AuthController::class, 'updateFireToken']);
-
-    Route::post('roles', [RolePermissionController::class, 'createRole']);
-    Route::get('roles', [RolePermissionController::class, 'getRoles']);
-    Route::get('roles/{id}', [RolePermissionController::class, 'getRole']);
-    Route::put('roles/{id}', [RolePermissionController::class, 'updateRole']);
-    Route::delete('roles/{id}', [RolePermissionController::class, 'deleteRole']);
-    Route::post('/roles/assign-permissions', [RolePermissionController::class, 'assignPermissions']);
-    Route::get('/roles/get-permissions/{id}', [RolePermissionController::class, 'getRolePermissions']);
     // Route::post('/users/assign-role', [AuthController::class, 'assignRoleToUser']);
-    Route::post('/roles/remove-permissions', [RolePermissionController::class, 'removePermissionsFromRole']);
 
     // Route::post('/users/{userId}/assign-departments', [UserDepartmentController::class, 'assignDepartments']);
     // Route::get('/departments-users', [UserDepartmentController::class, 'getUsersInDepartment']);
@@ -158,7 +160,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Route::get('dailyTasks/yesterday', [DailyTaskController::class, 'getYesterdayEvaluationTasks']);
     // Route::post('dailyTasks/setRandomCount', [DailyTaskController::class, 'updateRandomTaskCount']);
-});
+// });
 
 // Route::middleware('auth:sanctum')->group(function () {
     // Route::get('/tasks', [TaskController::class, 'index']);
