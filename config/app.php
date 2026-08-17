@@ -154,6 +154,7 @@ return [
         App\Modules\Ticket\Providers\TicketServiceProvider::class,
         App\Modules\Plan\Providers\PlanServiceProvider::class,
         App\Modules\RolePermission\Providers\RolePermissionServiceProvider::class,
+        App\Modules\DigitalCard\Providers\DigitalCardServiceProvider::class,
     ],
     'admin_api_token' => env('ADMIN_API_TOKEN', null),
 

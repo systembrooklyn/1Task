@@ -699,6 +699,673 @@
                 ]
             }
         },
+        "/api/digital-card/register": {
+            "post": {
+                "tags": [
+                    "Digital Card Auth"
+                ],
+                "summary": "Register a new digital card user",
+                "operationId": "0efb810ef38376eb3e2378dcf45c58d6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User registered successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User registered successfully. Please check your email for the verification code."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Failed to send verification email"
+                    }
+                }
+            }
+        },
+        "/api/digital-card/verify-code": {
+            "post": {
+                "tags": [
+                    "Digital Card Auth"
+                ],
+                "summary": "Verify email with code",
+                "operationId": "83940fc426a6602243c203f1b6792670",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "verification_code"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "example": "john@example.com"
+                                    },
+                                    "verification_code": {
+                                        "type": "string",
+                                        "example": "ABC123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Email verified successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Email verified successfully."
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "john@example.com"
+                                                },
+                                                "is_verified": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "email_verified_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "user_code": {
+                                                    "type": "string",
+                                                    "example": "ABC123"
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "desc": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "profile_pic_url": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "back_pic_link": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid verification code"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/digital-card/login": {
+            "post": {
+                "tags": [
+                    "Digital Card Auth"
+                ],
+                "summary": "Login a digital card user",
+                "operationId": "6eb4a6ca3947b32fe3909ed68cdd37a5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Login successful."
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "1|abc123..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    },
+                    "403": {
+                        "description": "Email not verified"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/digital-card/user": {
+            "get": {
+                "tags": [
+                    "Digital Card"
+                ],
+                "summary": "Get authenticated user's digital card",
+                "operationId": "3ea8865ba92d5ec4ed14ee73aac9ef5e",
+                "responses": {
+                    "200": {
+                        "description": "User details with social links and phones",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "john@example.com"
+                                                },
+                                                "is_verified": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "email_verified_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "user_code": {
+                                                    "type": "string",
+                                                    "example": "ABC123"
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Software Engineer"
+                                                },
+                                                "desc": {
+                                                    "type": "string",
+                                                    "example": "Laravel developer"
+                                                },
+                                                "profile_pic_url": {
+                                                    "type": "string",
+                                                    "example": "https://example.com/photo.jpg"
+                                                },
+                                                "back_pic_link": {
+                                                    "type": "string",
+                                                    "example": "https://example.com/background.jpg"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "social_links": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "user_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Twitter"
+                                                            },
+                                                            "icon": {
+                                                                "type": "string",
+                                                                "example": "twitter-icon"
+                                                            },
+                                                            "link": {
+                                                                "type": "string",
+                                                                "example": "https://twitter.com/johndoe"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "phones": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "user_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "phone": {
+                                                                "type": "string",
+                                                                "example": "+1234567890"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/digital-card/update": {
+            "put": {
+                "tags": [
+                    "Digital Card"
+                ],
+                "summary": "Update authenticated user's digital card",
+                "operationId": "478a7990b026999ae1b4bc9c8aebc6ef",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Senior Developer"
+                                    },
+                                    "desc": {
+                                        "type": "string",
+                                        "example": "Experienced in Laravel & Vue"
+                                    },
+                                    "profile_pic_url": {
+                                        "type": "string",
+                                        "example": "https://example.com/newphoto.jpg"
+                                    },
+                                    "back_pic_link": {
+                                        "type": "string",
+                                        "example": "https://example.com/newbg.jpg"
+                                    },
+                                    "social_links": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "LinkedIn"
+                                                },
+                                                "icon": {
+                                                    "type": "string",
+                                                    "example": "linkedin-icon"
+                                                },
+                                                "link": {
+                                                    "type": "string",
+                                                    "example": "https://linkedin.com/in/johndoe"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "phones": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "+1987654321"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Digital card updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Digital card updated successfully."
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "email": {
+                                                    "type": "string"
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "desc": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "profile_pic_url": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "back_pic_link": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "social_links": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "icon": {
+                                                                "type": "string"
+                                                            },
+                                                            "link": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "phones": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "phone": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/digital-card/view/{user_code}": {
+            "get": {
+                "tags": [
+                    "Digital Card"
+                ],
+                "summary": "View a public digital card by user code",
+                "operationId": "ae2c89e8763b86787e8aa2819c978c8e",
+                "parameters": [
+                    {
+                        "name": "user_code",
+                        "in": "path",
+                        "description": "Unique user code for the digital card",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Digital card retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Digital card retrieved successfully."
+                                        },
+                                        "digital_card": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "john@example.com"
+                                                },
+                                                "user_code": {
+                                                    "type": "string",
+                                                    "example": "ABC123"
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Software Engineer"
+                                                },
+                                                "desc": {
+                                                    "type": "string",
+                                                    "example": "Laravel developer"
+                                                },
+                                                "profile_pic_url": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "back_pic_link": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "social_links": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "icon": {
+                                                                "type": "string"
+                                                            },
+                                                            "link": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "phones": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "phone": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Digital card not found"
+                    }
+                }
+            }
+        },
         "/api/features": {
             "get": {
                 "tags": [
@@ -3576,6 +4243,14 @@
         {
             "name": "Roles",
             "description": "Role management endpoints"
+        },
+        {
+            "name": "Digital Card Auth",
+            "description": "Authentication for digital card users"
+        },
+        {
+            "name": "Digital Card",
+            "description": "Public digital card viewing and management"
         }
     ]
 }

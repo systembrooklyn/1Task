@@ -41,6 +41,12 @@ namespace App\Modules\Swagger;
  *         @OA\Tag(name="Daily Task", description="Daily task operations"),
  *         @OA\Tag(name="Daily Task Report", description="Daily task reporting"),
  *         @OA\Tag(name="Daily Task Evaluation", description="Task evaluations and performance"),
+ * 
+ *         @OA\Tag(name="Permissions", description="Project Permissions"),
+ *         @OA\Tag(name="Roles", description="Manage Roles"),
+ * 
+ *         @OA\Tag(name="Digital Card Auth", description="Authentication for digital card users"),
+ *         @OA\Tag(name="Digital Card", description="Public digital card viewing and management"),
  *
  *     }
  * )

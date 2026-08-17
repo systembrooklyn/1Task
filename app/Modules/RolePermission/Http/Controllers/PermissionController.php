@@ -17,14 +17,12 @@ class PermissionController extends Controller
 
     public function index()
     {
-        // Original: Permission::get() – returns all attributes
         $permissions = $this->permissionService->all();
         return response()->json($permissions);
     }
 
     public function show(int $id)
     {
-        // Original: Permission::findOrFail($id) – returns full model
         $permission = $this->permissionService->find($id);
         return response()->json($permission);
     }

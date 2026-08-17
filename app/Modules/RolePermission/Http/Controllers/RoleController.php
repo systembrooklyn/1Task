@@ -25,7 +25,6 @@ class RoleController extends Controller
         $companyId = auth()->user()->company_id;
         $roles = $this->roleService->getRoles($companyId);
 
-        // Original mapping: role_id, role_name, permissions array
         $rolesWithPermissions = $roles->map(function ($role) {
             return [
                 'role_id'   => $role->id,
@@ -47,7 +46,6 @@ class RoleController extends Controller
         $companyId = auth()->user()->company_id;
         $role = $this->roleService->createRole($request->validated(), $companyId);
 
-        // Apply the same hiding as original
         $role->permissions->makeHidden('pivot');
         $role->permissions->each->makeHidden('guard_name');
         $role->makeHidden('guard_name');
@@ -63,7 +61,6 @@ class RoleController extends Controller
         $companyId = auth()->user()->company_id;
         $role = $this->roleService->getRole($companyId, $id);
 
-        // Original mapping (same as index)
         $roleWithPermissions = [
             'role_id'   => $role->id,
             'role_name' => $role->name,
@@ -110,7 +107,6 @@ class RoleController extends Controller
     {
         $role = $this->roleService->getRolePermissions($id);
 
-        // Original: returns role name + permissions (raw, no hiding)
         return response()->json([
             'role'        => $role->name,
             'permissions' => $role->permissions,
