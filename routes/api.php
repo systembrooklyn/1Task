@@ -190,17 +190,17 @@ use Illuminate\Support\Facades\Artisan;
 /**
  * digital users
  */
-Route::get('/digital-card/view/{user_code}', [DigitalCardController::class, 'viewDigitalCard']);
-Route::post('/digital-card/register', [DigitalCardController::class, 'register']);
-Route::post('/digital-card/verify-code', [DigitalCardController::class, 'verifyCode']);
-Route::post('/digital-card/login', [DigitalCardController::class, 'login']);
-// Route::middleware('auth:digital_card_users')->put('/digital-card/update', [DigitalCardController::class, 'updateDigitalCard']);
+// Route::get('/digital-card/view/{user_code}', [DigitalCardController::class, 'viewDigitalCard']);
+// Route::post('/digital-card/register', [DigitalCardController::class, 'register']);
+// Route::post('/digital-card/verify-code', [DigitalCardController::class, 'verifyCode']);
+// Route::post('/digital-card/login', [DigitalCardController::class, 'login']);
+// // Route::middleware('auth:digital_card_users')->put('/digital-card/update', [DigitalCardController::class, 'updateDigitalCard']);
 
-Route::middleware('auth:digital_card_users')->group(function () {
-    Route::get('/digital-card/user', [DigitalCardController::class, 'getDigitalCard']);
-    Route::put('/digital-card/update', [DigitalCardController::class, 'updateDigitalCard']);
-    // Route::post('/digital-card/delete', [DigitalCardController::class, 'deleteAccount']);
-});
+// Route::middleware('auth:digital_card_users')->group(function () {
+//     Route::get('/digital-card/user', [DigitalCardController::class, 'getDigitalCard']);
+//     Route::put('/digital-card/update', [DigitalCardController::class, 'updateDigitalCard']);
+//     // Route::post('/digital-card/delete', [DigitalCardController::class, 'deleteAccount']);
+// });
 
 
 // Route::middleware('auth:sanctum')->get('/dashboard/{date?}', [DashboardController::class, 'getCounts']);
