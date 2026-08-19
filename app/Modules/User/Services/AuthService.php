@@ -103,13 +103,12 @@ class AuthService
         return $status === Password::RESET_LINK_SENT;
     }
 
-    public function resetPassword(array $credentials): bool
+    public function resetPassword(array $credentials): string
     {
-        $status = Password::reset($credentials, function ($user, $password) {
+        return Password::reset($credentials, function ($user, $password) {
             $user->password = bcrypt($password);
             $user->save();
         });
-        return $status === Password::PASSWORD_RESET;
     }
 
     public function checkEmailExists(string $email): bool
