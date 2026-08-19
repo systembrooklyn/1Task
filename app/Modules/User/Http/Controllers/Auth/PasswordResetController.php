@@ -24,9 +24,13 @@ class PasswordResetController extends Controller
     public function reset(ResetPasswordRequest $request): JsonResponse
     {
         $reset = $this->authService->resetPassword($request->validated());
+        $response = response()->json(['message' => 'Default']);
         if ($reset) {
-            return response()->json(['message' => 'Password reset successfully.']);
+            $response =  response()->json(['message' => 'Password reset successfully.']);
         }
-        return response()->json(['message' => 'Failed to reset password.'], 400);
+        if (!$reset) {
+            $response = response()->json(['message' => 'Failed to reset password.'], 400);
+        }
+        return $response;
     }
 }
