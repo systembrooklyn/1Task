@@ -2,10 +2,11 @@
 
 namespace App\Modules\Task\Services;
 
-use App\Models\Task;
 use App\Models\TaskComment;
+use App\Models\Task;
 use App\Modules\Task\Models\TaskAttachment;
 use App\Modules\Task\Repositories\Contracts\TaskAttachmentRepositoryInterface;
+use App\Services\PlanLimitService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -14,34 +15,55 @@ class TaskAttachmentService
 {
     protected array $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'jfif'];
 
-    public function __construct(protected TaskAttachmentRepositoryInterface $attachments) {}
+    public function __construct(
+        protected TaskAttachmentRepositoryInterface $attachments,
+        protected PlanLimitService $planService,
+    ) {}
 
     public function uploadAndAttach(Task $task, UploadedFile $file, ?string $commentText): array
     {
+        $attachment = $this->storeFile($task, $file, isMain: false);
+        $this->createAttachmentComment($task, $attachment->download_url, $file, $commentText);
+
+        return [
+            'attachment'   => $attachment,
+            'file_size'    => $attachment->file_size,
+            'download_url' => $attachment->download_url,
+        ];
+    }
+    public function uploadMainAttachments(Task $task, array $files): array
+    {
+        $created = [];
+        foreach ($files as $file) {
+            $created[] = $this->storeFile($task, $file, isMain: true);
+        }
+        return $created;
+    }
+    public function removeMainAttachments(Task $task, array $ids): void
+    {
+        $attachments = $this->attachments->findMainByTask($task->id, $ids);
+        foreach ($attachments as $attachment) {
+            $this->deleteFromStorage($attachment);
+            $this->attachments->delete($attachment);
+        }
+    }
+    protected function storeFile(Task $task, UploadedFile $file, bool $isMain): TaskAttachment
+    {
         $company = Auth::user()->company;
+        $this->planService->checkFeatureAccess($company->id, 'limit_storage', $file->getSize() / 1024);
 
         $path        = $file->store("1Task/{$company->name}/tasks/{$task->id}/task_attachments", 'spaces');
         $downloadUrl = Storage::disk('spaces')->url($path);
-        $fileSizeKB  = $file->getSize() / 1024;
 
-        // 2) Persist attachment record via Contract
-        $attachment = $this->attachments->create([
+        return $this->attachments->create([
             'task_id'             => $task->id,
             'uploaded_by_user_id' => Auth::id(),
             'file_path'           => $path,
             'file_name'           => basename($path),
-            'file_size'           => $fileSizeKB,
+            'file_size'           => $file->getSize() / 1024,
             'download_url'        => $downloadUrl,
+            'is_main'             => $isMain,
         ]);
-
-        // 3) Auto-comment + read/unread for related users
-        $this->createAttachmentComment($task, $downloadUrl, $file, $commentText);
-
-        return [
-            'attachment'   => $attachment,
-            'file_size'    => $fileSizeKB,
-            'download_url' => $downloadUrl,
-        ];
     }
 
     public function deleteFromStorage(TaskAttachment $attachment): void
@@ -69,9 +91,7 @@ class TaskAttachmentService
         ])->filter()->unique('id');
 
         foreach ($relatedUsers as $user) {
-            $comment->users()->attach($user->id, [
-                'read_at' => $user->id === Auth::id() ? now() : null,
-            ]);
+            $comment->users()->attach($user->id, ['read_at' => $user->id === Auth::id() ? now() : null]);
         }
     }
 

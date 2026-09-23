@@ -17,6 +17,7 @@ class TaskAttachmentResource extends JsonResource
             'file_name'           => $this->file_name,
             'file_size'           => $this->file_size,
             'download_url'        => $this->download_url,
+            'is_main'             => $this->is_main,
             'created_at'          => $this->created_at?->toDateTimeString(),
             'updated_at'          => $this->updated_at?->toDateTimeString(),
         ];

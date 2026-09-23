@@ -20,6 +20,7 @@ class TaskResource extends JsonResource
             'read_comments' => $this->read_comments ?? false,
             'is_starred' => $this->is_starred ?? false,
             'is_archived' => $this->is_archived ?? false,
+            'main_task_attachments' => TaskAttachmentResource::collection($this->whenLoaded('mainTaskAttachments')),
             'project' => $this->project ? [
                 'id' => $this->project->id,
                 'name' => $this->project->name,

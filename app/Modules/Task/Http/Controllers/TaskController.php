@@ -7,6 +7,7 @@ use App\Modules\Task\Http\Requests\StoreTaskRequest;
 use App\Modules\Task\Http\Requests\UpdateTaskRequest;
 use App\Modules\Task\Http\Requests\UpdateTaskStatusRequest;
 use App\Modules\Task\Services\TaskService;
+use App\Modules\Task\Services\TaskAttachmentService;
 use App\Models\Task;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +17,7 @@ class TaskController extends Controller
 {
     protected TaskService $taskService;
 
-    public function __construct(TaskService $taskService)
+    public function __construct(TaskService $taskService, protected TaskAttachmentService $taskAttachmentService)
     {
         $this->taskService = $taskService;
     }
@@ -31,8 +32,10 @@ class TaskController extends Controller
     public function store(StoreTaskRequest $request): JsonResponse
     {
         $user = Auth::user();
-        $this->authorize('create', Task::class);
         $task = $this->taskService->createTask($request->validated(), $user->company_id, $user->id);
+        if ($request->hasFile('main_task_attachments')) {
+            $this->taskAttachmentService->uploadMainAttachments($task, $request->file('main_task_attachments'));
+        }
         return response()->json(
             $task->load([
                 'creator:id,name,last_name',
@@ -40,6 +43,7 @@ class TaskController extends Controller
                 'assignedUsers:id,name,last_name',
                 'consultUsers:id,name,last_name',
                 'informerUsers:id,name,last_name',
+                'mainTaskAttachments',
             ]),
             201
         );
@@ -53,6 +57,7 @@ class TaskController extends Controller
             'project',
             'department',
             'attachments.uploadedBy',
+            'mainTaskAttachments.uploadedBy',
             'revisions.user',
             'creator',
             'supervisor',
@@ -149,17 +154,6 @@ class TaskController extends Controller
             200
         );
     }
-
-    // public function destroy(int $id): JsonResponse
-    // {
-    //     $task = Task::findOrFail($id);
-    //     if (Auth::id() !== $task->creator_user_id) {
-    //         return response()->json(['error' => 'Forbidden'], 403);
-    //     }
-    //     $this->authorize('delete', $task);
-    //     $this->taskService->deleteTask($task);
-    //     return response()->json(['message' => 'Task and its attachments deleted successfully'], 200);
-    // }
 
     public function updateStatus(UpdateTaskStatusRequest $request, int $taskId): JsonResponse
     {

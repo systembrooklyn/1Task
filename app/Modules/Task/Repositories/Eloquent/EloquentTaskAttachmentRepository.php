@@ -4,6 +4,7 @@ namespace App\Modules\Task\Repositories\Eloquent;
 
 use App\Modules\Task\Models\TaskAttachment;
 use App\Modules\Task\Repositories\Contracts\TaskAttachmentRepositoryInterface;
+use Illuminate\Support\Collection;
 
 class EloquentTaskAttachmentRepository implements TaskAttachmentRepositoryInterface
 {
@@ -20,6 +21,14 @@ class EloquentTaskAttachmentRepository implements TaskAttachmentRepositoryInterf
     public function findByTaskOrFail(int $taskId, int $attachmentId): TaskAttachment
     {
         return TaskAttachment::where('task_id', $taskId)->findOrFail($attachmentId);
+    }
+
+    public function findMainByTask(int $taskId, array $ids): Collection
+    {
+        return TaskAttachment::where('task_id', $taskId)
+            ->where('is_main', true)
+            ->whereIn('id', $ids)
+            ->get();
     }
 
     public function delete(TaskAttachment $attachment): bool

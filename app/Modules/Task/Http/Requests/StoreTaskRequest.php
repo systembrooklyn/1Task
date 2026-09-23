@@ -31,19 +31,33 @@ class StoreTaskRequest extends FormRequest
             'priority' => 'nullable|in:low,normal,high,urgent',
             'project_id' => 'nullable|exists:projects,id',
             'department_id' => 'nullable|exists:departments,id',
+            'status' => 'sometimes|in:pending,rework,done,review,inProgress',
+            // New Attachment Rules
+            'main_task_attachments'     => 'nullable|array',
+            'main_task_attachments.*'   => 'file|max:102400',
+            'remove_main_attachments'   => 'nullable|array',
+            'remove_main_attachments.*' => 'integer',
         ];
     }
 
     public function withValidator(Validator $validator): void
     {
         $validator->after(function ($validator) {
+            if ($validator->errors()->isNotEmpty()) return;
+
             $companyId = $this->user()->company_id;
 
+            // Bulletproof casting for JSON arrays AND Form-Data strings/nulls
+            $assigned   = $this->input('assigned_user_id', []);
+            $consult    = $this->input('consult_user_id', []);
+            $inform     = $this->input('inform_user_id', []);
+            $supervisor = $this->input('supervisor_user_id');
+
             $userIds = array_merge(
-                $this->input('assigned_user_id', []),
-                $this->input('consult_user_id', []),
-                $this->input('inform_user_id', []),
-                [$this->input('supervisor_user_id')]
+                is_array($assigned) ? $assigned : ($assigned ? [$assigned] : []),
+                is_array($consult)  ? $consult  : ($consult  ? [$consult]  : []),
+                is_array($inform)   ? $inform   : ($inform   ? [$inform]   : []),
+                $supervisor ? [$supervisor] : []
             );
 
             CompanyMembershipValidator::validate($validator, $userIds, $companyId);

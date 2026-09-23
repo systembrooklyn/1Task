@@ -107,25 +107,25 @@ class TaskService
         $this->planService->checkFeatureAccess($companyId, 'limit_task');
         $this->authorize('create', Task::class);
 
-        $taskData = [
-            'title' => $data['title'],
-            'description' => $data['description'] ?? null,
-            'start_date' => $data['start_date'] ?? now(),
-            'deadline' => $data['deadline'] ?? null,
-            'priority' => $data['priority'] ?? 'normal',
-            'project_id' => $data['project_id'] ?? null,
-            'department_id' => $data['department_id'] ?? null,
+        $taskData = collect($data)->except(['main_task_attachments', 'remove_main_attachments'])->toArray();
+
+        $task = $this->taskRepo->create([
+            'title' => $taskData['title'],
+            'description' => $taskData['description'] ?? null,
+            'start_date' => $taskData['start_date'] ?? now(),
+            'deadline' => $taskData['deadline'] ?? null,
+            'priority' => $taskData['priority'] ?? 'normal',
+            'project_id' => $taskData['project_id'] ?? null,
+            'department_id' => $taskData['department_id'] ?? null,
             'creator_user_id' => $userId,
             'company_id' => $companyId,
-            'status' => 'pending',
-            'supervisor_user_id' => $data['supervisor_user_id'] ?? null,
-        ];
+            'status' => $taskData['status'] ?? 'pending',
+            'supervisor_user_id' => $taskData['supervisor_user_id'] ?? null,
+        ]);
 
-        $task = $this->taskRepo->create($taskData);
-
-        $this->attachUsersWithRole($task, $data['assigned_user_id'] ?? [], 'assigned');
-        $this->attachUsersWithRole($task, $data['consult_user_id'] ?? [], 'consult');
-        $this->attachUsersWithRole($task, $data['inform_user_id'] ?? [], 'informer');
+        $this->attachUsersWithRole($task, $taskData['assigned_user_id'] ?? [], 'assigned');
+        $this->attachUsersWithRole($task, $taskData['consult_user_id'] ?? [], 'consult');
+        $this->attachUsersWithRole($task, $taskData['inform_user_id'] ?? [], 'informer');
 
         return $task;
     }
