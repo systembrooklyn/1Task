@@ -7,7 +7,7 @@ class UploadProfilePictureRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif|max:51200',
         ];
     }
 }
