@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class GoogleController extends Controller
 {
@@ -31,14 +32,15 @@ class GoogleController extends Controller
                     $user->update(['google_id' => $googleUser->getId()]);
                 }
             } else {
+                throw new NotFoundHttpException('this email is not registered please register first and create your company');
                 // Create a new user if no matching email is found
-                $user = User::create([
-                    'name' => $googleUser->getName(),
-                    'email' => $googleUser->getEmail(),
-                    'google_id' => $googleUser->getId(),
-                    'avatar' => $googleUser->getAvatar(),
-                    'password' => bcrypt(uniqid()), // Generate a random password
-                ]);
+                // $user = User::create([
+                //     'name' => $googleUser->getName(),
+                //     'email' => $googleUser->getEmail(),
+                //     'google_id' => $googleUser->getId(),
+                //     'avatar' => $googleUser->getAvatar(),
+                //     'password' => bcrypt(uniqid()), // Generate a random password
+                // ]);
             }
 
             // Generate an API token
