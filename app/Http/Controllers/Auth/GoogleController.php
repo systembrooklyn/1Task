@@ -46,16 +46,12 @@ class GoogleController extends Controller
             // Generate an API token
             $token = $user->createToken('GoogleLoginToken')->plainTextToken;
 
-            return response()->json([
-                'message' => 'Login successful',
-                'token' => $token,
-                'user' => $user->load(['company', 'departments', 'roles.permissions']),
-            ]);
+            $appRedirectUrl = env('MOBILE_APP_REDIRECT_URL', 'myapp://auth/success');
+            $finalRedirectUrl = $appRedirectUrl . '?token=' . urlencode($token);
+            return redirect($finalRedirectUrl);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error authenticating with Google',
-                'error' => $e->getMessage(),
-            ], 500);
+            $errorUrl = env('MOBILE_APP_ERROR_URL', 'myapp://auth/error?message=login_failed');
+            return redirect($errorUrl);
         }
     }
 }
